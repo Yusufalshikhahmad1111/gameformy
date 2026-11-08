@@ -452,6 +452,11 @@ local function syncArmyVisual(army)
 	end
 end
 
+local function playerRoot(player)
+	local character = player.Character
+	return character and character:FindFirstChild("HumanoidRootPart")
+end
+
 local function createArmy(player, armyType)
 	if workspace:GetAttribute("MatchActive") ~= true or matchEnded then
 		return nil, "MATCH_NOT_ACTIVE"
@@ -509,11 +514,6 @@ end
 local function armyOwnedBy(player, armyId)
 	local army = armies[armyId]
 	return army and army.Owner == player and army.Model and army.Model.Parent
-end
-
-local function playerRoot(player)
-	local character = player.Character
-	return character and character:FindFirstChild("HumanoidRootPart")
 end
 
 local function playersNearPosition(position, radius)
