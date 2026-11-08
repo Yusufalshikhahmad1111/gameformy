@@ -96,3 +96,32 @@ Delivered:
 - production release gate documented.
 
 Studio-only release gate remains mandatory: source inspection cannot substitute for a real Roblox multiplayer playtest.
+
+
+## Stage 8 — World Map Architecture — COMPLETED
+Delivered:
+- data-driven MapPacks for Syria, Saudi Arabia, Palestine and Europe;
+- map-aware matchmaking and team-count selection;
+- MapService world graph;
+- dynamic tactical minimap;
+- map/team mode transport through TeleportData;
+- production bootstrap validation.
+
+## Stage 9 — World Map Art & Castle Content — IMPLEMENTED
+Delivered:
+- regional art profiles for all four world maps;
+- map-aware terrain, river and lighting presentation;
+- reusable castle tiers: Capital / Major / Regional;
+- castle metadata for city, province and tier;
+- graph-driven roads derived from MapService edges;
+- reusable trees, rocks, bridges and regional accents;
+- capital/major visual hierarchy;
+- city/province labels driven by MapService;
+- team-colored banners and ownership markers;
+- tactical minimap polish for capitals, armies and contested castles;
+- strategic map selection metadata and difficulty descriptions;
+- multi-team starting ownership and economy/victory compatibility fixes discovered during Stage 9 audit.
+
+Release gate:
+- repository-level structural verification completed;
+- real Roblox Studio visual/performance verification remains mandatory for every map, mobile layouts, dense castle scenes, streaming and multiplayer runtime.
