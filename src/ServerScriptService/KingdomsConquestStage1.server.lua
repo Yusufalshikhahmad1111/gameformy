@@ -63,6 +63,7 @@ local activeTeamCount = math.clamp(tonumber(workspace:GetAttribute("KC_TeamCount
 Config.Game.TeamCount = activeTeamCount
 local selectedMap = MapService.GetMap(workspace:GetAttribute("KC_MapId") or Config.Game.MapId, activeTeamCount)
 Config.Game.MapId = selectedMap.Name
+local staticMap = workspace:FindFirstChild("Map_" .. selectedMap.Name)
 
 local teamObjects = {}
 local teamSupplies = {}
@@ -322,6 +323,22 @@ for team = 1, activeTeamCount do
 	spawnPart.CanCollide = false
 end
 
+-- The editable map prefabs in Workspace are the visible world. Stage 1 keeps only
+-- invisible gameplay proxies for authoritative capture/pathfinding state.
+for _, descendant in ipairs(root:GetDescendants()) do
+	if descendant:IsA("BasePart") then
+		descendant.Transparency = 1
+		descendant.CanCollide = false
+	end
+	if descendant:IsA("BillboardGui") then
+		descendant.Enabled = false
+	end
+end
+
+for name in pairs(provinceStates) do
+	updateStaticProvinceVisual(name)
+end
+
 -- Stage 3+ clients must only proceed after the complete runtime world exists.
 workspace:SetAttribute("KC_RuntimeReady", true)
 
@@ -527,6 +544,28 @@ local function playersNearPosition(position, radius)
 	return found
 end
 
+local function updateStaticProvinceVisual(name)
+	local state = provinceStates[name]
+	local mapModel = staticMap
+	if not mapModel or not state then return end
+	local castle = mapModel:FindFirstChild(name .. "_Castle", true)
+	if castle then
+		local color = ownerColor(state.Owner)
+		local banner = castle:FindFirstChild("Banner", true)
+		if banner and banner:IsA("BasePart") then banner.Color = color end
+		local gates = castle:FindFirstChild("Gates", true)
+		if gates then
+			for _, gate in ipairs(gates:GetChildren()) do
+				if gate:IsA("BasePart") then gate.Color = color end
+			end
+		end
+	end
+	local territory = mapModel:FindFirstChild(name .. "_Territory", true)
+	if territory and territory:IsA("BasePart") then
+		territory.Color = color:Lerp(Color3.fromRGB(92, 115, 80), 0.55)
+	end
+end
+
 local function updateProvinceVisual(name)
 	local state = provinceStates[name]
 	local model = provinceFolder:FindFirstChild(name .. "_Castle")
@@ -541,6 +580,7 @@ local function updateProvinceVisual(name)
 		territory.Color = color:Lerp(Color3.fromRGB(92, 115, 80), 0.55)
 		territory:SetAttribute("Owner", state.Owner)
 	end
+	updateStaticProvinceVisual(name)
 end
 
 local function captureTick(dt)
