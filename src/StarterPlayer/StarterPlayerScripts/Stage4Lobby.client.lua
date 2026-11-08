@@ -25,7 +25,7 @@ backdrop.Parent = gui
 local panel = Instance.new("Frame")
 panel.AnchorPoint = Vector2.new(0.5, 0.5)
 panel.Position = UDim2.fromScale(0.5, 0.5)
-panel.Size = UDim2.fromScale(0.64, 0.88)
+panel.Size = UDim2.fromScale(0.64, 0.96)
 panel.BackgroundColor3 = Color3.fromRGB(29, 34, 34)
 panel.BorderSizePixel = 0
 panel.Parent = backdrop
@@ -105,12 +105,12 @@ local function button(text, pos, size, callback)
 	return b
 end
 
-local createButton = button("CREATE PARTY", UDim2.fromScale(0.08, 0.84), UDim2.fromScale(0.26, 0.10), function()
+local createButton = button("CREATE PARTY", UDim2.fromScale(0.08, 0.82), UDim2.fromScale(0.26, 0.10), function()
 	action:FireServer("CreateParty")
 end)
 
 local codeBox = Instance.new("TextBox")
-codeBox.Position = UDim2.fromScale(0.37, 0.84)
+codeBox.Position = UDim2.fromScale(0.37, 0.82)
 codeBox.Size = UDim2.fromScale(0.26, 0.10)
 codeBox.PlaceholderText = "6-digit code"
 codeBox.Text = ""
@@ -123,19 +123,19 @@ codeBox.ClearTextOnFocus = false
 codeBox.Parent = panel
 Instance.new("UICorner", codeBox).CornerRadius = UDim.new(0, 10)
 
-local joinButton = button("JOIN", UDim2.fromScale(0.66, 0.84), UDim2.fromScale(0.26, 0.10), function()
+local joinButton = button("JOIN", UDim2.fromScale(0.66, 0.82), UDim2.fromScale(0.26, 0.10), function()
 	action:FireServer("JoinParty", {Code = codeBox.Text})
 end)
 
-local queueButton = button("QUEUE MATCH", UDim2.fromScale(0.08, 0.93), UDim2.fromScale(0.26, 0.10), function()
+local queueButton = button("QUEUE MATCH", UDim2.fromScale(0.08, 0.90), UDim2.fromScale(0.26, 0.10), function()
 	action:FireServer("Queue")
 end)
 
-local leaveButton = button("LEAVE", UDim2.fromScale(0.37, 0.93), UDim2.fromScale(0.26, 0.10), function()
+local leaveButton = button("LEAVE", UDim2.fromScale(0.37, 0.90), UDim2.fromScale(0.26, 0.10), function()
 	action:FireServer("LeaveParty")
 end)
 
-local practiceButton = button("PRACTICE", UDim2.fromScale(0.66, 0.93), UDim2.fromScale(0.26, 0.10), function()
+local practiceButton = button("PRACTICE", UDim2.fromScale(0.66, 0.90), UDim2.fromScale(0.26, 0.10), function()
 	action:FireServer("StartPractice")
 end)
 
