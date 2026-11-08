@@ -225,10 +225,18 @@ local function teamCount(number)
 end
 
 local function assignTeam(player)
-	local number = teamCount(1) <= teamCount(2) and 1 or 2
+	local requested = player:GetAttribute("TeamId")
+	local number = (requested == 1 or requested == 2) and requested or (teamCount(1) <= teamCount(2) and 1 or 2)
 	player.Team = teamObjects[number]
 	player.Neutral = false
 	player:SetAttribute("TeamId", number)
+end
+
+local function startMatchClock()
+	if matchStartedAt == 0 and workspace:GetAttribute("MatchActive") == true then
+		matchStartedAt = os.clock()
+		workspace:SetAttribute("MatchStartedAt", os.time())
+	end
 end
 
 local function characterSpawn(player, character)
@@ -578,16 +586,11 @@ end
 
 Players.PlayerAdded:Connect(function(player)
 	assignTeam(player)
-	if not matchStartedAt then matchStartedAt = 0 end
-	if matchStartedAt == 0 then
-		matchStartedAt = os.clock()
-		workspace:SetAttribute("MatchStartedAt", os.time())
-		workspace:SetAttribute("MatchActive", true)
-	end
+	startMatchClock()
 	player.CharacterAdded:Connect(function(character)
 		task.wait(0.2)
 		characterSpawn(player, character)
-		if not playerSelectedArmy[player] then
+		if workspace:GetAttribute("MatchActive") == true and not playerSelectedArmy[player] then
 			createArmy(player, "Spearmen")
 		end
 	end)
@@ -675,10 +678,7 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 end)
 
-if #Players:GetPlayers() > 0 and matchStartedAt == 0 then
-	matchStartedAt = os.clock()
-	workspace:SetAttribute("MatchStartedAt", os.time())
-	workspace:SetAttribute("MatchActive", true)
-end
+workspace:GetAttributeChangedSignal("MatchActive"):Connect(startMatchClock)
+if workspace:GetAttribute("MatchActive") == true then startMatchClock() end
 
 print("[KingdomsConquest] Stage 1/2 authoritative runtime initialized.")
