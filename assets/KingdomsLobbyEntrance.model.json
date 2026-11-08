@@ -1,0 +1,566 @@
+{
+  "Name": "KingdomsLobbyEntrance",
+  "ClassName": "Model",
+  "Children": [
+    {
+      "Name": "LobbySpawn",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          76,
+          2,
+          76
+        ],
+        "Position": [
+          0,
+          -1,
+          0
+        ],
+        "Color": [
+          0.149,
+          0.1686,
+          0.1529
+        ],
+        "Material": "Slate",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "KingdomsLobbySpawnLocation",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          10,
+          1,
+          10
+        ],
+        "Position": [
+          0,
+          1,
+          20
+        ],
+        "Color": [
+          0.3608,
+          0.3059,
+          0.2275
+        ],
+        "Material": "Cobblestone",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "LobbyCourtyard",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          54,
+          1,
+          42
+        ],
+        "Position": [
+          0,
+          0.5,
+          -22
+        ],
+        "Color": [
+          0.2941,
+          0.3176,
+          0.2863
+        ],
+        "Material": "Cobblestone",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "GateLeftTower",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          12,
+          28,
+          12
+        ],
+        "Position": [
+          -22,
+          14,
+          0
+        ],
+        "Color": [
+          0.2588,
+          0.2549,
+          0.2431
+        ],
+        "Material": "Slate",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "GateRightTower",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          12,
+          28,
+          12
+        ],
+        "Position": [
+          22,
+          14,
+          0
+        ],
+        "Color": [
+          0.2588,
+          0.2549,
+          0.2431
+        ],
+        "Material": "Slate",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "GatehouseLeft",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          8,
+          15,
+          7
+        ],
+        "Position": [
+          -8,
+          7.5,
+          0
+        ],
+        "Color": [
+          0.4392,
+          0.4118,
+          0.3765
+        ],
+        "Material": "Cobblestone",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "GatehouseRight",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          8,
+          15,
+          7
+        ],
+        "Position": [
+          8,
+          7.5,
+          0
+        ],
+        "Color": [
+          0.4392,
+          0.4118,
+          0.3765
+        ],
+        "Material": "Cobblestone",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "GateLintel",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          24,
+          4,
+          7
+        ],
+        "Position": [
+          0,
+          15,
+          0
+        ],
+        "Color": [
+          0.4392,
+          0.4118,
+          0.3765
+        ],
+        "Material": "Slate",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "PromptAnchor",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          1,
+          1,
+          1
+        ],
+        "Position": [
+          0,
+          6,
+          5
+        ],
+        "Color": [
+          0.8549,
+          0.6941,
+          0.3216
+        ],
+        "Material": "Neon",
+        "Transparency": 1,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "RoyalSignBoard",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          25,
+          4,
+          1
+        ],
+        "Position": [
+          0,
+          22,
+          5
+        ],
+        "Color": [
+          0.3765,
+          0.2627,
+          0.1686
+        ],
+        "Material": "WoodPlanks",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "LeftBanner",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          4,
+          8,
+          0.4
+        ],
+        "Position": [
+          -22,
+          33,
+          0
+        ],
+        "Color": [
+          0.8549,
+          0.6941,
+          0.3216
+        ],
+        "Material": "Fabric",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "RightBanner",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          4,
+          8,
+          0.4
+        ],
+        "Position": [
+          22,
+          33,
+          0
+        ],
+        "Color": [
+          0.8549,
+          0.6941,
+          0.3216
+        ],
+        "Material": "Fabric",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "Portal_Syria",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          10,
+          1,
+          10
+        ],
+        "Position": [
+          -27,
+          1,
+          -27
+        ],
+        "Color": [
+          0.8549,
+          0.6941,
+          0.3216
+        ],
+        "Material": "Neon",
+        "Transparency": 0.35,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "PortalSign_Syria",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          11,
+          3,
+          0.5
+        ],
+        "Position": [
+          -27,
+          4,
+          -32
+        ],
+        "Color": [
+          0.3765,
+          0.2627,
+          0.1686
+        ],
+        "Material": "WoodPlanks",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "Portal_SaudiArabia",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          10,
+          1,
+          10
+        ],
+        "Position": [
+          27,
+          1,
+          -27
+        ],
+        "Color": [
+          0.8549,
+          0.6941,
+          0.3216
+        ],
+        "Material": "Neon",
+        "Transparency": 0.35,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "PortalSign_SaudiArabia",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          11,
+          3,
+          0.5
+        ],
+        "Position": [
+          27,
+          4,
+          -32
+        ],
+        "Color": [
+          0.3765,
+          0.2627,
+          0.1686
+        ],
+        "Material": "WoodPlanks",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "Portal_Palestine",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          10,
+          1,
+          10
+        ],
+        "Position": [
+          -27,
+          1,
+          27
+        ],
+        "Color": [
+          0.8549,
+          0.6941,
+          0.3216
+        ],
+        "Material": "Neon",
+        "Transparency": 0.35,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "PortalSign_Palestine",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          11,
+          3,
+          0.5
+        ],
+        "Position": [
+          -27,
+          4,
+          22
+        ],
+        "Color": [
+          0.3765,
+          0.2627,
+          0.1686
+        ],
+        "Material": "WoodPlanks",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "Portal_Europe",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          10,
+          1,
+          10
+        ],
+        "Position": [
+          27,
+          1,
+          27
+        ],
+        "Color": [
+          0.8549,
+          0.6941,
+          0.3216
+        ],
+        "Material": "Neon",
+        "Transparency": 0.35,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "PortalSign_Europe",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          11,
+          3,
+          0.5
+        ],
+        "Position": [
+          27,
+          4,
+          22
+        ],
+        "Color": [
+          0.3765,
+          0.2627,
+          0.1686
+        ],
+        "Material": "WoodPlanks",
+        "Transparency": 0,
+        "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    }
+  ]
+}
