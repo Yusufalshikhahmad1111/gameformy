@@ -80,6 +80,13 @@ local mapButtons = {
     {Id="Palestine",Text="PALESTINE"},
     {Id="Europe",Text="EUROPE"},
 }
+local mapDetails = {
+    Syria = "LEVANT  •  12 CASTLES  •  MEDIUM",
+    SaudiArabia = "ARABIAN PENINSULA  •  12 CASTLES  •  HARD",
+    Palestine = "LEVANT  •  12 CASTLES  •  MEDIUM",
+    Europe = "EUROPE  •  16 CASTLES  •  EXPERT",
+}
+local mapInfo = label(panel, "SELECT A BATTLEFIELD", UDim2.fromScale(0.08, 0.455), UDim2.fromScale(0.84, 0.045), Enum.Font.Gotham, Color3.fromRGB(175,170,160))
 local mapButtonRefs = {}
 for i, item in ipairs(mapButtons) do
     local b = button(item.Text, UDim2.fromScale(0.08 + ((i-1)%2)*0.29, 0.30 + math.floor((i-1)/2)*0.075), UDim2.fromScale(0.26, 0.06), function()
@@ -90,14 +97,6 @@ for i, item in ipairs(mapButtons) do
     end)
     mapButtonRefs[item.Id] = b
 end
-
-local mapInfo = label(panel, "SELECT A BATTLEFIELD", UDim2.fromScale(0.08, 0.455), UDim2.fromScale(0.84, 0.045), Enum.Font.Gotham, Color3.fromRGB(175,170,160))
-local mapDetails = {
-    Syria = "LEVANT  •  12 CASTLES  •  MEDIUM",
-    SaudiArabia = "ARABIAN PENINSULA  •  12 CASTLES  •  HARD",
-    Palestine = "LEVANT  •  12 CASTLES  •  MEDIUM",
-    Europe = "EUROPE  •  16 CASTLES  •  EXPERT",
-}
 
 local teamsLabel = label(panel, "TEAMS  •  3", UDim2.fromScale(0.66, 0.30), UDim2.fromScale(0.26, 0.05), Enum.Font.GothamBold, Color3.fromRGB(222,191,117))
 local teamButtonRefs = {}
