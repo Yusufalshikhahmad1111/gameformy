@@ -371,7 +371,7 @@ local function teleportPartyToMatch(payload)
 	if #localPlayers == 0 then return end
 
 	local options = Instance.new("TeleportOptions")
-	options.ReservedServerId = payload.ReservedServerId
+	options.ReservedServerAccessCode = payload.ReservedServerAccessCode
 	options:SetTeleportData({
 		kcMatchId = payload.MatchId,
 		kcTeamMap = payload.TeamMap,
@@ -381,7 +381,7 @@ local function teleportPartyToMatch(payload)
 	})
 
 	pendingMatch[payload.MatchId] = {
-		ReservedServerId = payload.ReservedServerId,
+		ReservedServerAccessCode = payload.ReservedServerAccessCode,
 		Players = localPlayers,
 	}
 
@@ -402,10 +402,18 @@ local function publishMatch(selectedTickets)
 	local selectedMapId = (selectedTickets[1] and selectedTickets[1].MapId) or "Syria"
 	local selectedTeamCount = math.clamp(tonumber((selectedTickets[1] and selectedTickets[1].TeamCount) or 2) or 2, 2, 4)
 	local matchId = HttpService:GenerateGUID(false)
-	local reservedServerId = HttpService:GenerateGUID(false)
+	local reservedServerAccessCode
+	local okReserve, reserveResult = pcall(function()
+		return TeleportService:ReserveServerAsync(game.PlaceId)
+	end)
+	if not okReserve or type(reserveResult) ~= "string" or reserveResult == "" then
+		warn("[KingdomsConquest][Stage4] ReserveServerAsync failed:", reserveResult)
+		return
+	end
+	reservedServerAccessCode = reserveResult
 	if matchDirectory then
 		pcall(function()
-			matchDirectory:SetAsync(matchId, {ReservedServerId = reservedServerId, PlaceId = game.PlaceId, CreatedAt = os.time()}, RECONNECT_EXPIRY)
+			matchDirectory:SetAsync(matchId, {ReservedServerAccessCode = reservedServerAccessCode, PlaceId = game.PlaceId, CreatedAt = os.time()}, RECONNECT_EXPIRY)
 		end)
 	end
 	local teamMap = assignTeams(nil, selectedTickets)
@@ -413,7 +421,7 @@ local function publishMatch(selectedTickets)
 	for _, ticket in ipairs(selectedTickets) do
 		local reconnectData = {
 			MatchId = matchId,
-			ReservedServerId = reservedServerId,
+			ReservedServerAccessCode = reservedServerAccessCode,
 			PlaceId = game.PlaceId,
 			TeamId = nil,
 			ExpiresAt = os.time() + RECONNECT_EXPIRY,
@@ -615,9 +623,9 @@ Players.PlayerAdded:Connect(function(player)
 		safeRemoveReconnect(player.UserId)
 	else
 		local reconnect = safeGetReconnect(player.UserId)
-		if reconnect and reconnect.ReservedServerId and reconnect.ExpiresAt and reconnect.ExpiresAt > os.time() and not RunService:IsStudio() then
+		if reconnect and reconnect.ReservedServerAccessCode and reconnect.ExpiresAt and reconnect.ExpiresAt > os.time() and not RunService:IsStudio() then
 			local options = Instance.new("TeleportOptions")
-			options.ReservedServerId = reconnect.ReservedServerId
+			options.ReservedServerAccessCode = reconnect.ReservedServerAccessCode
 			options:SetTeleportData({
 				kcMatchId = reconnect.MatchId,
 				kcTeamMap = {[tostring(player.UserId)] = reconnect.TeamId or 1},
