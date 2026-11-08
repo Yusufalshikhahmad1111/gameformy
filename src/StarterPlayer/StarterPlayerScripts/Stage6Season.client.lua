@@ -1,7 +1,7 @@
 local Players=game:GetService("Players")
 local ReplicatedStorage=game:GetService("ReplicatedStorage")
 local player=Players.LocalPlayer
-local remotes=ReplicatedStorage:WaitForChild("Stage6SeasonRemotes")
+local remotes=ReplicatedStorage:WaitForChild("Stage7SeasonRemotes")
 local request=remotes:WaitForChild("RequestSeason")
 local changed=remotes:WaitForChild("SeasonChanged")
 
