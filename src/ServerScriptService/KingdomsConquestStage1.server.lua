@@ -6,6 +6,11 @@ local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local RateLimiter = require(ReplicatedStorage.Shared.RateLimiter)
+
+if workspace:GetAttribute("KC_BootstrapReady") ~= true then
+	workspace:GetAttributeChangedSignal("KC_BootstrapReady"):Wait()
+end
 
 local remotes = ReplicatedStorage:FindFirstChild("KingdomsRemotes")
 if remotes then remotes:Destroy() end
@@ -17,11 +22,11 @@ local commandRemote = Instance.new("RemoteEvent")
 commandRemote.Name = "Command"
 commandRemote.Parent = remotes
 
-local vfxRemote = Instance.new("RemoteEvent")
+local vfxRemote = Instance.new("UnreliableRemoteEvent")
 vfxRemote.Name = "VFX"
 vfxRemote.Parent = remotes
 
-local stateRemote = Instance.new("RemoteEvent")
+local stateRemote = Instance.new("UnreliableRemoteEvent")
 stateRemote.Name = "State"
 stateRemote.Parent = remotes
 
@@ -51,7 +56,6 @@ spawnFolder.Parent = root
 
 local teamObjects = {}
 local teamSupplies = {}
-local activeTeamCount = math.clamp(tonumber(Config.Game.TeamCount) or 2, 2, 4)
 for teamId = 1, activeTeamCount do teamSupplies[teamId] = 60 end
 local armies = {}
 local playerSelectedArmy = {}
@@ -152,7 +156,10 @@ Lighting.EnvironmentSpecularScale = 0.25
 Lighting.FogEnd = 900
 Lighting.FogColor = Color3.fromRGB(173, 184, 169)
 
-local selectedMap = Config.Maps[Config.Game.MapId] or Config.Maps.Heartland
+local selectedMap = Config.Maps[workspace:GetAttribute("KC_MapId") or Config.Game.MapId] or Config.Maps.Heartland
+local activeTeamCount = math.clamp(tonumber(workspace:GetAttribute("KC_TeamCount")) or tonumber(Config.Game.TeamCount) or 2, 2, 4)
+Config.Game.TeamCount = activeTeamCount
+Config.Game.MapId = selectedMap.Name
 local mapExtent = selectedMap.Name == "Riverlands" and 300 or 300
 makePart(terrainFolder, "WorldFloor", Vector3.new(mapExtent, 2, mapExtent), Vector3.new(0, -1, 0), Color3.fromRGB(76, 105, 67), Enum.Material.Grass)
 local riverData = selectedMap.River
@@ -327,6 +334,7 @@ local function syncArmyVisual(army)
 end
 
 local function createArmy(player, armyType)
+	if workspace:GetAttribute("MatchActive") ~= true or matchEnded then return nil, "MATCH_NOT_ACTIVE" end
 	local team = findTeamForPlayer(player)
 	local info = Config.ArmyTypes[armyType]
 	if not info or teamSupplies[team] < info.Cost then return nil, "INSUFFICIENT SUPPLIES" end
@@ -484,7 +492,9 @@ end
 
 commandRemote.OnServerEvent:Connect(function(player, action, payload)
 	if type(action) ~= "string" or type(payload) ~= "table" then return end
+	if not RateLimiter.Allow("KCCommand", player.UserId, 1, 24) then return end
 	if action == "Ping" then
+		if not RateLimiter.Allow("KCPing", player.UserId, 1, 2) then return end
 		local now = os.clock()
 		if now - (pingCooldown[player] or 0) < 0.8 then return end
 		local p = payload.Position
@@ -513,12 +523,12 @@ commandRemote.OnServerEvent:Connect(function(player, action, payload)
 
 	if action == "Move" then
 		local p = payload.Position
-		if typeof(p) == "Vector3" then moveArmy(army, p) end
+		if typeof(p) == "Vector3" and p.X == p.X and p.Y == p.Y and p.Z == p.Z then moveArmy(army, p) end
 	elseif action == "Hold" then
 		army.TargetPosition = army.Position
 		army.AttackTarget = nil
 	elseif action == "Formation" then
-		if Config.Formations[payload.Formation] then
+		if RateLimiter.Allow("KCFormation", player.UserId, 1, 6) and Config.Formations[payload.Formation] then
 			army.Formation = payload.Formation
 			syncArmyVisual(army)
 		end
@@ -543,6 +553,9 @@ requestState.OnServerInvoke = function(player)
 	end
 	return {
 		Team = findTeamForPlayer(player),
+		TeamCount = activeTeamCount,
+		MapId = selectedMap.Name,
+		TotalProvinces = #selectedMap.ProvinceOrder,
 		Supplies = teamSupplies[findTeamForPlayer(player)],
 		Provinces = states,
 		SelectedArmy = playerSelectedArmy[player] or 0,
@@ -566,6 +579,9 @@ local function publishState()
 			Team = team,
 			Supplies = teamSupplies[team],
 			Owned = owned,
+			TeamCount = activeTeamCount,
+			MapId = selectedMap.Name,
+			TotalProvinces = #selectedMap.ProvinceOrder,
 			Provinces = capture,
 			SelectedArmy = playerSelectedArmy[player] or 0,
 			Armies = (function()
@@ -593,15 +609,8 @@ local function finishMatch(winner, reason)
 end
 
 Players.PlayerAdded:Connect(function(player)
-	assignTeam(player)
+	setupPlayer(player)
 	startMatchClock()
-	player.CharacterAdded:Connect(function(character)
-		task.wait(0.2)
-		characterSpawn(player, character)
-		if workspace:GetAttribute("MatchActive") == true and not playerSelectedArmy[player] then
-			createArmy(player, "Spearmen")
-		end
-	end)
 end)
 
 Players.PlayerRemoving:Connect(function(player)
@@ -613,8 +622,25 @@ Players.PlayerRemoving:Connect(function(player)
 	playerSelectedArmy[player] = nil
 end)
 
-for _, player in ipairs(Players:GetPlayers()) do
+local function setupPlayer(player)
 	assignTeam(player)
+	player.CharacterAdded:Connect(function(character)
+		task.wait(0.2)
+		characterSpawn(player, character)
+		if workspace:GetAttribute("MatchActive") == true and not playerSelectedArmy[player] then
+			createArmy(player, "Spearmen")
+		end
+	end)
+	if player.Character then
+		characterSpawn(player, player.Character)
+		if workspace:GetAttribute("MatchActive") == true and not playerSelectedArmy[player] then
+			createArmy(player, "Spearmen")
+		end
+	end
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+	setupPlayer(player)
 end
 
 task.spawn(function()
@@ -661,7 +687,7 @@ RunService.Heartbeat:Connect(function(dt)
 		attackTick(attackClock)
 		attackClock = 0
 	end
-	if broadcastClock >= Config.Game.StateBroadcastSeconds then
+	if broadcastClock >= math.max(0.25, Config.Game.StateBroadcastSeconds) then
 		publishState()
 		broadcastClock = 0
 	end
