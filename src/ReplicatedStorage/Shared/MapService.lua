@@ -50,9 +50,11 @@ function MapService.GetMap(mapId, teamCount)
         cache[cacheKey] = build(Config.MapPacks[mapId])
         local total = #cache[cacheKey].ProvinceOrder
         for index, cityId in ipairs(cache[cacheKey].ProvinceOrder) do
-            local team = ((index - 1) % teamCount) + 1
-            if index > total - teamCount then team = ((index - 1) % teamCount) + 1 end
-            cache[cacheKey].Provinces[cityId].StartingOwners = {[team] = 1}
+            if index <= teamCount then
+                cache[cacheKey].Provinces[cityId].StartingOwners = {[index] = 1}
+            else
+                cache[cacheKey].Provinces[cityId].StartingOwners = {[2] = 0}
+            end
         end
         return cache[cacheKey]
     end
