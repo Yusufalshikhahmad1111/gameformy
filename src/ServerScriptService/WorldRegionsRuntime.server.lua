@@ -1,170 +1,154 @@
 -- Kingdoms Conquest — Static World Regions Runtime
--- The four maps and the lobby are editable Workspace prefabs. This script only
--- adds interaction, labels, and safe travel between them.
-local Players = game:GetService("Players")
+-- Static prefabs are the source of truth. Runtime only adds interaction.
 local Workspace = game:GetService("Workspace")
 
 local MAPS = {
-	Syria = "SYRIA",
-	SaudiArabia = "SAUDI ARABIA",
-	Palestine = "PALESTINE",
-	Europe = "EUROPE",
+    {Id = "Syria", Display = "SYRIA", Color = Color3.fromRGB(112, 142, 94)},
+    {Id = "SaudiArabia", Display = "SAUDI ARABIA", Color = Color3.fromRGB(185, 145, 70)},
+    {Id = "Palestine", Display = "PALESTINE", Color = Color3.fromRGB(126, 104, 82)},
+    {Id = "Europe", Display = "EUROPE", Color = Color3.fromRGB(85, 118, 101)},
 }
 
-local function addLabel(part, title, subtitle)
-	if not part or not part:IsA("BasePart") or part:FindFirstChild("RegionLabel") then return end
-	local gui = Instance.new("BillboardGui")
-	gui.Name = "RegionLabel"
-	gui.Size = UDim2.fromOffset(240, 70)
-	gui.StudsOffset = Vector3.new(0, 6, 0)
-	gui.AlwaysOnTop = true
-	gui.MaxDistance = 500
-	gui.Parent = part
-
-	local titleLabel = Instance.new("TextLabel")
-	titleLabel.BackgroundTransparency = 1
-	titleLabel.Size = UDim2.fromScale(1, .58)
-	titleLabel.Font = Enum.Font.GothamBlack
-	titleLabel.TextScaled = true
-	titleLabel.TextColor3 = Color3.fromRGB(239, 226, 193)
-	titleLabel.TextStrokeTransparency = .2
-	titleLabel.Text = title
-	titleLabel.Parent = gui
-
-	local sub = Instance.new("TextLabel")
-	sub.BackgroundTransparency = 1
-	sub.Position = UDim2.fromScale(0,.58)
-	sub.Size = UDim2.fromScale(1,.35)
-	sub.Font = Enum.Font.GothamMedium
-	sub.TextScaled = true
-	sub.TextColor3 = Color3.fromRGB(196,190,174)
-	sub.Text = subtitle
-	sub.Parent = gui
+local function getMap(id)
+    return Workspace:FindFirstChild("Map_" .. id)
 end
 
-local function addTravelPrompt(part, actionText, objectText, callback)
-	if not part or not part:IsA("BasePart") then return end
-	local prompt = part:FindFirstChild("TravelPrompt")
-	if not prompt then
-		prompt = Instance.new("ProximityPrompt")
-		prompt.Name = "TravelPrompt"
-		prompt.ActionText = actionText
-		prompt.ObjectText = objectText
-		prompt.KeyboardKeyCode = Enum.KeyCode.E
-		prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
-		prompt.HoldDuration = .15
-		prompt.MaxActivationDistance = 18
-		prompt.RequiresLineOfSight = false
-		prompt.Parent = part
-	end
-	prompt.Triggered:Connect(function(player)
-		if Workspace:GetAttribute("MatchActive") == true then return end
-		callback(player)
-	end)
+local function getLobby()
+    return Workspace:FindFirstChild("KingdomsLobbyEntrance")
+end
+
+local function addPrompt(part, actionText, objectText, callback, holdDuration)
+    if not part or not part:IsA("BasePart") then return nil end
+    local prompt = part:FindFirstChild("TravelPrompt")
+    if not prompt then
+        prompt = Instance.new("ProximityPrompt")
+        prompt.Name = "TravelPrompt"
+        prompt.KeyboardKeyCode = Enum.KeyCode.E
+        prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
+        prompt.HoldDuration = holdDuration or 0.15
+        prompt.MaxActivationDistance = 14
+        prompt.RequiresLineOfSight = false
+        prompt.Style = Enum.ProximityPromptStyle.Default
+        prompt.Parent = part
+    end
+    prompt.ActionText = actionText
+    prompt.ObjectText = objectText
+    if not prompt:GetAttribute("KCBound") then
+        prompt:SetAttribute("KCBound", true)
+        prompt.Triggered:Connect(function(player)
+            if Workspace:GetAttribute("MatchActive") == true then return end
+            callback(player)
+        end)
+    end
+    return prompt
+end
+
+local function addRegionHeader(part, title, subtitle)
+    if not part or not part:IsA("BasePart") or part:FindFirstChild("RegionHeader") then return end
+    local gui = Instance.new("BillboardGui")
+    gui.Name = "RegionHeader"
+    gui.Size = UDim2.fromOffset(190, 54)
+    gui.StudsOffset = Vector3.new(0, 6, 0)
+    gui.AlwaysOnTop = false
+    gui.MaxDistance = 110
+    gui.Parent = part
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Size = UDim2.fromScale(1, 0.6)
+    titleLabel.Font = Enum.Font.GothamBlack
+    titleLabel.TextScaled = true
+    titleLabel.TextColor3 = Color3.fromRGB(239, 226, 193)
+    titleLabel.TextStrokeTransparency = 0.35
+    titleLabel.Text = title
+    titleLabel.Parent = gui
+
+    local subtitleLabel = Instance.new("TextLabel")
+    subtitleLabel.BackgroundTransparency = 1
+    subtitleLabel.Position = UDim2.fromScale(0, 0.6)
+    subtitleLabel.Size = UDim2.fromScale(1, 0.32)
+    subtitleLabel.Font = Enum.Font.GothamMedium
+    subtitleLabel.TextScaled = true
+    subtitleLabel.TextColor3 = Color3.fromRGB(190, 186, 172)
+    subtitleLabel.Text = subtitle
+    subtitleLabel.Parent = gui
 end
 
 local function teleportTo(player, destination)
-	local character = player.Character
-	if not character or not destination then return end
-	character:PivotTo(destination.CFrame + Vector3.new(0,5,0))
+    local character = player.Character
+    if not character or not destination then return end
+    character:PivotTo(destination.CFrame + Vector3.new(0, 4, 0))
 end
 
-local function prepareMap(mapId, display)
-	local map = Workspace:FindFirstChild("Map_"..mapId)
-	if not map then return end
-	for _, castle in ipairs(map:GetChildren()) do
-		if castle:IsA("Model") and castle.Name:sub(-7) == "_Castle" then
-			local province = castle.Name:sub(1, #castle.Name - 7)
-			castle:SetAttribute("Province", province)
-			castle:SetAttribute("CityName", province)
-			local keep = castle:FindFirstChild("Keep", true)
-			if keep and not keep:FindFirstChild("CityLabel") then
-				local gui = Instance.new("BillboardGui")
-				gui.Name = "CityLabel"
-				gui.Size = UDim2.fromOffset(180, 44)
-				gui.StudsOffset = Vector3.new(0, 11, 0)
-				gui.AlwaysOnTop = true
-				gui.MaxDistance = 280
-				gui.Parent = keep
-				local label = Instance.new("TextLabel")
-				label.BackgroundTransparency = 1
-				label.Size = UDim2.fromScale(1,1)
-				label.Font = Enum.Font.GothamBold
-				label.TextScaled = true
-				label.TextColor3 = Color3.fromRGB(239,226,193)
-				label.TextStrokeTransparency = .25
-				label.Text = province
-				label.Parent = gui
-			end
-			local gates = castle:FindFirstChild("Gates", true)
-			if gates then
-				for _, gate in ipairs(gates:GetChildren()) do
-					if gate:IsA("BasePart") then
-						gate:SetAttribute("Province", province)
-						gate:SetAttribute("Gate", gate.Name)
-					end
-				end
-			end
-		end
-	end
-end
-
-
--- Lobby -> any world.
-local lobby = Workspace:FindFirstChild("KingdomsLobbyEntrance")
+-- Lobby portals: one prompt per portal, no stacked floating travel labels.
+local lobby = getLobby()
 if lobby then
-	for mapId, display in pairs(MAPS) do
-		local portal = lobby:FindFirstChild("Portal_"..mapId, true)
-		local map = Workspace:FindFirstChild("Map_"..mapId)
-		local destination = map and map:FindFirstChild("VisitorSpawn", true)
-		if portal and destination then
-			addLabel(portal, display, "PRESS E • VISIT REGION")
-			addTravelPrompt(portal, "Visit "..display, "World Region", function(player)
-				teleportTo(player, destination)
-			end)
-		end
-	end
+    for _, mapInfo in ipairs(MAPS) do
+        local portal = lobby:FindFirstChild("Portal_" .. mapInfo.Id, true)
+        local destinationMap = getMap(mapInfo.Id)
+        local destination = destinationMap and destinationMap:FindFirstChild("VisitorSpawn", true)
+        if portal and destination then
+            addPrompt(portal, "Travel", mapInfo.Display, function(player)
+                teleportTo(player, destination)
+            end, 0.15)
+        end
+    end
 end
 
--- World -> lobby and world -> world.
-for mapId, display in pairs(MAPS) do
-	prepareMap(mapId, display)
-	local map = Workspace:FindFirstChild("Map_"..mapId)
-	if map then
-		local visitor = map:FindFirstChild("VisitorSpawn", true)
-		local back = map:FindFirstChild("ReturnToLobby", true)
-		if visitor then addLabel(visitor, display, "WORLD REGION • "..mapId) end
-		if back and lobby then
-			addLabel(back, "KINGDOMS LOBBY", "PRESS E • RETURN")
-			local lobbySpawn = lobby:FindFirstChild("KingdomsLobbySpawnLocation", true) or lobby:FindFirstChild("LobbySpawn", true)
-			addTravelPrompt(back, "Return to Lobby", "Kingdoms", function(player)
-				teleportTo(player, lobbySpawn)
-			end)
-		end
+-- World regions: clean arrival point, one return prompt, and three travel prompts.
+for _, mapInfo in ipairs(MAPS) do
+    local map = getMap(mapInfo.Id)
+    if map then
+        local visitor = map:FindFirstChild("VisitorSpawn", true)
+        local back = map:FindFirstChild("ReturnToLobby", true)
+        if visitor then
+            addRegionHeader(visitor, mapInfo.Display, "WORLD REGION")
+        end
 
-		for otherId, otherDisplay in pairs(MAPS) do
-			if otherId ~= mapId then
-				local pad = Instance.new("Part")
-				pad.Name = "TravelTo_"..otherId
-				pad.Size = Vector3.new(8,1,8)
-				pad.Position = (visitor and visitor.Position or Vector3.zero) + Vector3.new(0,0,14 + (table.find({"Syria","SaudiArabia","Palestine","Europe"}, otherId) or 1)*5)
-				pad.Anchored = true
-				pad.CanCollide = false
-				pad.Transparency = .45
-				pad.Material = Enum.Material.Neon
-				pad.Color = Color3.fromRGB(218,177,82)
-				pad.Parent = map
-				addLabel(pad, otherDisplay, "PRESS E • TRAVEL")
-				local otherMap = Workspace:FindFirstChild("Map_"..otherId)
-				local destination = otherMap and otherMap:FindFirstChild("VisitorSpawn", true)
-				if destination then
-					addTravelPrompt(pad, "Travel to "..otherDisplay, "World Region", function(player)
-						teleportTo(player, destination)
-					end)
-				end
-			end
-		end
-	end
+        if back and lobby then
+            local lobbySpawn = lobby:FindFirstChild("KingdomsLobbySpawnLocation", true) or lobby:FindFirstChild("LobbySpawn", true)
+            addPrompt(back, "Return", "KINGDOMS LOBBY", function(player)
+                teleportTo(player, lobbySpawn)
+            end, 0.15)
+        end
+
+        -- Remove any stale runtime travel pads from older builds.
+        for _, child in ipairs(map:GetChildren()) do
+            if child:IsA("BasePart") and child.Name:match("^TravelTo_") then
+                child:Destroy()
+            end
+        end
+
+        local offsets = {
+            Vector3.new(-18, 0, 16),
+            Vector3.new(0, 0, 20),
+            Vector3.new(18, 0, 16),
+        }
+
+        local slot = 0
+        for _, targetInfo in ipairs(MAPS) do
+            if targetInfo.Id ~= mapInfo.Id then
+                slot += 1
+                local targetMap = getMap(targetInfo.Id)
+                local destination = targetMap and targetMap:FindFirstChild("VisitorSpawn", true)
+                if visitor and destination then
+                    local pad = Instance.new("Part")
+                    pad.Name = "TravelTo_" .. targetInfo.Id
+                    pad.Size = Vector3.new(7, 1, 7)
+                    pad.Position = visitor.Position + offsets[slot]
+                    pad.Anchored = true
+                    pad.CanCollide = false
+                    pad.Transparency = 0.18
+                    pad.Material = Enum.Material.Slate
+                    pad.Color = targetInfo.Color
+                    pad.Parent = map
+                    addPrompt(pad, "Travel", targetInfo.Display, function(player)
+                        teleportTo(player, destination)
+                    end, 0.15)
+                end
+            end
+        end
+    end
 end
 
 print("[KingdomsConquest] Static world regions loaded: Lobby + Syria + Saudi Arabia + Palestine + Europe")
