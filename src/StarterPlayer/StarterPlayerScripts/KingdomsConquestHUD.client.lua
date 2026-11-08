@@ -131,8 +131,7 @@ local function clickWorld()
   selectedCastle=province
   castlePanel.Visible=true
   castleTitle.Text=tostring(province)
-  castleBody.Text=UITheme.T(lang,"castle").." • "..UITheme.T(lang,mode:lower()).."
-"..UITheme.T(lang,"territory")..": "..tostring((state.Provinces and state.Provinces[province] and state.Provinces[province].Owner) or 0)
+  castleBody.Text=UITheme.T(lang,"castle").." • "..UITheme.T(lang,mode:lower()).."\n"..UITheme.T(lang,"territory")..": "..tostring((state.Provinces and state.Provinces[province] and state.Provinces[province].Owner) or 0)
   if selectedArmy~=0 then
    if mode=="Move" then command:FireServer("Move",{ArmyId=selectedArmy,Position=hit.Position})
    elseif mode=="Hold" then command:FireServer("Hold",{ArmyId=selectedArmy})
