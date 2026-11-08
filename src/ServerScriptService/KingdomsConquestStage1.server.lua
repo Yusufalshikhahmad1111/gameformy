@@ -335,10 +335,6 @@ for _, descendant in ipairs(root:GetDescendants()) do
 	end
 end
 
-for name in pairs(provinceStates) do
-	updateStaticProvinceVisual(name)
-end
-
 -- Stage 3+ clients must only proceed after the complete runtime world exists.
 workspace:SetAttribute("KC_RuntimeReady", true)
 
@@ -592,6 +588,10 @@ local function updateProvinceVisual(name)
 		territory.Color = color:Lerp(Color3.fromRGB(92, 115, 80), 0.55)
 		territory:SetAttribute("Owner", state.Owner)
 	end
+	updateStaticProvinceVisual(name)
+end
+
+for name in pairs(provinceStates) do
 	updateStaticProvinceVisual(name)
 end
 
