@@ -4,15 +4,21 @@ local ReplicatedStorage=game:GetService("ReplicatedStorage")
 local UserInputService=game:GetService("UserInputService")
 local Workspace=game:GetService("Workspace")
 local player=Players.LocalPlayer
-local remotes=ReplicatedStorage:WaitForChild("KingdomsRemotes")
+if workspace:GetAttribute("KC_RuntimeReady") ~= true then
+	workspace:GetAttributeChangedSignal("KC_RuntimeReady"):Wait()
+end
+local remotes=ReplicatedStorage:WaitForChild("KingdomsRemotes", 15)
+if not remotes then return end
 local command=remotes:WaitForChild("Command")
 local stateRemote=remotes:WaitForChild("State")
 local requestState=remotes:WaitForChild("RequestState")
 local feedbackRemote=remotes:WaitForChild("Feedback")
 local UITheme=require(ReplicatedStorage.Shared.UITheme)
 
-local stage4Remotes = ReplicatedStorage:WaitForChild("Stage4Remotes")
-local stage4StateRemote = stage4Remotes:WaitForChild("State")
+local stage4Remotes = ReplicatedStorage:WaitForChild("Stage4Remotes", 15)
+if not stage4Remotes then return end
+local stage4StateRemote = stage4Remotes:WaitForChild("State", 15)
+if not stage4StateRemote then return end
 
 local lang="en"
 local state={}
