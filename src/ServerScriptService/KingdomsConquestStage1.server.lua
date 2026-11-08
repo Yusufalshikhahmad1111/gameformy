@@ -27,7 +27,7 @@ local vfxRemote = Instance.new("UnreliableRemoteEvent")
 vfxRemote.Name = "VFX"
 vfxRemote.Parent = remotes
 
-local stateRemote = Instance.new("UnreliableRemoteEvent")
+local stateRemote = Instance.new("RemoteEvent")
 stateRemote.Name = "State"
 stateRemote.Parent = remotes
 
@@ -82,6 +82,29 @@ if not matchResultEvent then
 	matchResultEvent.Name = "KingdomsMatchResult"
 	matchResultEvent.Parent = ReplicatedStorage
 end
+
+local function initialOwner(data)
+	local owners = data.StartingOwners or {}
+	return owners[activeTeamCount] or 0
+end
+
+local function terrainMultiplier(position)
+	local river = terrainZones.River
+	if river and math.abs(position.X - river.Center.X) <= river.HalfX and math.abs(position.Z - river.Center.Z) <= river.HalfZ then
+		return river.Speed
+	end
+	return 1
+end
+
+local provinceStates = {}
+local mapNodes = {}
+for name, data in pairs(selectedMap.Provinces) do
+	mapNodes[name] = {Name=data.CityName or name, Province=data.ProvinceName or name, Position=data.Position, Capital=data.Capital == true}
+	provinceStates[name] = {Owner=initialOwner(data), CaptureTeam=0, CaptureProgress=0, Income=data.Income, Strategic=data.Strategic}
+end
+
+local WORLD_HALF_EXTENT = 350
+local ARMY_Y = 3
 
 local function makePart(parent, name, size, position, color, material)
 	local p = Instance.new("Part")
@@ -142,7 +165,7 @@ Lighting.EnvironmentDiffuseScale = 0.6
 Lighting.EnvironmentSpecularScale = 0.25
 Lighting.FogEnd = 900
 Lighting.FogColor = art.Ground or Color3.fromRGB(173, 184, 169)
-local mapExtent = selectedMap.Name == "Riverlands" and 300 or 300
+local mapExtent = WORLD_HALF_EXTENT * 2
 makePart(terrainFolder, "WorldFloor", Vector3.new(mapExtent, 2, mapExtent), Vector3.new(0, -1, 0), art.Grass or Color3.fromRGB(76, 105, 67), Enum.Material.Grass)
 local riverData = selectedMap.River or {Center=Vector3.new(0,0,0), HalfX=0, HalfZ=0, Speed=0.55, Size=Vector3.new(0,0.3,0)}
 local river = makePart(terrainFolder, "River", riverData.Size, riverData.Center + Vector3.new(0, 0.1, 0), art.River or Color3.fromRGB(72, 125, 154), Enum.Material.Glass)
@@ -185,7 +208,7 @@ local function createCastle(provinceName, data)
 		West = Vector3.new(-gateDistance, 1.5, 0),
 	}
 	for gateName, offset in pairs(gateOffsets) do
-		local gate = makePart(gates, gateName, Vector3.new(16, 1, 16), base + offset, ownerColor(data.Home), Enum.Material.Neon)
+		local gate = makePart(gates, gateName, Vector3.new(16, 1, 16), base + offset, ownerColor(initialOwner(data)), Enum.Material.Neon)
 		gate.Transparency = 0.78
 		gate.CanCollide = false
 		gate:SetAttribute("Gate", gateName)
@@ -334,8 +357,8 @@ local function createArmy(player, armyType)
 	if not info or teamSupplies[team] < info.Cost then return nil, "INSUFFICIENT SUPPLIES" end
 	teamSupplies[team] -= info.Cost
 	nextArmyId += 1
-	local spawnBase = selectedMap.Spawns[team] or Vector3.new(0, 3, 0)
-	local spawnPosition = spawnBase + Vector3.new(0, 3, 0)
+	local spawnBase = selectedMap.Spawns[team] or Vector3.new(0, ARMY_Y, 0)
+	local spawnPosition = Vector3.new(spawnBase.X, ARMY_Y, spawnBase.Z)
 	local army = {
 		Id = nextArmyId,
 		Owner = player,
@@ -440,9 +463,9 @@ local function captureTick(dt)
 end
 
 local function moveArmy(army, target)
-	local flatTarget = Vector3.new(target.X, 6, target.Z)
-	if (flatTarget - army.Position).Magnitude > 260 then return false end
-	if math.abs(flatTarget.X) > 145 or math.abs(flatTarget.Z) > 145 then return false end
+	local flatTarget = Vector3.new(target.X, ARMY_Y, target.Z)
+	if (flatTarget - army.Position).Magnitude > WORLD_HALF_EXTENT * 1.6 then return false end
+	if math.abs(flatTarget.X) > WORLD_HALF_EXTENT - 8 or math.abs(flatTarget.Z) > WORLD_HALF_EXTENT - 8 then return false end
 	army.TargetPosition = flatTarget
 	army.AttackTarget = nil
 	return true
@@ -585,7 +608,7 @@ local function publishState()
 			Armies = (function()
 				local result = {}
 				for id, army in pairs(armies) do
-					result[id] = {Team=army.Team, OwnerUserId=army.Owner.UserId, Position=army.Position, Type=army.Type, Formation=army.Formation, Health=army.Health, MaxHealth=army.MaxHealth}
+					result[tostring(id)] = {Team=army.Team, OwnerUserId=army.Owner.UserId, Position=army.Position, Type=army.Type, Formation=army.Formation, Health=army.Health, MaxHealth=army.MaxHealth}
 				end
 				return result
 			end)()
@@ -603,13 +626,10 @@ local function finishMatch(winner, reason)
 		ownership[name] = state.Owner
 	end
 	matchResultEvent:Fire(winner, reason, duration, ownership)
-	stateRemote:FireAllClients({MatchOver=true, Winner=winner, Reason=reason, Duration=duration})
+	for _, p in ipairs(Players:GetPlayers()) do
+		stateRemote:FireClient(p, {MatchOver=true, Team=findTeamForPlayer(p), Winner=winner, Reason=reason, Duration=duration, MapId=selectedMap.Name})
+	end
 end
-
-Players.PlayerAdded:Connect(function(player)
-	setupPlayer(player)
-	startMatchClock()
-end)
 
 Players.PlayerRemoving:Connect(function(player)
 	local toRemove = {}
@@ -640,6 +660,11 @@ end
 for _, player in ipairs(Players:GetPlayers()) do
 	setupPlayer(player)
 end
+
+Players.PlayerAdded:Connect(function(player)
+	setupPlayer(player)
+	startMatchClock()
+end)
 
 task.spawn(function()
 	while true do
@@ -672,7 +697,7 @@ RunService.Heartbeat:Connect(function(dt)
 		if distance > 0.5 then
 			local step = info.MoveSpeed * terrainMultiplier(army.Position) * dt
 			local nextPos = distance <= step and army.TargetPosition or army.Position:Lerp(army.TargetPosition, step / distance)
-			army.Position = Vector3.new(nextPos.X, 6, nextPos.Z)
+			army.Position = Vector3.new(nextPos.X, ARMY_Y, nextPos.Z)
 			syncArmyVisual(army)
 		end
 	end
