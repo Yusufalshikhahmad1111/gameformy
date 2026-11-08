@@ -7,6 +7,7 @@ local Lighting = game:GetService("Lighting")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local RateLimiter = require(ReplicatedStorage.Shared.RateLimiter)
+local MapService = require(ReplicatedStorage.Shared.MapService)
 
 if workspace:GetAttribute("KC_BootstrapReady") ~= true then
 	workspace:GetAttributeChangedSignal("KC_BootstrapReady"):Wait()
@@ -156,13 +157,13 @@ Lighting.EnvironmentSpecularScale = 0.25
 Lighting.FogEnd = 900
 Lighting.FogColor = Color3.fromRGB(173, 184, 169)
 
-local selectedMap = Config.Maps[workspace:GetAttribute("KC_MapId") or Config.Game.MapId] or Config.Maps.Heartland
+local selectedMap = MapService.GetMap(workspace:GetAttribute("KC_MapId") or Config.Game.MapId)
 local activeTeamCount = math.clamp(tonumber(workspace:GetAttribute("KC_TeamCount")) or tonumber(Config.Game.TeamCount) or 2, 2, 4)
 Config.Game.TeamCount = activeTeamCount
 Config.Game.MapId = selectedMap.Name
 local mapExtent = selectedMap.Name == "Riverlands" and 300 or 300
 makePart(terrainFolder, "WorldFloor", Vector3.new(mapExtent, 2, mapExtent), Vector3.new(0, -1, 0), Color3.fromRGB(76, 105, 67), Enum.Material.Grass)
-local riverData = selectedMap.River
+local riverData = selectedMap.River or {Center=Vector3.new(0,0,0), HalfX=0, HalfZ=0, Speed=0.55, Size=Vector3.new(0,0.3,0)}
 local river = makePart(terrainFolder, "River", riverData.Size, riverData.Center + Vector3.new(0, 0.1, 0), Color3.fromRGB(72, 125, 154), Enum.Material.Glass)
 terrainZones.River = riverData
 river.Transparency = 0.35
