@@ -55,6 +55,22 @@ if not lobbySpawn then
 	lobbySpawn.Parent = workspace
 end
 
+local lobbySpawnLocation = workspace:FindFirstChild("KingdomsLobbySpawnLocation")
+if not lobbySpawnLocation then
+	lobbySpawnLocation = Instance.new("SpawnLocation")
+	lobbySpawnLocation.Name = "KingdomsLobbySpawnLocation"
+	lobbySpawnLocation.Anchored = true
+	lobbySpawnLocation.CanCollide = true
+	lobbySpawnLocation.Size = Vector3.new(8, 1, 8)
+	lobbySpawnLocation.Position = lobbySpawn.Position + Vector3.new(0, 1, 13)
+	lobbySpawnLocation.Neutral = true
+	lobbySpawnLocation.AllowTeamChangeOnTouch = false
+	lobbySpawnLocation.Duration = 0
+	lobbySpawnLocation.Material = Enum.Material.Cobblestone
+	lobbySpawnLocation.Color = Color3.fromRGB(92, 78, 58)
+	lobbySpawnLocation.Transparency = 0.15
+	lobbySpawnLocation.Parent = workspace
+end
 
 local lobbyEntrance = workspace:FindFirstChild("KingdomsLobbyEntrance")
 if lobbyEntrance then lobbyEntrance:Destroy() end
@@ -700,9 +716,8 @@ end)
 
 Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function(character)
-		task.wait(0.2)
 		if not workspace:GetAttribute("MatchActive") then
-			character:PivotTo(lobbySpawn.CFrame + Vector3.new(0, 5, 0))
+			character:PivotTo(lobbySpawnLocation.CFrame + Vector3.new(0, 4, 0))
 		end
 	end)
 
