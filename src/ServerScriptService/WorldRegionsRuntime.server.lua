@@ -69,6 +69,28 @@ local function teleportTo(player, destination)
 	character:PivotTo(destination.CFrame + Vector3.new(0,5,0))
 end
 
+local function prepareMap(mapId, display)
+	local map = Workspace:FindFirstChild("Map_"..mapId)
+	if not map then return end
+	for _, castle in ipairs(map:GetChildren()) do
+		if castle:IsA("Model") and castle.Name:sub(-7) == "_Castle" then
+			local province = castle.Name:sub(1, #castle.Name - 7)
+			castle:SetAttribute("Province", province)
+			castle:SetAttribute("CityName", province)
+			local gates = castle:FindFirstChild("Gates", true)
+			if gates then
+				for _, gate in ipairs(gates:GetChildren()) do
+					if gate:IsA("BasePart") then
+						gate:SetAttribute("Province", province)
+						gate:SetAttribute("Gate", gate.Name)
+					end
+				end
+			end
+		end
+	end
+end
+
+
 -- Lobby -> any world.
 local lobby = Workspace:FindFirstChild("KingdomsLobbyEntrance")
 if lobby then
@@ -87,6 +109,7 @@ end
 
 -- World -> lobby and world -> world.
 for mapId, display in pairs(MAPS) do
+	prepareMap(mapId, display)
 	local map = Workspace:FindFirstChild("Map_"..mapId)
 	if map then
 		local visitor = map:FindFirstChild("VisitorSpawn", true)
