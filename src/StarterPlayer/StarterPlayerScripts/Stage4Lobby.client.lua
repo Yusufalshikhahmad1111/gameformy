@@ -25,7 +25,7 @@ backdrop.Parent = gui
 local panel = Instance.new("Frame")
 panel.AnchorPoint = Vector2.new(0.5, 0.5)
 panel.Position = UDim2.fromScale(0.5, 0.5)
-panel.Size = UDim2.fromScale(0.58, 0.68)
+panel.Size = UDim2.fromScale(0.64, 0.88)
 panel.BackgroundColor3 = Color3.fromRGB(29, 34, 34)
 panel.BorderSizePixel = 0
 panel.Parent = backdrop
@@ -53,9 +53,40 @@ end
 label(panel, "KINGDOMS CONQUEST", UDim2.fromScale(0.08, 0.07), UDim2.fromScale(0.84, 0.10), Enum.Font.GothamBold, Color3.fromRGB(238, 228, 205))
 label(panel, "MULTIPLAYER COMMAND", UDim2.fromScale(0.08, 0.16), UDim2.fromScale(0.84, 0.06), Enum.Font.GothamMedium, Color3.fromRGB(173, 168, 156))
 
-local partyText = label(panel, "NO PARTY", UDim2.fromScale(0.08, 0.27), UDim2.fromScale(0.84, 0.12), Enum.Font.GothamBold, Color3.fromRGB(218, 213, 202))
-local memberText = label(panel, "", UDim2.fromScale(0.08, 0.40), UDim2.fromScale(0.84, 0.12), Enum.Font.Gotham, Color3.fromRGB(190, 188, 181))
-local statusText = label(panel, "Connecting…", UDim2.fromScale(0.08, 0.54), UDim2.fromScale(0.84, 0.08), Enum.Font.GothamMedium, Color3.fromRGB(222, 191, 117))
+local selectedMap = "Syria"
+local selectedTeams = 3
+
+local mapLabel = label(panel, "BATTLEFIELD  •  SYRIA", UDim2.fromScale(0.08, 0.23), UDim2.fromScale(0.84, 0.05), Enum.Font.GothamBold, Color3.fromRGB(222,191,117))
+local mapButtons = {
+    {Id="Syria",Text="SYRIA"},
+    {Id="SaudiArabia",Text="SAUDI"},
+    {Id="Palestine",Text="PALESTINE"},
+    {Id="Europe",Text="EUROPE"},
+}
+local mapButtonRefs = {}
+for i, item in ipairs(mapButtons) do
+    local b = button(item.Text, UDim2.fromScale(0.08 + ((i-1)%2)*0.29, 0.30 + math.floor((i-1)/2)*0.075), UDim2.fromScale(0.26, 0.06), function()
+        selectedMap = item.Id
+        mapLabel.Text = "BATTLEFIELD  •  "..item.Text
+        action:FireServer("SetMap", {MapId=selectedMap, TeamCount=selectedTeams})
+    end)
+    mapButtonRefs[item.Id] = b
+end
+
+local teamsLabel = label(panel, "TEAMS  •  3", UDim2.fromScale(0.66, 0.30), UDim2.fromScale(0.26, 0.05), Enum.Font.GothamBold, Color3.fromRGB(222,191,117))
+local teamButtonRefs = {}
+for i = 2, 4 do
+    local b = button(tostring(i).." TEAMS", UDim2.fromScale(0.66, 0.36 + (i-2)*0.065), UDim2.fromScale(0.26, 0.055), function()
+        selectedTeams = i
+        teamsLabel.Text = "TEAMS  •  "..i
+        action:FireServer("SetMap", {MapId=selectedMap, TeamCount=selectedTeams})
+    end)
+    teamButtonRefs[i] = b
+end
+
+local partyText = label(panel, "NO PARTY", UDim2.fromScale(0.08, 0.52), UDim2.fromScale(0.84, 0.12), Enum.Font.GothamBold, Color3.fromRGB(218, 213, 202))
+local memberText = label(panel, "", UDim2.fromScale(0.08, 0.63), UDim2.fromScale(0.84, 0.12), Enum.Font.Gotham, Color3.fromRGB(190, 188, 181))
+local statusText = label(panel, "Connecting…", UDim2.fromScale(0.08, 0.75), UDim2.fromScale(0.84, 0.08), Enum.Font.GothamMedium, Color3.fromRGB(222, 191, 117))
 
 local function button(text, pos, size, callback)
 	local b = Instance.new("TextButton")
@@ -74,12 +105,12 @@ local function button(text, pos, size, callback)
 	return b
 end
 
-local createButton = button("CREATE PARTY", UDim2.fromScale(0.08, 0.66), UDim2.fromScale(0.26, 0.10), function()
+local createButton = button("CREATE PARTY", UDim2.fromScale(0.08, 0.84), UDim2.fromScale(0.26, 0.10), function()
 	action:FireServer("CreateParty")
 end)
 
 local codeBox = Instance.new("TextBox")
-codeBox.Position = UDim2.fromScale(0.37, 0.66)
+codeBox.Position = UDim2.fromScale(0.37, 0.84)
 codeBox.Size = UDim2.fromScale(0.26, 0.10)
 codeBox.PlaceholderText = "6-digit code"
 codeBox.Text = ""
@@ -92,24 +123,28 @@ codeBox.ClearTextOnFocus = false
 codeBox.Parent = panel
 Instance.new("UICorner", codeBox).CornerRadius = UDim.new(0, 10)
 
-local joinButton = button("JOIN", UDim2.fromScale(0.66, 0.66), UDim2.fromScale(0.26, 0.10), function()
+local joinButton = button("JOIN", UDim2.fromScale(0.66, 0.84), UDim2.fromScale(0.26, 0.10), function()
 	action:FireServer("JoinParty", {Code = codeBox.Text})
 end)
 
-local queueButton = button("QUEUE MATCH", UDim2.fromScale(0.08, 0.79), UDim2.fromScale(0.26, 0.10), function()
+local queueButton = button("QUEUE MATCH", UDim2.fromScale(0.08, 0.93), UDim2.fromScale(0.26, 0.10), function()
 	action:FireServer("Queue")
 end)
 
-local leaveButton = button("LEAVE", UDim2.fromScale(0.37, 0.79), UDim2.fromScale(0.26, 0.10), function()
+local leaveButton = button("LEAVE", UDim2.fromScale(0.37, 0.93), UDim2.fromScale(0.26, 0.10), function()
 	action:FireServer("LeaveParty")
 end)
 
-local practiceButton = button("PRACTICE", UDim2.fromScale(0.66, 0.79), UDim2.fromScale(0.26, 0.10), function()
+local practiceButton = button("PRACTICE", UDim2.fromScale(0.66, 0.93), UDim2.fromScale(0.26, 0.10), function()
 	action:FireServer("StartPractice")
 end)
 
 local function render(s)
 	if not s then return end
+	selectedMap = s.Party and s.Party.MapId or selectedMap
+	selectedTeams = s.Party and s.Party.TeamCount or selectedTeams
+	mapLabel.Text = "BATTLEFIELD  •  "..string.upper(selectedMap)
+	teamsLabel.Text = "TEAMS  •  "..tostring(selectedTeams)
 	statusText.Text = s.Status or "Lobby ready"
 	backdrop.Visible = not s.MatchActive
 
