@@ -740,7 +740,46 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 end)
 
-workspace:GetAttributeChangedSignal("MatchActive"):Connect(startMatchClock)
-if workspace:GetAttribute("MatchActive") == true then startMatchClock() end
+workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
+	if workspace:GetAttribute("MatchActive") == true then
+		startMatchClock()
+		for _, player in ipairs(Players:GetPlayers()) do
+			assignTeam(player)
+			if player.Character then
+				characterSpawn(player, player.Character)
+			end
+			if not playerSelectedArmy[player] then
+				createArmy(player, "Spearmen")
+			end
+		end
+	else
+		matchStartedAt = 0
+		matchEnded = false
+		for id, army in pairs(armies) do
+			if army.Model then army.Model:Destroy() end
+			armies[id] = nil
+		end
+		for team = 1, activeTeamCount do
+			teamSupplies[team] = 60
+		end
+		nextArmyId = 0
+		for name, state in pairs(provinceStates) do
+			state.CaptureTeam = 0
+			state.CaptureProgress = 0
+			state.IncomeStartAt = 0
+			state.Owner = initialOwner(selectedMap.Provinces[name])
+			updateProvinceVisual(name)
+		end
+		for player in pairs(playerSelectedArmy) do
+			playerSelectedArmy[player] = nil
+		end
+	end
+end)
+if workspace:GetAttribute("MatchActive") == true then
+	startMatchClock()
+	for _, player in ipairs(Players:GetPlayers()) do
+		if not playerSelectedArmy[player] then createArmy(player, "Spearmen") end
+	end
+end
 
 print("[KingdomsConquest] Stage 1/2 authoritative runtime initialized.")
