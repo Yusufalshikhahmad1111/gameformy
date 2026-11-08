@@ -55,6 +55,11 @@ local spawnFolder = Instance.new("Folder")
 spawnFolder.Name = "Spawns"
 spawnFolder.Parent = root
 
+local activeTeamCount = math.clamp(tonumber(workspace:GetAttribute("KC_TeamCount")) or tonumber(Config.Game.TeamCount) or 2, 2, 4)
+Config.Game.TeamCount = activeTeamCount
+local selectedMap = MapService.GetMap(workspace:GetAttribute("KC_MapId") or Config.Game.MapId, activeTeamCount)
+Config.Game.MapId = selectedMap.Name
+
 local teamObjects = {}
 local teamSupplies = {}
 for teamId = 1, activeTeamCount do teamSupplies[teamId] = 60 end
@@ -76,28 +81,6 @@ if not matchResultEvent then
 	matchResultEvent = Instance.new("BindableEvent")
 	matchResultEvent.Name = "KingdomsMatchResult"
 	matchResultEvent.Parent = ReplicatedStorage
-end
-
-local function terrainMultiplier(position)
-	local river = terrainZones.River
-	if river and math.abs(position.X - river.Center.X) <= river.HalfX and math.abs(position.Z - river.Center.Z) <= river.HalfZ then
-		return river.Speed
-	end
-	return 1
-end
-
-local provinceStates = {}
-local mapNodes = {}
-for name, data in pairs(selectedMap.Provinces) do
-	local startingOwners = data.StartingOwners or {[2] = 0}
-	mapNodes[name] = {Name=data.CityName or name, Province=data.ProvinceName or name, Position=data.Position, Capital=data.Capital == true}
-	provinceStates[name] = {
-		Owner = startingOwners[activeTeamCount] or 0,
-		CaptureTeam = 0,
-		CaptureProgress = 0,
-		Income = data.Income,
-		Strategic = data.Strategic,
-	}
 end
 
 local function makePart(parent, name, size, position, color, material)
@@ -152,53 +135,54 @@ end
 
 for teamId = 1, activeTeamCount do createTeam(teamId, Config.Teams[teamId]) end
 
+local art = (Config.MapPacks and Config.MapPacks[selectedMap.Name] and Config.MapPacks[selectedMap.Name].Art) or {}
 Lighting.Brightness = 2
 Lighting.ClockTime = 14
 Lighting.EnvironmentDiffuseScale = 0.6
 Lighting.EnvironmentSpecularScale = 0.25
 Lighting.FogEnd = 900
-Lighting.FogColor = Color3.fromRGB(173, 184, 169)
-
-local activeTeamCount = math.clamp(tonumber(workspace:GetAttribute("KC_TeamCount")) or tonumber(Config.Game.TeamCount) or 2, 2, 4)
-Config.Game.TeamCount = activeTeamCount
-local selectedMap = MapService.GetMap(workspace:GetAttribute("KC_MapId") or Config.Game.MapId, activeTeamCount)
-Config.Game.MapId = selectedMap.Name
+Lighting.FogColor = art.Ground or Color3.fromRGB(173, 184, 169)
 local mapExtent = selectedMap.Name == "Riverlands" and 300 or 300
-makePart(terrainFolder, "WorldFloor", Vector3.new(mapExtent, 2, mapExtent), Vector3.new(0, -1, 0), Color3.fromRGB(76, 105, 67), Enum.Material.Grass)
+makePart(terrainFolder, "WorldFloor", Vector3.new(mapExtent, 2, mapExtent), Vector3.new(0, -1, 0), art.Grass or Color3.fromRGB(76, 105, 67), Enum.Material.Grass)
 local riverData = selectedMap.River or {Center=Vector3.new(0,0,0), HalfX=0, HalfZ=0, Speed=0.55, Size=Vector3.new(0,0.3,0)}
-local river = makePart(terrainFolder, "River", riverData.Size, riverData.Center + Vector3.new(0, 0.1, 0), Color3.fromRGB(72, 125, 154), Enum.Material.Glass)
+local river = makePart(terrainFolder, "River", riverData.Size, riverData.Center + Vector3.new(0, 0.1, 0), art.River or Color3.fromRGB(72, 125, 154), Enum.Material.Glass)
 terrainZones.River = riverData
 river.Transparency = 0.35
 river.CanCollide = false
 
 local function createCastle(provinceName, data)
+	local castleTier = data.Capital and "Capital" or (data.Strategic and "Major" or "Regional")
 	local model = Instance.new("Model")
 	model.Name = provinceName .. "_Castle"
 	model.Parent = provinceFolder
 	model:SetAttribute("Province", provinceName)
+	model:SetAttribute("CastleTier", castleTier)
+	model:SetAttribute("CityName", data.CityName or provinceName)
+	model:SetAttribute("RegionName", data.ProvinceName or provinceName)
 
 	local base = data.Position
-	makePart(model, "Courtyard", Vector3.new(44, 2, 38), base + Vector3.new(0, 2, 0), Color3.fromRGB(112, 108, 99), Enum.Material.Cobblestone)
-	makePart(model, "Keep", Vector3.new(18, 18, 18), base + Vector3.new(0, 11, 0), Color3.fromRGB(82, 82, 80), Enum.Material.Slate)
+	makePart(model, "Courtyard", data.Capital and Vector3.new(56, 2, 48) or Vector3.new(44, 2, 38), base + Vector3.new(0, 2, 0), art.Stone or Color3.fromRGB(112, 108, 99), Enum.Material.Cobblestone)
+	makePart(model, "Keep", data.Capital and Vector3.new(22, 24, 22) or Vector3.new(18, 18, 18), base + Vector3.new(0, data.Capital and 14 or 11, 0), art.DarkStone or Color3.fromRGB(82, 82, 80), Enum.Material.Slate)
 
-	local wallY = base.Y + 6
-	makePart(model, "WallNorth", Vector3.new(58, 10, 3), base + Vector3.new(0, wallY, -28), Color3.fromRGB(104, 101, 95), Enum.Material.Cobblestone)
+	local wallY = base.Y + (data.Capital and 7 or 6)
+	makePart(model, "WallNorth", Vector3.new(58, 10, 3), base + Vector3.new(0, wallY, -28), art.Stone or Color3.fromRGB(104, 101, 95), Enum.Material.Cobblestone)
 	makePart(model, "WallSouth", Vector3.new(58, 10, 3), base + Vector3.new(0, wallY, 28), Color3.fromRGB(104, 101, 95), Enum.Material.Cobblestone)
 	makePart(model, "WallEast", Vector3.new(3, 10, 58), base + Vector3.new(28, wallY, 0), Color3.fromRGB(104, 101, 95), Enum.Material.Cobblestone)
 	makePart(model, "WallWest", Vector3.new(3, 10, 58), base + Vector3.new(-28, wallY, 0), Color3.fromRGB(104, 101, 95), Enum.Material.Cobblestone)
 
-	local banner = makePart(model, "Banner", Vector3.new(1.5, 12, 1.5), base + Vector3.new(0, 16, -10), ownerColor(data.Home), Enum.Material.Wood)
+	local banner = makePart(model, "Banner", Vector3.new(1.5, 12, 1.5), base + Vector3.new(0, data.Capital and 22 or 16, -10), ownerColor(data.Home), Enum.Material.Wood)
 	banner.CanCollide = false
 	addBillboard(banner, provinceName .. "  •  CASTLE", ownerColor(data.Home))
 
 	local gates = Instance.new("Folder")
 	gates.Name = "Gates"
 	gates.Parent = model
+	local gateDistance = data.Capital and 39 or 33
 	local gateOffsets = {
-		North = Vector3.new(0, 1.5, -33),
-		East = Vector3.new(33, 1.5, 0),
-		South = Vector3.new(0, 1.5, 33),
-		West = Vector3.new(-33, 1.5, 0),
+		North = Vector3.new(0, 1.5, -gateDistance),
+		East = Vector3.new(gateDistance, 1.5, 0),
+		South = Vector3.new(0, 1.5, gateDistance),
+		West = Vector3.new(-gateDistance, 1.5, 0),
 	}
 	for gateName, offset in pairs(gateOffsets) do
 		local gate = makePart(gates, gateName, Vector3.new(16, 1, 16), base + offset, ownerColor(data.Home), Enum.Material.Neon)
@@ -215,7 +199,7 @@ for name, data in pairs(selectedMap.Provinces) do
 	zone.Transparency = 0.15
 	zone.CanCollide = true
 	zone:SetAttribute("Province", name)
-	addBillboard(zone, name, Color3.fromRGB(235, 228, 210))
+	addBillboard(zone, (data.CityName or name) .. "  •  " .. (data.ProvinceName or name), Color3.fromRGB(235, 228, 210))
 	createCastle(name, data)
 end
 
@@ -243,7 +227,14 @@ end
 
 local function assignTeam(player)
 	local requested = player:GetAttribute("TeamId")
-	local number = (requested == 1 or requested == 2) and requested or (teamCount(1) <= teamCount(2) and 1 or 2)
+	local number = (requested and requested >= 1 and requested <= activeTeamCount) and requested or (function()
+	local bestId, bestCount = 1, math.huge
+	for teamId = 1, activeTeamCount do
+		local count = teamCount(teamId)
+		if count < bestCount then bestId, bestCount = teamId, count end
+	end
+	return bestId
+end)()
 	player.Team = teamObjects[number]
 	player.Neutral = false
 	player:SetAttribute("TeamId", number)
@@ -652,7 +643,7 @@ end
 
 task.spawn(function()
 	while true do
-		for team = 1, 2 do
+		for team = 1, activeTeamCount do
 			local income = 0
 			for _, state in pairs(provinceStates) do
 				if state.Owner == team then
@@ -706,7 +697,7 @@ RunService.Heartbeat:Connect(function(dt)
 			local ownedCounts = {}
 			for teamId = 1, activeTeamCount do ownedCounts[teamId] = 0 end
 			for _, state in pairs(provinceStates) do if ownedCounts[state.Owner] ~= nil then ownedCounts[state.Owner] += 1 end end
-			local target = math.max(1, math.ceil(#Config.ProvinceOrder * Config.Game.VictoryRatio))
+			local target = math.max(1, math.ceil(#selectedMap.ProvinceOrder * (selectedMap.VictoryRatio or Config.Game.VictoryRatio)))
 			for teamId = 1, activeTeamCount do
 				if ownedCounts[teamId] >= target then finishMatch(teamId, "territory_victory"); break end
 			end
