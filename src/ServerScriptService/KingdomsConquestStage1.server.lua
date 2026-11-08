@@ -586,9 +586,9 @@ local function updateStaticProvinceVisual(name)
 	local state = provinceStates[name]
 	local mapModel = staticMap
 	if not mapModel or not state then return end
+	local color = ownerColor(state.Owner)
 	local castle = mapModel:FindFirstChild(name .. "_Castle", true)
 	if castle then
-		local color = ownerColor(state.Owner)
 		local banner = castle:FindFirstChild("Banner", true)
 		if banner and banner:IsA("BasePart") then banner.Color = color end
 		local gates = castle:FindFirstChild("Gates", true)
