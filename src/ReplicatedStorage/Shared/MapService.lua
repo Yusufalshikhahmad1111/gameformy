@@ -5,7 +5,57 @@ local Config = require(ReplicatedStorage.Shared.Config)
 
 local MapService = {}
 
+local WORLD_SCALE = 2
 local cache = {}
+
+local function scaledVector3(value)
+    if typeof(value) == "Vector3" then
+        return Vector3.new(value.X * WORLD_SCALE, value.Y, value.Z * WORLD_SCALE)
+    end
+    return value
+end
+
+local function scaledCity(city)
+    local copy = {}
+    for key, value in pairs(city) do
+        copy[key] = value
+    end
+    copy.X = (tonumber(city.X) or 0) * WORLD_SCALE
+    copy.Z = (tonumber(city.Z) or 0) * WORLD_SCALE
+    copy.Position = Vector3.new(copy.X, 0, copy.Z)
+    return copy
+end
+
+local function scaleRiver(river)
+    if type(river) ~= "table" then
+        return nil
+    end
+    local result = {}
+    for key, value in pairs(river) do
+        result[key] = value
+    end
+    if typeof(river.Center) == "Vector3" then
+        result.Center = scaledVector3(river.Center)
+    end
+    if typeof(river.Size) == "Vector3" then
+        result.Size = Vector3.new(river.Size.X * WORLD_SCALE, river.Size.Y, river.Size.Z * WORLD_SCALE)
+    end
+    if type(river.HalfX) == "number" then
+        result.HalfX = river.HalfX * WORLD_SCALE
+    end
+    if type(river.HalfZ) == "number" then
+        result.HalfZ = river.HalfZ * WORLD_SCALE
+    end
+    return result
+end
+
+local function scaleSpawns(spawns)
+    local result = {}
+    for teamId, position in pairs(spawns or {}) do
+        result[teamId] = scaledVector3(position)
+    end
+    return result
+end
 
 local function build(pack)
     local map = {
@@ -15,18 +65,19 @@ local function build(pack)
         Description = pack.Description,
         Difficulty = pack.Difficulty,
         Art = pack.Art,
-        River = pack.River,
+        River = scaleRiver(pack.River),
         RiverCrossings = pack.RiverCrossings or {},
-        Spawns = pack.Spawns,
+        Spawns = scaleSpawns(pack.Spawns),
         ProvinceOrder = {},
         Provinces = {},
         Cities = {},
         Edges = pack.Edges or {},
     }
 
-    for _, city in ipairs(pack.Cities or {}) do
+    for _, sourceCity in ipairs(pack.Cities or {}) do
+        local city = scaledCity(sourceCity)
         table.insert(map.ProvinceOrder, city.Id)
-        local position = Vector3.new(city.X * WORLD_SCALE, 0, city.Z * WORLD_SCALE)
+        local position = city.Position
         map.Cities[city.Id] = city
         map.Provinces[city.Id] = {
             Index = #map.ProvinceOrder,
