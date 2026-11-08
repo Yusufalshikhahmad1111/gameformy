@@ -322,6 +322,9 @@ for team = 1, activeTeamCount do
 	spawnPart.CanCollide = false
 end
 
+-- Stage 3+ clients must only proceed after the complete runtime world exists.
+workspace:SetAttribute("KC_RuntimeReady", true)
+
 local function findTeamForPlayer(player)
 	local id = player:GetAttribute("TeamId")
 	if id and teamObjects[id] then return id end
@@ -468,13 +471,14 @@ local function createArmy(player, armyType)
 	local rootPart = playerRoot(player)
 	local spawnBase = rootPart and rootPart.Position or selectedMap.Spawns[team] or Vector3.new(0, ARMY_Y, 0)
 	local slot = ((nextArmyId - 1) % 5) + 1
-	local spawnOffset = {
+	local spawnOffsets = {
 		Vector3.new(8, 0, 0),
 		Vector3.new(-8, 0, 0),
 		Vector3.new(0, 0, 8),
 		Vector3.new(0, 0, -8),
 		Vector3.new(10, 0, 10),
-	}[slot]
+	}
+	local spawnOffset = spawnOffsets[slot]
 	local spawnPosition = Vector3.new(spawnBase.X + spawnOffset.X, ARMY_Y, spawnBase.Z + spawnOffset.Z)
 
 	local army = {
