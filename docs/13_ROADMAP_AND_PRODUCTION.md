@@ -71,12 +71,18 @@ Build:
 Exit:
 Players have reasons to return beyond novelty.
 
-## Stage 6 — Content
-Add:
-- 3-team mode;
-- 4-team mode;
-- second map;
-- seasonal content.
+## Stage 6 — Content — COMPLETED
+Delivered:
+- four-team configuration and team registry;
+- second map (Riverlands) plus map registry;
+- dynamic province/team/victory rules;
+- matchmaking assignment support for 2–4 teams;
+- seasonal content framework and Season 1;
+- seasonal XP UI and server-side events.
+
+Hardening carried into Stage 7:
+- select MapId and TeamCount from TeleportData before world construction in reserved servers;
+- persist seasonal progression in the permanent profile schema after migration testing.
 
 ## Stage 7 — Launch hardening
 - performance;
