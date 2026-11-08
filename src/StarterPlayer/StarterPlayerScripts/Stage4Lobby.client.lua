@@ -68,7 +68,7 @@ local function button(text, pos, size, callback)
     b.BorderSizePixel = 0
     b.Parent = panel
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
-    b.MouseButton1Click:Connect(callback)
+    b.Activated:Connect(callback)
     return b
 end
 
