@@ -4,6 +4,9 @@ local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+if Workspace:GetAttribute("KC_BootstrapReady") ~= true then
+	Workspace:GetAttributeChangedSignal("KC_BootstrapReady"):Wait()
+end
 local MapService = require(ReplicatedStorage.Shared.MapService)
 
 local mapId = Workspace:GetAttribute("KC_MapId") or Config.Game.MapId
