@@ -425,6 +425,11 @@ local function captureTick(dt)
 				for _, player in ipairs(playersNearPosition(gate.Position, 9)) do
 					presentTeams[findTeamForPlayer(player)] = true
 				end
+				for _, army in pairs(armies) do
+					if (army.Position - gate.Position).Magnitude <= 12 then
+						presentTeams[army.Team] = true
+					end
+				end
 			end
 
 			local activeTeam = 0
@@ -454,7 +459,7 @@ local function captureTick(dt)
 					state.CaptureProgress = math.max(0, state.CaptureProgress - Config.Game.CaptureDecayPerSecond * dt)
 				end
 			elseif teamCount > 1 then
-				state.CaptureProgress = math.max(0, state.CaptureProgress - Config.Game.CaptureDecayPerSecond * dt)
+				-- Contesting stops capture progress; it does not punish either side.
 			elseif state.CaptureProgress > 0 then
 				state.CaptureProgress = math.max(0, state.CaptureProgress - Config.Game.CaptureDecayPerSecond * dt)
 			end
