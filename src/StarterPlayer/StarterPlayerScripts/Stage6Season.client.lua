@@ -1,4 +1,6 @@
 local Players=game:GetService("Players")
+local UserInputService=game:GetService("UserInputService")
+local UITheme=require(game:GetService("ReplicatedStorage").Shared.UITheme)
 local ReplicatedStorage=game:GetService("ReplicatedStorage")
 local player=Players.LocalPlayer
 local remotes=ReplicatedStorage:WaitForChild("Stage7SeasonRemotes")
@@ -16,7 +18,7 @@ local badge=Instance.new("TextButton")
 badge.AnchorPoint=Vector2.new(1,0)
 badge.Position=UDim2.fromScale(.985,.025)
 badge.Size=UDim2.fromScale(.22,.055)
-badge.Text="SEASON"
+badge.Text=UITheme.T("en","season")
 badge.Font=Enum.Font.GothamBold
 badge.TextScaled=true
 badge.TextColor3=Color3.fromRGB(235,228,210)
@@ -32,6 +34,7 @@ panel.Size=UDim2.fromScale(.30,.25)
 panel.BackgroundColor3=Color3.fromRGB(25,29,29)
 panel.BorderSizePixel=0
 panel.Visible=false
+badge.Activated:Connect(function() panel.Visible=not panel.Visible end)
 panel.Parent=gui
 Instance.new("UICorner",panel).CornerRadius=UDim.new(0,12)
 
@@ -60,4 +63,4 @@ end
 changed.OnClientEvent:Connect(render)
 local ok,data=pcall(function() return request:InvokeServer() end)
 if ok then render(data) end
-badge.MouseButton1Click:Connect(function() panel.Visible=not panel.Visible end)
+
