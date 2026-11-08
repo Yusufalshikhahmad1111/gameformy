@@ -2,6 +2,8 @@
 -- Lobby + party codes + cross-server matchmaking + reserved-server routing + reconnect handoff.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Config = require(ReplicatedStorage.Shared.Config)
+local RateLimiter = require(ReplicatedStorage.Shared.RateLimiter)
 local MemoryStoreService = game:GetService("MemoryStoreService")
 local MessagingService = game:GetService("MessagingService")
 local TeleportService = game:GetService("TeleportService")
