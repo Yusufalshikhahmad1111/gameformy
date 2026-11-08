@@ -28,6 +28,12 @@
       "KingdomsLobbyEntrance": {
         "$path": "assets/KingdomsLobbyEntrance.rbxmx"
       }
+    },
+    "TextChatService": {
+      "$className": "TextChatService",
+      "$properties": {
+        "ChatVersion": "TextChatService"
+      }
     }
   }
 }
