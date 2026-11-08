@@ -2,7 +2,11 @@
 local Players=game:GetService("Players")
 local ReplicatedStorage=game:GetService("ReplicatedStorage")
 local player=Players.LocalPlayer
-local remotes=ReplicatedStorage:WaitForChild("KingdomsRemotes")
+if workspace:GetAttribute("KC_RuntimeReady") ~= true then
+	workspace:GetAttributeChangedSignal("KC_RuntimeReady"):Wait()
+end
+local remotes=ReplicatedStorage:WaitForChild("KingdomsRemotes", 15)
+if not remotes then return end
 local stateRemote=remotes:WaitForChild("State")
 local requestState=remotes:WaitForChild("RequestState")
 
