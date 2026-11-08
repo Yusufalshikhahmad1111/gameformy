@@ -1,4 +1,4 @@
--- Kingdoms Conquest — Stage 8 Tactical Minimap
+-- Kingdoms Conquest — Stage 9 Tactical Map Presentation
 local Players=game:GetService("Players")
 local ReplicatedStorage=game:GetService("ReplicatedStorage")
 local player=Players.LocalPlayer
@@ -7,7 +7,7 @@ local stateRemote=remotes:WaitForChild("State")
 local requestState=remotes:WaitForChild("RequestState")
 
 local gui=Instance.new("ScreenGui")
-gui.Name="KingdomsStage8Minimap"
+gui.Name="KingdomsStage9Minimap"
 gui.ResetOnSpawn=false
 gui.IgnoreGuiInset=true
 gui.DisplayOrder=88
@@ -16,31 +16,42 @@ gui.Parent=player:WaitForChild("PlayerGui")
 local panel=Instance.new("Frame")
 panel.AnchorPoint=Vector2.new(1,0)
 panel.Position=UDim2.fromScale(.975,.155)
-panel.Size=UDim2.fromScale(.23,.30)
+panel.Size=UDim2.fromScale(.25,.34)
 panel.BackgroundColor3=Color3.fromRGB(22,27,28)
-panel.BackgroundTransparency=.08
+panel.BackgroundTransparency=.06
 panel.BorderSizePixel=0
 panel.Parent=gui
 Instance.new("UICorner",panel).CornerRadius=UDim.new(0,12)
 local stroke=Instance.new("UIStroke",panel)
 stroke.Color=Color3.fromRGB(111,101,82)
-stroke.Transparency=.35
+stroke.Transparency=.3
 
 local title=Instance.new("TextLabel")
 title.BackgroundTransparency=1
-title.Position=UDim2.fromScale(.06,.04)
-title.Size=UDim2.fromScale(.88,.12)
+title.Position=UDim2.fromScale(.06,.035)
+title.Size=UDim2.fromScale(.88,.09)
 title.Font=Enum.Font.GothamBold
 title.TextScaled=true
 title.TextColor3=Color3.fromRGB(238,228,205)
+title.TextXAlignment=Enum.TextXAlignment.Left
 title.Text="TACTICAL MAP"
 title.Parent=panel
 
+local subtitle=Instance.new("TextLabel")
+subtitle.BackgroundTransparency=1
+subtitle.Position=UDim2.fromScale(.06,.115)
+subtitle.Size=UDim2.fromScale(.88,.055)
+subtitle.Font=Enum.Font.GothamMedium
+subtitle.TextScaled=true
+subtitle.TextColor3=Color3.fromRGB(181,176,163)
+subtitle.TextXAlignment=Enum.TextXAlignment.Left
+subtitle.Parent=panel
+
 local map=Instance.new("Frame")
-map.Position=UDim2.fromScale(.06,.18)
-map.Size=UDim2.fromScale(.88,.68)
+map.Position=UDim2.fromScale(.055,.185)
+map.Size=UDim2.fromScale(.89,.67)
 map.BackgroundColor3=Color3.fromRGB(48,65,55)
-map.BackgroundTransparency=.12
+map.BackgroundTransparency=.08
 map.BorderSizePixel=0
 map.ClipsDescendants=true
 map.Parent=panel
@@ -82,17 +93,31 @@ local function drawEdge(a,b,minX,maxX,minZ,maxZ)
  line.Position=UDim2.fromScale((ax+bx)/2,(az+bz)/2)
  line.Size=UDim2.fromScale(length,.012)
  line.Rotation=math.deg(math.atan2(dy,dx))
- line.BackgroundColor3=Color3.fromRGB(145,143,128)
- line.BackgroundTransparency=.45
+ line.BackgroundColor3=Color3.fromRGB(159,151,132)
+ line.BackgroundTransparency=.34
  line.BorderSizePixel=0
  line.ZIndex=1
  line.Parent=map
 end
 
+local function marker(x,z,size,color,zindex)
+ local dot=Instance.new("Frame")
+ dot.AnchorPoint=Vector2.new(.5,.5)
+ dot.Position=UDim2.fromScale(x,z)
+ dot.Size=UDim2.fromScale(size,size)
+ dot.BackgroundColor3=color
+ dot.BorderSizePixel=0
+ dot.ZIndex=zindex or 3
+ dot.Parent=map
+ Instance.new("UICorner",dot).CornerRadius=UDim.new(1,0)
+ return dot
+end
+
 local function render(s)
  if not s or not s.MapNodes then return end
  clear()
- title.Text="TACTICAL MAP  •  "..string.upper(tostring(s.MapId or "WORLD"))
+ title.Text="TACTICAL MAP"
+ subtitle.Text=string.upper(tostring(s.MapId or "WORLD")).."  •  "..tostring(s.TeamCount or 2).." TEAMS"
  footer.Text=string.format("%d / %d CASTLES CONTROLLED",s.Owned or 0,s.TotalProvinces or 0)
 
  local minX,maxX,minZ,maxZ=math.huge,-math.huge,math.huge,-math.huge
@@ -105,36 +130,61 @@ local function render(s)
   local a=byId[edge[1]]; local b=byId[edge[2]]
   if a and b then drawEdge(a.Position,b.Position,minX,maxX,minZ,maxZ) end
  end
+
  for id,node in pairs(s.MapNodes) do
   local data=s.Provinces and s.Provinces[id] or {}
   local x,z=point(node.Position,minX,maxX,minZ,maxZ)
   local owner=tonumber(data.Owner) or 0
-  local dot=Instance.new("Frame")
-  dot.AnchorPoint=Vector2.new(.5,.5)
-  dot.Position=UDim2.fromScale(x,z)
-  dot.Size=UDim2.fromScale(node.Capital and .075 or .055,node.Capital and .075 or .055)
-  dot.BackgroundColor3=teamColors[owner] or teamColors[0]
-  dot.BorderSizePixel=0
-  dot.ZIndex=3
-  dot.Parent=map
-  Instance.new("UICorner",dot).CornerRadius=UDim.new(1,0)
+  local size=node.Capital and .075 or .052
+  local dot=marker(x,z,size,teamColors[owner] or teamColors[0],3)
+  dot:SetAttribute("CastleId",id)
+
+  if node.Capital then
+   local crown=Instance.new("TextLabel")
+   crown.BackgroundTransparency=1
+   crown.AnchorPoint=Vector2.new(.5,.5)
+   crown.Position=UDim2.fromScale(.5,.5)
+   crown.Size=UDim2.fromScale(1.5,1.5)
+   crown.Font=Enum.Font.GothamBold
+   crown.Text="◆"
+   crown.TextScaled=true
+   crown.TextColor3=Color3.fromRGB(247,224,163)
+   crown.ZIndex=4
+   crown.Parent=dot
+  end
+
   if owner==s.Team then
    local ring=Instance.new("UIStroke",dot)
    ring.Color=Color3.fromRGB(245,235,210)
    ring.Thickness=2
   end
+
+  if (tonumber(data.CaptureTeam) or 0) ~= 0 then
+   local contested=Instance.new("UIStroke",dot)
+   contested.Color=teamColors[data.CaptureTeam] or Color3.fromRGB(240,205,118)
+   contested.Thickness=3
+   contested.Transparency=.1
+  end
+
   local name=Instance.new("TextLabel")
   name.BackgroundTransparency=1
   name.AnchorPoint=Vector2.new(.5,0)
-  name.Position=UDim2.fromScale(.5,1)
-  name.Size=UDim2.fromScale(2.8,1.5)
+  name.Position=UDim2.fromScale(.5,1.0)
+  name.Size=UDim2.fromScale(3.0,1.45)
   name.Font=Enum.Font.GothamMedium
-  name.Text=string.upper(node.Name)
+  name.Text=node.Name
   name.TextScaled=true
   name.TextColor3=Color3.fromRGB(232,228,214)
-  name.TextStrokeTransparency=.5
+  name.TextStrokeTransparency=.45
   name.ZIndex=4
   name.Parent=dot
+ end
+
+ -- Army markers are deliberately lightweight and not rebuilt as world objects.
+ for id,army in pairs(s.Armies or {}) do
+  local x,z=point(army.Position,minX,maxX,minZ,maxZ)
+  local dot=marker(x,z,.035,teamColors[army.Team] or teamColors[0],5)
+  dot:SetAttribute("ArmyId",id)
  end
 end
 
