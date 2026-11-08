@@ -60,6 +60,7 @@ local localQueueOrder = {}
 local pendingMatch = {}
 local reconnectMap = nil
 local matchmakingQueue = nil
+local matchDirectory = nil
 local rematchSignal = ReplicatedStorage:FindFirstChild("KingdomsRematchRequest")
 if not rematchSignal then
 	rematchSignal = Instance.new("BindableEvent")
@@ -70,6 +71,7 @@ end
 pcall(function()
 	reconnectMap = MemoryStoreService:GetHashMap(RECONNECT_MAP_NAME)
 	matchmakingQueue = MemoryStoreService:GetQueue(QUEUE_NAME, 30)
+	matchDirectory = MemoryStoreService:GetHashMap("KingdomsConquest_MatchDirectory_v1")
 end)
 
 local function safeSetReconnect(userId, data)
@@ -381,6 +383,11 @@ end
 local function publishMatch(selectedTickets)
 	local matchId = HttpService:GenerateGUID(false)
 	local reservedServerId = HttpService:GenerateGUID(false)
+	if matchDirectory then
+		pcall(function()
+			matchDirectory:SetAsync(matchId, {ReservedServerId = reservedServerId, PlaceId = game.PlaceId, CreatedAt = os.time()}, RECONNECT_EXPIRY)
+		end)
+	end
 	local teamMap = assignTeams(nil, selectedTickets)
 
 	for _, ticket in ipairs(selectedTickets) do
