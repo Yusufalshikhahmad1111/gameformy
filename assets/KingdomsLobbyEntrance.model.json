@@ -1,0 +1,870 @@
+{
+  "Name": "KingdomsLobbyEntrance",
+  "ClassName": "Model",
+  "Children": [
+    {
+      "Name": "Courtyard",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          52,
+          1,
+          48
+        ],
+        "Position": [
+          0,
+          -0.5,
+          -8
+        ],
+        "Color": [
+          0.31,
+          0.34,
+          0.3
+        ],
+        "Material": "Cobblestone",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "ProcessionalPath",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          8,
+          0.25,
+          32
+        ],
+        "Position": [
+          0,
+          0.13,
+          6
+        ],
+        "Color": [
+          0.55,
+          0.52,
+          0.43
+        ],
+        "Material": "Cobblestone",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "GateLeftPier",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          9,
+          14,
+          5
+        ],
+        "Position": [
+          -11.5,
+          7,
+          2
+        ],
+        "Color": [
+          0.43,
+          0.42,
+          0.38
+        ],
+        "Material": "Cobblestone",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "GateRightPier",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          9,
+          14,
+          5
+        ],
+        "Position": [
+          11.5,
+          7,
+          2
+        ],
+        "Color": [
+          0.43,
+          0.42,
+          0.38
+        ],
+        "Material": "Cobblestone",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "GateLintel",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          15,
+          3,
+          5
+        ],
+        "Position": [
+          0,
+          14,
+          2
+        ],
+        "Color": [
+          0.25,
+          0.25,
+          0.24
+        ],
+        "Material": "Slate",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "LeftCurtainWall",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          5,
+          12,
+          28
+        ],
+        "Position": [
+          -20,
+          6,
+          -13
+        ],
+        "Color": [
+          0.43,
+          0.42,
+          0.38
+        ],
+        "Material": "Cobblestone",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "RightCurtainWall",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          5,
+          12,
+          28
+        ],
+        "Position": [
+          20,
+          6,
+          -13
+        ],
+        "Color": [
+          0.43,
+          0.42,
+          0.38
+        ],
+        "Material": "Cobblestone",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "RearCurtainWall",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          44,
+          12,
+          5
+        ],
+        "Position": [
+          0,
+          6,
+          -27
+        ],
+        "Color": [
+          0.43,
+          0.42,
+          0.38
+        ],
+        "Material": "Cobblestone",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "LeftCapitalTower",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          11,
+          25,
+          11
+        ],
+        "Position": [
+          -18,
+          12.5,
+          2
+        ],
+        "Color": [
+          0.25,
+          0.25,
+          0.24
+        ],
+        "Material": "Slate",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "RightCapitalTower",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          11,
+          25,
+          11
+        ],
+        "Position": [
+          18,
+          12.5,
+          2
+        ],
+        "Color": [
+          0.25,
+          0.25,
+          0.24
+        ],
+        "Material": "Slate",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "LeftTowerCrown",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          13,
+          2,
+          13
+        ],
+        "Position": [
+          -18,
+          25.5,
+          2
+        ],
+        "Color": [
+          0.43,
+          0.42,
+          0.38
+        ],
+        "Material": "Cobblestone",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "RightTowerCrown",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          13,
+          2,
+          13
+        ],
+        "Position": [
+          18,
+          25.5,
+          2
+        ],
+        "Color": [
+          0.43,
+          0.42,
+          0.38
+        ],
+        "Material": "Cobblestone",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "LeftMerlon0",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          2.3,
+          2.2,
+          2.3
+        ],
+        "Position": [
+          -22,
+          27.5,
+          2
+        ],
+        "Color": [
+          0.55,
+          0.52,
+          0.43
+        ],
+        "Material": "Slate",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "LeftMerlon1",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          2.3,
+          2.2,
+          2.3
+        ],
+        "Position": [
+          -18,
+          27.5,
+          2
+        ],
+        "Color": [
+          0.55,
+          0.52,
+          0.43
+        ],
+        "Material": "Slate",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "LeftMerlon2",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          2.3,
+          2.2,
+          2.3
+        ],
+        "Position": [
+          -14,
+          27.5,
+          2
+        ],
+        "Color": [
+          0.55,
+          0.52,
+          0.43
+        ],
+        "Material": "Slate",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "RightMerlon0",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          2.3,
+          2.2,
+          2.3
+        ],
+        "Position": [
+          14,
+          27.5,
+          2
+        ],
+        "Color": [
+          0.55,
+          0.52,
+          0.43
+        ],
+        "Material": "Slate",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "RightMerlon1",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          2.3,
+          2.2,
+          2.3
+        ],
+        "Position": [
+          18,
+          27.5,
+          2
+        ],
+        "Color": [
+          0.55,
+          0.52,
+          0.43
+        ],
+        "Material": "Slate",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "RightMerlon2",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Size": [
+          2.3,
+          2.2,
+          2.3
+        ],
+        "Position": [
+          22,
+          27.5,
+          2
+        ],
+        "Color": [
+          0.55,
+          0.52,
+          0.43
+        ],
+        "Material": "Slate",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "GateDoorLeft",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          3.5,
+          9,
+          0.55
+        ],
+        "Position": [
+          -1.8,
+          4.6,
+          4.75
+        ],
+        "Color": [
+          0.34,
+          0.22,
+          0.13
+        ],
+        "Material": "WoodPlanks",
+        "Transparency": 0.16,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "GateDoorRight",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          3.5,
+          9,
+          0.55
+        ],
+        "Position": [
+          1.8,
+          4.6,
+          4.75
+        ],
+        "Color": [
+          0.34,
+          0.22,
+          0.13
+        ],
+        "Material": "WoodPlanks",
+        "Transparency": 0.16,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "GateDoorBraceLeft",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          0.45,
+          8,
+          0.8
+        ],
+        "Position": [
+          -1.8,
+          4.6,
+          4.65
+        ],
+        "Color": [
+          0.82,
+          0.63,
+          0.25
+        ],
+        "Material": "Metal",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "GateDoorBraceRight",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          0.45,
+          8,
+          0.8
+        ],
+        "Position": [
+          1.8,
+          4.6,
+          4.65
+        ],
+        "Color": [
+          0.82,
+          0.63,
+          0.25
+        ],
+        "Material": "Metal",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "RoyalSignBoard",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          23,
+          3.5,
+          0.8
+        ],
+        "Position": [
+          0,
+          19,
+          4
+        ],
+        "Color": [
+          0.34,
+          0.22,
+          0.13
+        ],
+        "Material": "WoodPlanks",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "PromptAnchor",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          1,
+          1,
+          1
+        ],
+        "Position": [
+          0,
+          6,
+          8
+        ],
+        "Color": [
+          0.82,
+          0.63,
+          0.25
+        ],
+        "Material": "Neon",
+        "Transparency": 1,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "LeftFlagPole",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          0.45,
+          9,
+          0.45
+        ],
+        "Position": [
+          -18,
+          29,
+          2
+        ],
+        "Color": [
+          0.82,
+          0.63,
+          0.25
+        ],
+        "Material": "Metal",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "LeftBanner",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          4,
+          5,
+          0.35
+        ],
+        "Position": [
+          -15.9,
+          30,
+          2
+        ],
+        "Color": [
+          0.82,
+          0.63,
+          0.25
+        ],
+        "Material": "Fabric",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "RightFlagPole",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          0.45,
+          9,
+          0.45
+        ],
+        "Position": [
+          18,
+          29,
+          2
+        ],
+        "Color": [
+          0.82,
+          0.63,
+          0.25
+        ],
+        "Material": "Metal",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "RightBanner",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          4,
+          5,
+          0.35
+        ],
+        "Position": [
+          20.1,
+          30,
+          2
+        ],
+        "Color": [
+          0.82,
+          0.63,
+          0.25
+        ],
+        "Material": "Fabric",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "TorchLeftStem",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          0.6,
+          3,
+          0.6
+        ],
+        "Position": [
+          -7,
+          10,
+          5
+        ],
+        "Color": [
+          0.34,
+          0.22,
+          0.13
+        ],
+        "Material": "Wood",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "TorchLeftFlame",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          1.1,
+          1.1,
+          1.1
+        ],
+        "Position": [
+          -7,
+          12,
+          5
+        ],
+        "Color": [
+          0.82,
+          0.63,
+          0.25
+        ],
+        "Material": "Neon",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "TorchRightStem",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          0.6,
+          3,
+          0.6
+        ],
+        "Position": [
+          7,
+          10,
+          5
+        ],
+        "Color": [
+          0.34,
+          0.22,
+          0.13
+        ],
+        "Material": "Wood",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "TorchRightFlame",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          1.1,
+          1.1,
+          1.1
+        ],
+        "Position": [
+          7,
+          12,
+          5
+        ],
+        "Color": [
+          0.82,
+          0.63,
+          0.25
+        ],
+        "Material": "Neon",
+        "Transparency": 0,
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    }
+  ]
+}
