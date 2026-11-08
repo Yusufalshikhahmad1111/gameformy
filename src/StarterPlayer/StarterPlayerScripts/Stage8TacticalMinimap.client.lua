@@ -18,6 +18,11 @@ gui.ResetOnSpawn=false
 gui.IgnoreGuiInset=true
 gui.DisplayOrder=88
 gui.Parent=player:WaitForChild("PlayerGui")
+gui.Enabled = workspace:GetAttribute("MatchActive") == true
+
+workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
+	gui.Enabled = workspace:GetAttribute("MatchActive") == true
+end)
 
 local panel=Instance.new("TextButton")
 panel.Text=""
