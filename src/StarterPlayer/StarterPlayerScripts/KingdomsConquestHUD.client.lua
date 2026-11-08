@@ -91,6 +91,8 @@ contextBody.TextWrapped=true
 
 local modeBar=frame(root,UDim2.fromScale(.27,.845),UDim2.fromScale(.46,.13),UITheme.Colors.Surface,.04)
 local modeTitle=text(modeBar,"COMMAND  •  CLICK A MODE, THEN CLICK THE WORLD",UDim2.fromScale(.03,.04),UDim2.fromScale(.94,.24),Enum.Font.GothamBold,UITheme.Colors.Parchment)
+local announce
+
 local buttons={}
 local modes={{id="Move",icon="➜",hint="Move to clicked ground"},{id="Attack",icon="⚔",hint="Attack enemy army"},{id="Hold",icon="■",hint="Stop and hold position"}}
 for i,entry in ipairs(modes) do
@@ -154,7 +156,7 @@ local toast=frame(root,UDim2.fromScale(.35,.12),UDim2.fromScale(.30,.06),UITheme
 toast.Visible=false
 local toastText=text(toast,"",UDim2.fromScale(.05,.05),UDim2.fromScale(.90,.9),Enum.Font.GothamBold,UITheme.Colors.Parchment)
 
-local function announce(message)
+announce = function(message)
  toastText.Text=message; toast.Visible=true
  task.delay(2.2,function() if toastText.Text==message then toast.Visible=false end end)
 end
