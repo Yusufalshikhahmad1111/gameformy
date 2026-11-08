@@ -159,9 +159,9 @@ Lighting.EnvironmentSpecularScale = 0.25
 Lighting.FogEnd = 900
 Lighting.FogColor = Color3.fromRGB(173, 184, 169)
 
-local selectedMap = MapService.GetMap(workspace:GetAttribute("KC_MapId") or Config.Game.MapId, activeTeamCount)
 local activeTeamCount = math.clamp(tonumber(workspace:GetAttribute("KC_TeamCount")) or tonumber(Config.Game.TeamCount) or 2, 2, 4)
 Config.Game.TeamCount = activeTeamCount
+local selectedMap = MapService.GetMap(workspace:GetAttribute("KC_MapId") or Config.Game.MapId, activeTeamCount)
 Config.Game.MapId = selectedMap.Name
 local mapExtent = selectedMap.Name == "Riverlands" and 300 or 300
 makePart(terrainFolder, "WorldFloor", Vector3.new(mapExtent, 2, mapExtent), Vector3.new(0, -1, 0), Color3.fromRGB(76, 105, 67), Enum.Material.Grass)
