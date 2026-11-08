@@ -724,11 +724,8 @@ local function attackTick(dt)
 				if distance <= info.AttackRange then
 					army._cooldown = (army._cooldown or 0) - dt
 					if army._cooldown <= 0 then
-						local multiplier = 1
-						if army.Type == "Spearmen" and target.Type == "Cavalry" then multiplier = 1.35 end
-						if army.Type == "Cavalry" and target.Type == "Archers" then multiplier = 1.35 end
-						if army.Type == "Archers" and target.Type == "Spearmen" then multiplier = 1.10 end
-						target.Health -= info.Damage * multiplier
+						local damage = ArmyService.GetAttackDamage(info, army.Type, target.Type)
+						target.Health -= damage
 						vfxRemote:FireAllClients("Hit", target.Position, army.Type, target.Health <= 0)
 						army._cooldown = info.AttackCooldown
 						if target.Health <= 0 then removeArmy(target.Id) end
@@ -968,7 +965,7 @@ RunService.Heartbeat:Connect(function(dt)
 			local ownedCounts = {}
 			for teamId = 1, activeTeamCount do ownedCounts[teamId] = 0 end
 			for _, state in pairs(provinceStates) do if ownedCounts[state.Owner] ~= nil then ownedCounts[state.Owner] += 1 end end
-			local target = math.max(1, math.ceil(#selectedMap.ProvinceOrder * (selectedMap.VictoryRatio or Config.Game.VictoryRatio)))
+			local target = MatchService.GetVictoryTarget(#selectedMap.ProvinceOrder, selectedMap.VictoryRatio or Config.Game.VictoryRatio)
 			for teamId = 1, activeTeamCount do
 				if ownedCounts[teamId] >= target then finishMatch(teamId, "territory_victory"); break end
 			end
