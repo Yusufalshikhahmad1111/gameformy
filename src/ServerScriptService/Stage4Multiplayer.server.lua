@@ -42,7 +42,11 @@ local requestState = Instance.new("RemoteFunction")
 requestState.Name = "RequestState"
 requestState.Parent = remotes
 
-local lobbySpawn = workspace:FindFirstChild("KingdomsLobbySpawn")
+local lobbyModel = workspace:FindFirstChild("KingdomsLobbyEntrance")
+local lobbySpawn = lobbyModel and lobbyModel:FindFirstChild("LobbySpawn", true)
+if not lobbySpawn then
+	lobbySpawn = workspace:FindFirstChild("KingdomsLobbySpawn")
+end
 if not lobbySpawn then
 	lobbySpawn = Instance.new("Part")
 	lobbySpawn.Name = "KingdomsLobbySpawn"
@@ -55,7 +59,10 @@ if not lobbySpawn then
 	lobbySpawn.Parent = workspace
 end
 
-local lobbySpawnLocation = workspace:FindFirstChild("KingdomsLobbySpawnLocation")
+local lobbySpawnLocation = lobbyModel and lobbyModel:FindFirstChild("KingdomsLobbySpawnLocation", true)
+if not lobbySpawnLocation then
+	lobbySpawnLocation = workspace:FindFirstChild("KingdomsLobbySpawnLocation")
+end
 if not lobbySpawnLocation then
 	lobbySpawnLocation = Instance.new("SpawnLocation")
 	lobbySpawnLocation.Name = "KingdomsLobbySpawnLocation"
