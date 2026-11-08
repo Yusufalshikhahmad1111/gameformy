@@ -561,7 +561,11 @@ actionRemote.OnServerEvent:Connect(function(player, action, payload)
 		else
 			sendState(player, "Only the party leader can queue")
 		end
-		if RunService:IsStudio() then studioStartMatch() end
+		if RunService:IsStudio() then
+			workspace:SetAttribute("KC_MapId", party.MapId or "Syria")
+			workspace:SetAttribute("KC_TeamCount", party.TeamCount or 2)
+			studioStartMatch()
+		end
 	elseif action == "LeaveQueue" then
 		local party = playerParty[player.UserId] and parties[playerParty[player.UserId]]
 		if party and party.LeaderUserId == player.UserId then
