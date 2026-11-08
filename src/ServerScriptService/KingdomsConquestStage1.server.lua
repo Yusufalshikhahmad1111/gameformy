@@ -87,8 +87,10 @@ local function terrainMultiplier(position)
 end
 
 local provinceStates = {}
+local mapNodes = {}
 for name, data in pairs(selectedMap.Provinces) do
 	local startingOwners = data.StartingOwners or {[2] = 0}
+	mapNodes[name] = {Name=data.CityName or name, Province=data.ProvinceName or name, Position=data.Position, Capital=data.Capital == true}
 	provinceStates[name] = {
 		Owner = startingOwners[activeTeamCount] or 0,
 		CaptureTeam = 0,
@@ -157,7 +159,7 @@ Lighting.EnvironmentSpecularScale = 0.25
 Lighting.FogEnd = 900
 Lighting.FogColor = Color3.fromRGB(173, 184, 169)
 
-local selectedMap = MapService.GetMap(workspace:GetAttribute("KC_MapId") or Config.Game.MapId)
+local selectedMap = MapService.GetMap(workspace:GetAttribute("KC_MapId") or Config.Game.MapId, activeTeamCount)
 local activeTeamCount = math.clamp(tonumber(workspace:GetAttribute("KC_TeamCount")) or tonumber(Config.Game.TeamCount) or 2, 2, 4)
 Config.Game.TeamCount = activeTeamCount
 Config.Game.MapId = selectedMap.Name
@@ -583,7 +585,11 @@ local function publishState()
 			TeamCount = activeTeamCount,
 			MapId = selectedMap.Name,
 			TotalProvinces = #selectedMap.ProvinceOrder,
+			MapNodes = mapNodes,
+			MapEdges = selectedMap.Edges or {},
 			Provinces = capture,
+			MapNodes = mapNodes,
+			MapEdges = selectedMap.Edges or {},
 			SelectedArmy = playerSelectedArmy[player] or 0,
 			Armies = (function()
 				local result = {}
