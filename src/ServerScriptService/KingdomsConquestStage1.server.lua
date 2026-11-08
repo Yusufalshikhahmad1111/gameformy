@@ -57,6 +57,14 @@ local nextArmyId = 0
 local pingCooldown = {}
 local terrainZones = {}
 
+local function terrainMultiplier(position)
+	local river = terrainZones.River
+	if river and math.abs(position.X - river.Center.X) <= river.HalfX and math.abs(position.Z - river.Center.Z) <= river.HalfZ then
+		return river.Speed
+	end
+	return 1
+end
+
 local provinceStates = {}
 for name, data in pairs(Config.Provinces) do
 	provinceStates[name] = {
@@ -244,10 +252,12 @@ local function makeArmyVisual(army)
 		Vector3.new(-5,0,3), Vector3.new(0,0,3), Vector3.new(5,0,3),
 	}
 	local classInfo = Config.ArmyTypes[army.Type]
-	for i, offset in ipairs(offsets) do
+	for i = 1, #offsets do
+		local offset = formationOffset(army.Formation, i)
 		local unit = makePart(model, "Unit" .. i, Vector3.new(2.2, 3.6, 2.2), army.Position + offset, classInfo.Color, Enum.Material.SmoothPlastic)
 		unit.CanCollide = false
 		unit.Shape = Enum.PartType.Cylinder
+		unit:SetAttribute("FormationIndex", i)
 	end
 
 	local billboard = Instance.new("BillboardGui")
