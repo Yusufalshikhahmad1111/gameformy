@@ -477,6 +477,36 @@ local function makeArmyVisual(army)
 	label.Parent = billboard
 	army.Model = model
 end
+local function syncArmyVisual(army)
+	if not army.Model or not army.Model.Parent then return end
+	local model = army.Model
+	model:PivotTo(CFrame.new(army.Position))
+	local combatPulse = army.AttackTarget and math.sin(os.clock() * 12 + army.Id) * 0.9 or 0
+	for _, unit in ipairs(model:GetChildren()) do
+		local index = unit:GetAttribute("FormationIndex")
+		if index then
+			local base = army.Position + formationOffset(army.Formation, index)
+			if unit.Name:find("^Body") or unit.Name:find("^RiderBody") then
+				unit.Position = base + Vector3.new(0, 2 + math.max(0, combatPulse) * 0.35, combatPulse)
+			elseif unit.Name:find("^Head") or unit.Name:find("^RiderHead") then
+				unit.Position = base + Vector3.new(0, 4 + math.max(0, combatPulse) * 0.35, combatPulse)
+			elseif unit.Name:find("^Spear") or unit.Name:find("^Lance") then
+				unit.Position = base + Vector3.new(1 + combatPulse * 0.5, 3.2, -.2)
+			else
+				unit.Position = base
+			end
+		end
+	end
+	local rootPart = model:FindFirstChild("Root")
+	if rootPart then
+		local label = rootPart:FindFirstChild("ArmyLabel")
+		local textLabel = label and label:FindFirstChildOfClass("TextLabel")
+		if textLabel then
+			textLabel.Text = Config.ArmyTypes[army.Type].Label .. " • " .. math.max(0, math.floor(army.Health)) .. (army.AttackTarget and "  ⚔ FIGHTING" or "")
+		end
+	end
+end
+
 local function playerRoot(player)
 	local character = player.Character
 	return character and character:FindFirstChild("HumanoidRootPart")
