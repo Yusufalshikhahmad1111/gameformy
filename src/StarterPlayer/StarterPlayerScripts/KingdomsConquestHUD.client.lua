@@ -118,7 +118,7 @@ for i,f in ipairs({"Line","Wedge","Spread"}) do
  end)
 end
 
-local recruitBar=frame(root,UDim2.fromScale(.69,.355),UDim2.fromScale(.28,.16),UITheme.Colors.Surface,.04)
+local recruitBar=frame(root,UDim2.fromScale(.69,.60),UDim2.fromScale(.28,.16),UITheme.Colors.Surface,.04)
 text(recruitBar,"RECRUIT  •  PAY WITH SUPPLIES",UDim2.fromScale(.04,.04),UDim2.fromScale(.92,.20),Enum.Font.GothamBold,UITheme.Colors.Parchment)
 local armyDefs={
  {id="Spearmen",icon="⚔",cost=20,sub="Front line"},
@@ -132,17 +132,28 @@ for i,armyDef in ipairs(armyDefs) do
   end)
 end
 
-local info=frame(root,UDim2.fromScale(.03,.75),UDim2.fromScale(.22,.18),UITheme.Colors.Surface,.04)
+local info=frame(root,UDim2.fromScale(.03,.62),UDim2.fromScale(.22,.18),UITheme.Colors.Surface,.04)
 text(info,"SELECT AN ARMY\n1) Recruit above\n2) Click your army\n3) Choose Move / Attack / Hold\n4) Click the map",UDim2.fromScale(.08,.08),UDim2.fromScale(.84,.84),Enum.Font.GothamMedium,UITheme.Colors.Muted).Name="Hint"
 
 local mobileBar=nil
 if mobile then
- mobileBar=frame(root,UDim2.fromScale(.04,.79),UDim2.fromScale(.92,.17),UITheme.Colors.Surface,.02)
+ modeBar.Visible=false
+ formationBar.Visible=false
+ recruitBar.Visible=false
+ info.Visible=false
+ context.Visible=false
+ mobileBar=frame(root,UDim2.fromScale(.03,.76),UDim2.fromScale(.94,.21),UITheme.Colors.Surface,.02)
  local actionWheel=btn(mobileBar,"⚔",UDim2.fromScale(.02,.12),UDim2.fromScale(.19,.72),function()
   mode=mode=="Attack" and "Move" or "Attack"
  end)
  for i,m in ipairs({"Move","Attack","Hold"}) do
-  local b=btn(mobileBar,UITheme.T(lang,m:lower()),UDim2.fromScale(.23+(i-1)*.25,.12),UDim2.fromScale(.21,.72),function() mode=m end)
+  local b=btn(mobileBar,UITheme.T(lang,m:lower()),UDim2.fromScale(.03+(i-1)*.24,.12),UDim2.fromScale(.21,.34),function() mode=m end)
+ end
+ local recruitTypes={{id="Spearmen",icon="⚔"},{id="Archers",icon="➶"},{id="Cavalry",icon="♞"}}
+ for i,a in ipairs(recruitTypes) do
+  btn(mobileBar,a.icon.." "..a.id,UDim2.fromScale(.03+(i-1)*.32,.53),UDim2.fromScale(.29,.34),function()
+   command:FireServer("RequestArmy",{ArmyType=a.id})
+  end)
  end
 end
 
