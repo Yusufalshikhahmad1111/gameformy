@@ -21,6 +21,14 @@ daily.MouseButton1Click:Connect(function() if profile and profile.CanClaimDaily 
 profileChanged.OnClientEvent:Connect(render)
 local ok,data=pcall(function() return requestProfile:InvokeServer() end); if ok then render(data) end
 local open=false
+gui.Enabled = workspace:GetAttribute("MatchActive") == true
+workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
+	gui.Enabled = workspace:GetAttribute("MatchActive") == true
+	if not gui.Enabled then
+		panel.Visible = false
+		open = false
+	end
+end)
 local UIS=game:GetService("UserInputService")
 UIS.InputBegan:Connect(function(input,processed) if processed then return end; if input.KeyCode==Enum.KeyCode.P then open=not open; panel.Visible=open end end)
 local badge=Instance.new("TextButton"); badge.AnchorPoint=Vector2.new(0,1); badge.Position=UDim2.fromScale(.025,.965); badge.Size=UDim2.fromScale(.14,.065); badge.Text="COMMANDER • LV 1"; badge.Font=Enum.Font.GothamBold; badge.TextScaled=true; badge.TextColor3=Color3.fromRGB(232,226,210); badge.BackgroundColor3=Color3.fromRGB(28,33,33); badge.BorderSizePixel=0; badge.Parent=gui; Instance.new("UICorner",badge).CornerRadius=UDim.new(0,9)
