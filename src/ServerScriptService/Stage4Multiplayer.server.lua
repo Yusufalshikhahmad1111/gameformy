@@ -111,7 +111,9 @@ local function buildLobbyEntrance()
 end
 
 local lobbyPrompt = buildLobbyEntrance()
-lobbyPrompt.Enabled = workspace:GetAttribute("MatchActive") ~= true
+if lobbyPrompt then
+	lobbyPrompt.Enabled = workspace:GetAttribute("MatchActive") ~= true
+end
 
 workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
 	if lobbyPrompt and lobbyPrompt.Parent then
