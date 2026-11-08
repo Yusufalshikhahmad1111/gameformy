@@ -375,13 +375,42 @@ local function startMatchClock()
 	end
 end
 
-local function characterSpawn(player, character)
-	local number = findTeamForPlayer(player)
-	local spawnPart = spawnFolder:FindFirstChild("Team" .. number)
-	if spawnPart then
-		character:PivotTo(spawnPart.CFrame + Vector3.new(0, 4, 0))
+local function lobbySpawnPart()
+	local lobby = workspace:FindFirstChild("KingdomsLobbyEntrance")
+	if not lobby then return nil end
+	return lobby:FindFirstChild("KingdomsLobbySpawnLocation", true) or lobby:FindFirstChild("LobbySpawn", true)
+end
+
+local function teleportPlayerForState(player)
+	local character = player.Character
+	if not character then return end
+	if workspace:GetAttribute("MatchActive") == true then
+		local number = findTeamForPlayer(player)
+		local spawnPart = spawnFolder:FindFirstChild("Team" .. number)
+		if spawnPart then
+			character:PivotTo(spawnPart.CFrame + Vector3.new(0, 4, 0))
+		end
+	else
+		local spawnPart = lobbySpawnPart()
+		if spawnPart then
+			character:PivotTo(spawnPart.CFrame + Vector3.new(0, 4, 0))
+		end
 	end
 end
+
+local function characterSpawn(player, character)
+	task.defer(function()
+		teleportPlayerForState(player)
+	end)
+end
+
+workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
+	for _, player in ipairs(Players:GetPlayers()) do
+		task.defer(function()
+			teleportPlayerForState(player)
+		end)
+	end
+end)
 
 local function formationOffset(formation, index)
 	local offsets = {
