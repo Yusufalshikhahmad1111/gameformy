@@ -123,7 +123,8 @@ local function render(s)
 	ui.supplies.Text="SUPPLIES  "..tostring(math.floor(s.Supplies or 0))
 	local lines={}
 	for name,data in pairs(s.Provinces or {}) do
-		local owner = data.Owner==0 and "NEUTRAL" or data.Owner==1 and "CRIMSON" or "AZURE"
+		local teamNames={[0]="NEUTRAL",[1]="CRIMSON",[2]="AZURE",[3]="EMERALD",[4]="AMBER"}
+		local owner = teamNames[data.Owner] or "UNKNOWN"
 		local progress = data.CaptureProgress and data.CaptureProgress > 0 and ("  "..math.floor(data.CaptureProgress).."s") or ""
 		table.insert(lines,name.."  •  "..owner..progress)
 	end
