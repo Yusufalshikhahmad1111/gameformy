@@ -6,27 +6,35 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local MapService = {}
 
 local WORLD_SCALE = 2
+local WORLD_ORIGINS = {
+	Syria = Vector3.new(-1100, 0, -1100),
+	SaudiArabia = Vector3.new(1100, 0, -1100),
+	Palestine = Vector3.new(-1100, 0, 1100),
+	Europe = Vector3.new(1100, 0, 1100),
+}
 local cache = {}
 
-local function scaledVector3(value)
+local function scaledVector3(value, origin)
     if typeof(value) == "Vector3" then
-        return Vector3.new(value.X * WORLD_SCALE, value.Y, value.Z * WORLD_SCALE)
+        return Vector3.new(value.X * WORLD_SCALE + (origin and origin.X or 0), value.Y + (origin and origin.Y or 0), value.Z * WORLD_SCALE + (origin and origin.Z or 0))
     end
     return value
 end
 
-local function scaledCity(city)
+local function scaledCity(city, origin)
     local copy = {}
     for key, value in pairs(city) do
         copy[key] = value
     end
     copy.X = (tonumber(city.X) or 0) * WORLD_SCALE
     copy.Z = (tonumber(city.Z) or 0) * WORLD_SCALE
+    copy.X += origin.X
+    copy.Z += origin.Z
     copy.Position = Vector3.new(copy.X, 0, copy.Z)
     return copy
 end
 
-local function scaleRiver(river)
+local function scaleRiver(river, origin)
     if type(river) ~= "table" then
         return nil
     end
@@ -35,7 +43,7 @@ local function scaleRiver(river)
         result[key] = value
     end
     if typeof(river.Center) == "Vector3" then
-        result.Center = scaledVector3(river.Center)
+        result.Center = scaledVector3(river.Center, origin)
     end
     if typeof(river.Size) == "Vector3" then
         result.Size = Vector3.new(river.Size.X * WORLD_SCALE, river.Size.Y, river.Size.Z * WORLD_SCALE)
@@ -49,15 +57,16 @@ local function scaleRiver(river)
     return result
 end
 
-local function scaleSpawns(spawns)
+local function scaleSpawns(spawns, origin)
     local result = {}
     for teamId, position in pairs(spawns or {}) do
-        result[teamId] = scaledVector3(position)
+        result[teamId] = scaledVector3(position, origin)
     end
     return result
 end
 
 local function build(pack)
+    local origin = WORLD_ORIGINS[pack.Id] or Vector3.new(0, 0, 0)
     local map = {
         Name = pack.Id,
         DisplayName = pack.DisplayName,
@@ -65,9 +74,10 @@ local function build(pack)
         Description = pack.Description,
         Difficulty = pack.Difficulty,
         Art = pack.Art,
-        River = scaleRiver(pack.River),
+        Origin = origin,
+        River = scaleRiver(pack.River, origin),
         RiverCrossings = pack.RiverCrossings or {},
-        Spawns = scaleSpawns(pack.Spawns),
+        Spawns = scaleSpawns(pack.Spawns, origin),
         ProvinceOrder = {},
         Provinces = {},
         Cities = {},
@@ -75,7 +85,7 @@ local function build(pack)
     }
 
     for _, sourceCity in ipairs(pack.Cities or {}) do
-        local city = scaledCity(sourceCity)
+        local city = scaledCity(sourceCity, origin)
         table.insert(map.ProvinceOrder, city.Id)
         local position = city.Position
         map.Cities[city.Id] = city
