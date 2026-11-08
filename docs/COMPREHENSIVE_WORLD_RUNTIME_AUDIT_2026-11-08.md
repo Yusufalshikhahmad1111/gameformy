@@ -33,3 +33,19 @@ Roblox Studio built-in plugin messages such as Assistant_24999 are not generated
 ## Verification boundary
 
 GitHub source and project structure were reviewed after the changes. A Roblox Studio Play session is still the final runtime gate for visual positioning, prompt distance, mobile layout and physical collision behavior.
+
+## Final pass
+
+- Removed the last custom camera source; repository search no longer finds CameraType=Scriptable.
+- Restored Roblox camera by leaving StarterPlayer camera properties at defaults.
+- Static world prefabs are mounted through default.project.json and are the visible source of truth.
+- Runtime proxies are invisible/non-collidable to prevent duplicate castles, terrain and territory overlays.
+- Restored the missing army visual synchronization function and added a lightweight combat lunge/pulse plus a FIGHTING label while an army has an attack target.
+- Profile and Season UI are hidden outside active matches to prevent overlap with the lobby/world presentation.
+- Lobby interaction is nil-safe and uses the editable lobby model as the spawn/entry source.
+- Fixed startup ordering so static province visuals are updated only after their helper function is defined.
+- Rojo model files no longer contain deprecated top-level Name fields.
+
+## Remaining runtime gate
+
+The repository is structurally reviewed and patched. Final confirmation still requires opening the generated place in Roblox Studio and visually checking the static world layout, camera feel, prompt distance, collisions and combat animation at runtime.
