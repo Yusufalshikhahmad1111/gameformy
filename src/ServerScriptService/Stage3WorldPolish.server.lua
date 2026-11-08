@@ -36,11 +36,22 @@ end
 
 local function addRoad(a, b, width)
 	local delta = b - a
-	local distance = Vector3.new(delta.X, 0, delta.Z).Magnitude
+	local flatDelta = Vector3.new(delta.X, 0, delta.Z)
+	local distance = flatDelta.Magnitude
 	if distance < 2 then return end
-	local midpoint = Vector3.new((a.X+b.X)/2, 0.12, (a.Z+b.Z)/2)
-	local road = make(terrain, "Road_" .. tostring(math.floor(a.X)) .. "_" .. tostring(math.floor(b.X)), Vector3.new(width or 7, 0.35, distance), midpoint, art.Road or Color3.fromRGB(118,111,98), Enum.Material.Cobblestone, false)
-	road.CFrame = CFrame.lookAt(midpoint, Vector3.new(b.X, midpoint.Y, b.Z))
+
+	-- Roads connect castle gates instead of cutting through castle centers.
+	local trim = math.min(18, distance * 0.28)
+	local direction = flatDelta.Unit
+	local startPoint = Vector3.new(a.X, 0.12, a.Z) + direction * trim
+	local endPoint = Vector3.new(b.X, 0.12, b.Z) - direction * trim
+	local roadDelta = endPoint - startPoint
+	local roadDistance = Vector3.new(roadDelta.X, 0, roadDelta.Z).Magnitude
+	if roadDistance < 4 then return end
+
+	local midpoint = Vector3.new((startPoint.X+endPoint.X)/2, 0.12, (startPoint.Z+endPoint.Z)/2)
+	local road = make(terrain, "Road_" .. tostring(math.floor(a.X)) .. "_" .. tostring(b.X), Vector3.new(width or 7, 0.35, roadDistance), midpoint, art.Road or Color3.fromRGB(118,111,98), Enum.Material.Cobblestone, false)
+	road.CFrame = CFrame.lookAt(midpoint, Vector3.new(endPoint.X, midpoint.Y, endPoint.Z))
 end
 
 local function addTree(position, scale)
