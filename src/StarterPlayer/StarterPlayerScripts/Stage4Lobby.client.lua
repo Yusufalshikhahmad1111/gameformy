@@ -1,6 +1,8 @@
 -- Kingdoms Conquest — Stage 4 Lobby / Party UI
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local UITheme = require(ReplicatedStorage.Shared.UITheme)
 
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("Stage4Remotes")
@@ -25,7 +27,7 @@ backdrop.Parent = gui
 local panel = Instance.new("Frame")
 panel.AnchorPoint = Vector2.new(0.5, 0.5)
 panel.Position = UDim2.fromScale(0.5, 0.5)
-panel.Size = UDim2.fromScale(0.64, 0.96)
+panel.Size = UDim2.fromScale(UserInputService.TouchEnabled and 0.92 or 0.64, UserInputService.TouchEnabled and 0.92 or 0.96)
 panel.BackgroundColor3 = Color3.fromRGB(29, 34, 34)
 panel.BorderSizePixel = 0
 panel.Parent = backdrop
@@ -50,8 +52,8 @@ local function label(parent, text, pos, size, font, color)
 	return x
 end
 
-label(panel, "KINGDOMS CONQUEST", UDim2.fromScale(0.08, 0.07), UDim2.fromScale(0.84, 0.10), Enum.Font.GothamBold, Color3.fromRGB(238, 228, 205))
-label(panel, "MULTIPLAYER COMMAND", UDim2.fromScale(0.08, 0.16), UDim2.fromScale(0.84, 0.06), Enum.Font.GothamMedium, Color3.fromRGB(173, 168, 156))
+label(panel, UITheme.T("en","objective").."  •  KINGDOMS CONQUEST", UDim2.fromScale(0.08, 0.07), UDim2.fromScale(0.84, 0.10), Enum.Font.GothamBold, Color3.fromRGB(238, 228, 205))
+label(panel, "MULTIPLAYER COMMAND  •  CHOOSE YOUR BATTLEFIELD", UDim2.fromScale(0.08, 0.16), UDim2.fromScale(0.84, 0.06), Enum.Font.GothamMedium, Color3.fromRGB(173, 168, 156))
 
 local function button(text, pos, size, callback)
     local b = Instance.new("TextButton")
@@ -158,6 +160,7 @@ local function render(s)
 	teamsLabel.Text = "TEAMS  •  "..tostring(selectedTeams)
 	statusText.Text = s.Status or "Lobby ready"
 	backdrop.Visible = not s.MatchActive
+	if s.MatchActive then return end
 
 	if s.Party then
 		partyText.Text = "PARTY  •  " .. tostring(s.Party.Code)
