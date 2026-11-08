@@ -8,36 +8,26 @@ local Lighting = game:GetService("Lighting")
 local Config = require(ReplicatedStorage.Shared.Config)
 local RateLimiter = require(ReplicatedStorage.Shared.RateLimiter)
 local MapService = require(ReplicatedStorage.Shared.MapService)
+local NetworkContract = require(ReplicatedStorage.Shared.NetworkContract)
+local StateSchemas = require(ReplicatedStorage.Shared.StateSchemas)
+local ArmyService = require(script.Parent.Services.ArmyService)
+local EconomyService = require(script.Parent.Services.EconomyService)
+local MatchService = require(script.Parent.Services.MatchService)
+local CaptureService = require(script.Parent.Services.CaptureService)
 
 if workspace:GetAttribute("KC_BootstrapReady") ~= true then
 	workspace:GetAttributeChangedSignal("KC_BootstrapReady"):Wait()
 end
 
-local remotes = ReplicatedStorage:FindFirstChild("KingdomsRemotes")
-if remotes then remotes:Destroy() end
-remotes = Instance.new("Folder")
-remotes.Name = "KingdomsRemotes"
-remotes.Parent = ReplicatedStorage
-
-local commandRemote = Instance.new("RemoteEvent")
-commandRemote.Name = "Command"
-commandRemote.Parent = remotes
-
-local vfxRemote = Instance.new("UnreliableRemoteEvent")
-vfxRemote.Name = "VFX"
-vfxRemote.Parent = remotes
-
-local stateRemote = Instance.new("RemoteEvent")
-stateRemote.Name = "State"
-stateRemote.Parent = remotes
-
-local requestState = Instance.new("RemoteFunction")
-requestState.Name = "RequestState"
-requestState.Parent = remotes
-
-local feedbackRemote = Instance.new("RemoteEvent")
-feedbackRemote.Name = "Feedback"
-feedbackRemote.Parent = remotes
+-- Stage 11: one authoritative remote hierarchy. Never destroy/recreate remotes
+-- during startup; client scripts may already be waiting on this folder.
+local remotes, remoteSet = NetworkContract.Ensure()
+local commandRemote = remoteSet.Command
+local vfxRemote = remoteSet.VFX
+local stateRemote = remoteSet.State
+local requestState = remoteSet.RequestState
+local feedbackRemote = remoteSet.Feedback
+workspace:SetAttribute("KC_NetworkContractVersion", NetworkContract.Version)
 
 local root = Instance.new("Folder")
 root.Name = "KingdomsConquest"
@@ -753,6 +743,11 @@ end
 
 commandRemote.OnServerEvent:Connect(function(player, action, payload)
 	if type(action) ~= "string" or type(payload) ~= "table" then return end
+	local valid, reason = StateSchemas.ValidateArmyCommand(action, payload, Config)
+	if not valid then
+		feedbackRemote:FireClient(player, "COMMAND_REJECTED", {Reason = reason})
+		return
+	end
 	if not RateLimiter.Allow("KCCommand", player.UserId, 1, 24) then return end
 	if action == "Ping" then
 		if not RateLimiter.Allow("KCPing", player.UserId, 1, 2) then return end
