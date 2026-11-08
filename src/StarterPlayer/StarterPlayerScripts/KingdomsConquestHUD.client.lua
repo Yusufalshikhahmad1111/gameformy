@@ -141,3 +141,29 @@ stateRemote.OnClientEvent:Connect(function(s)
 end)
 
 render(state)
+
+-- Stage 3 presentation layer
+local toast = create("TextLabel", {BackgroundColor3=Color3.fromRGB(29,34,34), BackgroundTransparency=0.08, AnchorPoint=Vector2.new(0.5,0), Position=UDim2.fromScale(0.5,0.13), Size=UDim2.fromScale(0.38,0.055), Font=Enum.Font.GothamMedium, Text="", TextColor3=Color3.fromRGB(238,228,207), TextScaled=true, Visible=false}, gui)
+create("UICorner",{CornerRadius=UDim.new(0,9)},toast)
+local function announce(text)
+ toast.Text=text; toast.Visible=true
+ task.delay(2.4,function() toast.Visible=false end)
+end
+
+local oldRender=render
+render=function(s)
+ oldRender(s)
+ if s.Team then
+  local teamName=s.Team==1 and "CRIMSON" or "AZURE"
+  ui.status.Text=teamName.."  |  TERRITORY "..tostring(s.Owned).."/6  |  "..mode:upper()
+ end
+end
+
+stateRemote.OnClientEvent:Connect(function(s)
+ if s.MatchOver then return end
+ if s.Provinces then
+  for name,data in pairs(s.Provinces) do
+   if data.CaptureProgress and data.CaptureProgress > 0 then announce("CAPTURING  •  "..name) end
+  end
+ end
+end)
