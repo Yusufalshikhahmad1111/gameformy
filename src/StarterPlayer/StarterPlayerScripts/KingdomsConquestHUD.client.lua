@@ -8,6 +8,7 @@ local remotes=ReplicatedStorage:WaitForChild("KingdomsRemotes")
 local command=remotes:WaitForChild("Command")
 local stateRemote=remotes:WaitForChild("State")
 local requestState=remotes:WaitForChild("RequestState")
+local feedbackRemote=remotes:WaitForChild("Feedback")
 local UITheme=require(ReplicatedStorage.Shared.UITheme)
 
 local stage4Remotes = ReplicatedStorage:WaitForChild("Stage4Remotes")
@@ -36,10 +37,39 @@ local function text(parent,value,pos,size,font,color)
  local x=Instance.new("TextLabel"); x.BackgroundTransparency=1; x.Position=pos; x.Size=size; x.Font=font or Enum.Font.Gotham; x.Text=value; x.TextColor3=color or UITheme.Colors.White; x.TextScaled=true; x.Parent=parent; return x
 end
 local function btn(parent,value,pos,size,callback)
- local x=Instance.new("TextButton"); x.Position=pos; x.Size=size; x.Text=value; x.Font=Enum.Font.GothamBold; x.TextScaled=true; x.TextColor3=UITheme.Colors.White; x.BackgroundColor3=UITheme.Colors.Surface3; x.BorderSizePixel=0; x.AutoButtonColor=true; x.Parent=parent
+ local x=Instance.new("TextButton")
+ x.Position=pos; x.Size=size; x.Text=value; x.Font=Enum.Font.GothamBold
+ x.TextScaled=true; x.TextWrapped=true; x.TextColor3=UITheme.Colors.White
+ x.BackgroundColor3=UITheme.Colors.Surface3; x.BorderSizePixel=0; x.AutoButtonColor=true
+ x.Parent=parent
  Instance.new("UICorner",x).CornerRadius=UDim.new(0,8)
  x.Activated:Connect(callback)
  return x
+end
+
+local function labeledButton(parent, icon, title, subtitle, pos, size, callback)
+ local b=Instance.new("TextButton")
+ b.Position=pos; b.Size=size; b.Text=""; b.BackgroundColor3=UITheme.Colors.Surface3
+ b.BorderSizePixel=0; b.AutoButtonColor=true; b.Parent=parent
+ Instance.new("UICorner",b).CornerRadius=UDim.new(0,9)
+
+ local iconLabel=Instance.new("TextLabel")
+ iconLabel.BackgroundTransparency=1; iconLabel.Position=UDim2.fromScale(.03,.12); iconLabel.Size=UDim2.fromScale(.18,.70)
+ iconLabel.Font=Enum.Font.GothamBold; iconLabel.Text=icon; iconLabel.TextScaled=true
+ iconLabel.TextColor3=UITheme.Colors.Brass; iconLabel.Parent=b
+
+ local titleLabel=Instance.new("TextLabel")
+ titleLabel.BackgroundTransparency=1; titleLabel.Position=UDim2.fromScale(.23,.08); titleLabel.Size=UDim2.fromScale(.73,.43)
+ titleLabel.Font=Enum.Font.GothamBold; titleLabel.Text=title; titleLabel.TextScaled=true
+ titleLabel.TextColor3=UITheme.Colors.White; titleLabel.Parent=b
+
+ local subLabel=Instance.new("TextLabel")
+ subLabel.BackgroundTransparency=1; subLabel.Position=UDim2.fromScale(.23,.51); subLabel.Size=UDim2.fromScale(.73,.34)
+ subLabel.Font=Enum.Font.Gotham; subLabel.Text=subtitle; subLabel.TextScaled=true
+ subLabel.TextColor3=UITheme.Colors.Muted; subLabel.Parent=b
+
+ b.Activated:Connect(callback)
+ return b
 end
 
 local top=frame(root,UDim2.fromScale(.03,.025),UDim2.fromScale(.94,.075),UITheme.Colors.Surface,.06)
@@ -50,36 +80,52 @@ supply.TextXAlignment=Enum.TextXAlignment.Right
 
 local context=frame(root,UDim2.fromScale(.03,.115),UDim2.fromScale(.27,.115),UITheme.Colors.Surface,.04)
 local contextTitle=text(context,UITheme.T(lang,"army"),UDim2.fromScale(.06,.08),UDim2.fromScale(.88,.25),Enum.Font.GothamBold,UITheme.Colors.Parchment)
-local contextBody=text(context,UITheme.T(lang,"selectArmy"),UDim2.fromScale(.06,.35),UDim2.fromScale(.88,.53),Enum.Font.Gotham,UITheme.Colors.Muted)
+local contextBody=text(context,"SELECT AN ARMY\nThen choose a command below.",UDim2.fromScale(.06,.35),UDim2.fromScale(.88,.53),Enum.Font.Gotham,UITheme.Colors.Muted)
 contextBody.TextWrapped=true
 
-local modeBar=frame(root,UDim2.fromScale(.27,.855),UDim2.fromScale(.46,.115),UITheme.Colors.Surface,.04)
+local modeBar=frame(root,UDim2.fromScale(.27,.845),UDim2.fromScale(.46,.13),UITheme.Colors.Surface,.04)
+local modeTitle=text(modeBar,"COMMAND  •  CLICK A MODE, THEN CLICK THE WORLD",UDim2.fromScale(.03,.04),UDim2.fromScale(.94,.24),Enum.Font.GothamBold,UITheme.Colors.Parchment)
 local buttons={}
-local modes={"Move","Attack","Hold"}
-for i,m in ipairs(modes) do
- buttons[m]=btn(modeBar,UITheme.T(lang,m:lower()),UDim2.fromScale(.025+(i-1)*.325,.17),UDim2.fromScale(.30,.66),function()
-  mode=m
-  for n,b in pairs(buttons) do b.BackgroundColor3=(n==mode) and UITheme.Colors.Brass or UITheme.Colors.Surface3 end
- end)
+local modes={{id="Move",icon="➜",hint="Move to clicked ground"},{id="Attack",icon="⚔",hint="Attack enemy army"},{id="Hold",icon="■",hint="Stop and hold position"}}
+for i,entry in ipairs(modes) do
+ buttons[entry.id]=labeledButton(modeBar,entry.icon,UITheme.T(lang,entry.id:lower()),entry.hint,
+  UDim2.fromScale(.025+(i-1)*.325,.31),UDim2.fromScale(.30,.60),function()
+   mode=entry.id
+   for n,b in pairs(buttons) do b.BackgroundColor3=(n==mode) and UITheme.Colors.Brass or UITheme.Colors.Surface3 end
+   contextBody.Text=selectedArmy==0 and UITheme.T(lang,"selectArmy") or (UITheme.T(lang,mode:lower()).." • "..(entry.hint))
+  end)
 end
 for n,b in pairs(buttons) do b.BackgroundColor3=(n==mode) and UITheme.Colors.Brass or UITheme.Colors.Surface3 end
 
-local formationBar=frame(root,UDim2.fromScale(.27,.785),UDim2.fromScale(.46,.06),UITheme.Colors.Surface,.05)
+local formationBar=frame(root,UDim2.fromScale(.27,.775),UDim2.fromScale(.46,.06),UITheme.Colors.Surface,.05)
+text(formationBar,"FORMATION",UDim2.fromScale(.02,.12),UDim2.fromScale(.17,.76),Enum.Font.GothamBold,UITheme.Colors.Parchment)
 for i,f in ipairs({"Line","Wedge","Spread"}) do
- btn(formationBar,UITheme.T(lang,f:lower()),UDim2.fromScale(.025+(i-1)*.325,.12),UDim2.fromScale(.30,.76),function()
-  if selectedArmy~=0 then command:FireServer("Formation",{ArmyId=selectedArmy,Formation=f}) end
+ btn(formationBar,UITheme.T(lang,f:lower()),UDim2.fromScale(.20+(i-1)*.265,.12),UDim2.fromScale(.24,.76),function()
+  if selectedArmy~=0 then
+   command:FireServer("Formation",{ArmyId=selectedArmy,Formation=f})
+   announce("FORMATION • "..f)
+  else
+   announce("SELECT AN ARMY FIRST")
+  end
  end)
 end
 
-local recruitBar=frame(root,UDim2.fromScale(.69,.355),UDim2.fromScale(.28,.09),UITheme.Colors.Surface,.04)
-for i,armyType in ipairs({"Spearmen","Archers","Cavalry"}) do
- btn(recruitBar,armyType:upper(),UDim2.fromScale(.025+(i-1)*.325,.15),UDim2.fromScale(.30,.70),function()
-  command:FireServer("RequestArmy",{ArmyType=armyType})
- end)
+local recruitBar=frame(root,UDim2.fromScale(.69,.355),UDim2.fromScale(.28,.16),UITheme.Colors.Surface,.04)
+text(recruitBar,"RECRUIT  •  PAY WITH SUPPLIES",UDim2.fromScale(.04,.04),UDim2.fromScale(.92,.20),Enum.Font.GothamBold,UITheme.Colors.Parchment)
+local armyDefs={
+ {id="Spearmen",icon="⚔",cost=20,sub="Front line"},
+ {id="Archers",icon="➶",cost=24,sub="Long range"},
+ {id="Cavalry",icon="♞",cost=30,sub="Fast / charge"},
+}
+for i,armyDef in ipairs(armyDefs) do
+ labeledButton(recruitBar,armyDef.icon,armyDef.id:upper(),tostring(armyDef.cost).." SUP • "..armyDef.sub,
+  UDim2.fromScale(.03+(i-1)*.32,.29),UDim2.fromScale(.30,.61),function()
+   command:FireServer("RequestArmy",{ArmyType=armyDef.id})
+  end)
 end
 
-local info=frame(root,UDim2.fromScale(.03,.76),UDim2.fromScale(.22,.16),UITheme.Colors.Surface,.04)
-text(info,"",UDim2.fromScale(.08,.08),UDim2.fromScale(.84,.82),Enum.Font.GothamMedium,UITheme.Colors.Muted).Name="Hint"
+local info=frame(root,UDim2.fromScale(.03,.75),UDim2.fromScale(.22,.18),UITheme.Colors.Surface,.04)
+text(info,"SELECT AN ARMY\n1) Recruit above\n2) Click your army\n3) Choose Move / Attack / Hold\n4) Click the map",UDim2.fromScale(.08,.08),UDim2.fromScale(.84,.84),Enum.Font.GothamMedium,UITheme.Colors.Muted).Name="Hint"
 
 local mobileBar=nil
 if mobile then
@@ -150,9 +196,17 @@ local function clickWorld()
   castleTitle.Text=tostring(province)
   castleBody.Text=UITheme.T(lang,"castle").." • "..UITheme.T(lang,mode:lower()).."\n"..UITheme.T(lang,"territory")..": "..tostring((state.Provinces and state.Provinces[province] and state.Provinces[province].Owner) or 0)
   if selectedArmy~=0 then
-   if mode=="Move" then command:FireServer("Move",{ArmyId=selectedArmy,Position=hit.Position})
-   elseif mode=="Hold" then command:FireServer("Hold",{ArmyId=selectedArmy})
+   if mode=="Move" then
+    command:FireServer("Move",{ArmyId=selectedArmy,Position=hit.Position})
+    announce("MOVE ORDER • "..tostring(province))
+   elseif mode=="Hold" then
+    command:FireServer("Hold",{ArmyId=selectedArmy})
+    announce("HOLD ORDER")
+   elseif mode=="Attack" then
+    announce("ATTACK MODE • CLICK AN ENEMY ARMY")
    end
+  else
+   announce("CASTLE • "..tostring(province).." • WALK TO A GATE TO CAPTURE")
   end
   return
  end
@@ -170,14 +224,35 @@ UserInputService.InputBegan:Connect(function(input,processed)
  if input.KeyCode==Enum.KeyCode.Three and selectedArmy~=0 then command:FireServer("Formation",{ArmyId=selectedArmy,Formation="Spread"}) end
 end)
 
+feedbackRemote.OnClientEvent:Connect(function(kind,payload)
+ if kind=="ARMY_CREATED" then
+  selectedArmy=tonumber(payload.ArmyId) or selectedArmy
+  contextTitle.Text="ARMY #"..tostring(selectedArmy).." • "..tostring(payload.ArmyType)
+  contextBody.Text="Army created and selected.\nMove mode is ready."
+  announce("ARMY READY • "..tostring(payload.ArmyType).."  •  -"..tostring(payload.Cost).." SUPPLIES")
+ elseif kind=="ARMY_FAILED" then
+  announce("RECRUIT FAILED • "..tostring(payload.Reason))
+ end
+end)
+
 local function render(s)
  state=s or state
+ selectedArmy=tonumber(s.SelectedArmy) or selectedArmy
  local team=s.Team or 0
  teamText.Text=UITheme.TeamName(team,lang).."  •  "..UITheme.T(lang,"territory").." "..tostring(s.Owned or 0).."/"..tostring(s.TotalProvinces or 0)
  supply.Text=UITheme.T(lang,"supplies").."  "..tostring(math.floor(s.Supplies or 0))
  objective.Text=UITheme.T(lang,"objective").."  •  "..tostring(s.MapId or "WORLD").."  •  "..tostring(s.TeamCount or 2).." TEAMS"
  local hint=info:FindFirstChild("Hint")
- if hint then hint.Text=selectedArmy==0 and UITheme.T(lang,"selectArmy") or UITheme.T(lang,mode:lower()) end
+ if hint then
+ if selectedArmy==0 then
+  hint.Text="SELECT AN ARMY\nRecruit with the buttons above."
+ else
+  hint.Text="ARMY #"..tostring(selectedArmy).."\n"..mode.." selected • click the world"
+ end
+end
+if selectedArmy~=0 then
+ contextTitle.Text="ARMY #"..tostring(selectedArmy)
+end
  if s.MatchOver then
   announce((s.Winner==team and UITheme.T(lang,"victory") or UITheme.T(lang,"defeat")).."  •  "..tostring(s.MapId or "WORLD"))
  end

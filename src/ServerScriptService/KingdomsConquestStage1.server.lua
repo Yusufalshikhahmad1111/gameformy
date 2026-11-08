@@ -35,6 +35,10 @@ local requestState = Instance.new("RemoteFunction")
 requestState.Name = "RequestState"
 requestState.Parent = remotes
 
+local feedbackRemote = Instance.new("RemoteEvent")
+feedbackRemote.Name = "Feedback"
+feedbackRemote.Parent = remotes
+
 local root = Instance.new("Folder")
 root.Name = "KingdomsConquest"
 root.Parent = workspace
@@ -197,38 +201,110 @@ local function createCastle(provinceName, data)
 	model:SetAttribute("RegionName", data.ProvinceName or provinceName)
 
 	local base = data.Position
-	makePart(model, "Courtyard", data.Capital and Vector3.new(56, 2, 48) or Vector3.new(44, 2, 38), base + Vector3.new(0, 2, 0), art.Stone or Color3.fromRGB(112, 108, 99), Enum.Material.Cobblestone)
-	makePart(model, "Keep", data.Capital and Vector3.new(22, 24, 22) or Vector3.new(18, 18, 18), base + Vector3.new(0, data.Capital and 14 or 11, 0), art.DarkStone or Color3.fromRGB(82, 82, 80), Enum.Material.Slate)
+	local footprint = castleTier == "Capital" and 32 or castleTier == "Major" and 30 or 26
+	local wallHalf = footprint * 0.5 - 1.5
+	local gateWidth = castleTier == "Capital" and 8 or 7
+	local wallHeight = castleTier == "Capital" and 8 or 7
+	local keepSize = castleTier == "Capital" and 14 or castleTier == "Major" and 12 or 10
+	local keepHeight = castleTier == "Capital" and 18 or castleTier == "Major" and 15 or 12
+	local stone = art.Stone or Color3.fromRGB(112, 108, 99)
+	local darkStone = art.DarkStone or Color3.fromRGB(82, 82, 80)
+	local gateColor = ownerColor(initialOwner(data))
 
-	local wallY = base.Y + (data.Capital and 7 or 6)
-	makePart(model, "WallNorth", Vector3.new(58, 10, 3), base + Vector3.new(0, wallY, -28), art.Stone or Color3.fromRGB(104, 101, 95), Enum.Material.Cobblestone)
-	makePart(model, "WallSouth", Vector3.new(58, 10, 3), base + Vector3.new(0, wallY, 28), Color3.fromRGB(104, 101, 95), Enum.Material.Cobblestone)
-	makePart(model, "WallEast", Vector3.new(3, 10, 58), base + Vector3.new(28, wallY, 0), Color3.fromRGB(104, 101, 95), Enum.Material.Cobblestone)
-	makePart(model, "WallWest", Vector3.new(3, 10, 58), base + Vector3.new(-28, wallY, 0), Color3.fromRGB(104, 101, 95), Enum.Material.Cobblestone)
+	makePart(model, "Courtyard", Vector3.new(footprint, 2, footprint), base + Vector3.new(0, 1, 0), stone, Enum.Material.Cobblestone)
+	makePart(model, "Keep", Vector3.new(keepSize, keepHeight, keepSize), base + Vector3.new(0, keepHeight * 0.5 + 1, 0), darkStone, Enum.Material.Slate)
 
-	local banner = makePart(model, "Banner", Vector3.new(1.5, 12, 1.5), base + Vector3.new(0, data.Capital and 22 or 16, -10), ownerColor(initialOwner(data)), Enum.Material.Wood)
+	local function wallSegment(name, size, position)
+		makePart(model, name, size, position, stone, Enum.Material.Cobblestone)
+	end
+
+	local halfGap = gateWidth * 0.5
+	local sideLength = wallHalf - halfGap
+	local segmentLength = math.max(4, sideLength)
+	local segmentOffset = halfGap + segmentLength * 0.5
+
+	-- Four real wall openings for the capture gates.
+	wallSegment("WallNorthL", Vector3.new(segmentLength, wallHeight, 3), base + Vector3.new(-segmentOffset, wallHeight * 0.5, -wallHalf))
+	wallSegment("WallNorthR", Vector3.new(segmentLength, wallHeight, 3), base + Vector3.new(segmentOffset, wallHeight * 0.5, -wallHalf))
+	wallSegment("WallSouthL", Vector3.new(segmentLength, wallHeight, 3), base + Vector3.new(-segmentOffset, wallHeight * 0.5, wallHalf))
+	wallSegment("WallSouthR", Vector3.new(segmentLength, wallHeight, 3), base + Vector3.new(segmentOffset, wallHeight * 0.5, wallHalf))
+	wallSegment("WallEastN", Vector3.new(3, wallHeight, segmentLength), base + Vector3.new(wallHalf, wallHeight * 0.5, -segmentOffset))
+	wallSegment("WallEastS", Vector3.new(3, wallHeight, segmentLength), base + Vector3.new(wallHalf, wallHeight * 0.5, segmentOffset))
+	wallSegment("WallWestN", Vector3.new(3, wallHeight, segmentLength), base + Vector3.new(-wallHalf, wallHeight * 0.5, -segmentOffset))
+	wallSegment("WallWestS", Vector3.new(3, wallHeight, segmentLength), base + Vector3.new(-wallHalf, wallHeight * 0.5, segmentOffset))
+
+	local banner = makePart(model, "Banner", Vector3.new(1.2, castleTier == "Capital" and 10 or 8, 1.2), base + Vector3.new(0, castleTier == "Capital" and 18 or 15, 0), gateColor, Enum.Material.Wood)
 	banner.CanCollide = false
-	addBillboard(banner, (data.CityName or provinceName) .. "  •  " .. castleTier, ownerColor(initialOwner(data)))
+	addBillboard(banner, (data.CityName or provinceName) .. "  •  " .. castleTier, gateColor)
+
+	local towers = Instance.new("Folder")
+	towers.Name = "Towers"
+	towers.Parent = model
+	local towerRadius = wallHalf - 1
+	local towerSize = castleTier == "Capital" and 5 or 4.5
+	local towerHeight = castleTier == "Capital" and 11 or 9
+	for i, offset in ipairs({
+		Vector3.new(-towerRadius, towerHeight * 0.5, -towerRadius),
+		Vector3.new(towerRadius, towerHeight * 0.5, -towerRadius),
+		Vector3.new(-towerRadius, towerHeight * 0.5, towerRadius),
+		Vector3.new(towerRadius, towerHeight * 0.5, towerRadius),
+	}) do
+		makePart(towers, "Tower" .. i, Vector3.new(towerSize, towerHeight, towerSize), base + offset, darkStone, Enum.Material.Slate)
+	end
 
 	local gates = Instance.new("Folder")
 	gates.Name = "Gates"
 	gates.Parent = model
-	local gateDistance = data.Capital and 39 or 33
-	local gateOffsets = {
-		North = Vector3.new(0, 1.5, -gateDistance),
-		East = Vector3.new(gateDistance, 1.5, 0),
-		South = Vector3.new(0, 1.5, gateDistance),
-		West = Vector3.new(-gateDistance, 1.5, 0),
+
+	local gateSpecs = {
+		North = {position = base + Vector3.new(0, 1.2, -wallHalf - 0.5), size = Vector3.new(gateWidth, 0.6, 5)},
+		East = {position = base + Vector3.new(wallHalf + 0.5, 1.2, 0), size = Vector3.new(5, 0.6, gateWidth)},
+		South = {position = base + Vector3.new(0, 1.2, wallHalf + 0.5), size = Vector3.new(gateWidth, 0.6, 5)},
+		West = {position = base + Vector3.new(-wallHalf - 0.5, 1.2, 0), size = Vector3.new(5, 0.6, gateWidth)},
 	}
-	for gateName, offset in pairs(gateOffsets) do
-		local gate = makePart(gates, gateName, Vector3.new(16, 1, 16), base + offset, ownerColor(initialOwner(data)), Enum.Material.Neon)
-		gate.Transparency = 0.78
+
+	for gateName, spec in pairs(gateSpecs) do
+		local gate = makePart(gates, gateName, spec.size, spec.position, gateColor, Enum.Material.Neon)
+		gate.Transparency = 0.38
 		gate.CanCollide = false
 		gate:SetAttribute("Gate", gateName)
 		gate:SetAttribute("Province", provinceName)
-	end
-end
 
+		local marker = Instance.new("BillboardGui")
+		marker.Name = "GateMarker"
+		marker.Size = UDim2.fromOffset(110, 28)
+		marker.StudsOffset = Vector3.new(0, 4.5, 0)
+		marker.AlwaysOnTop = true
+		marker.MaxDistance = 160
+		marker.Parent = gate
+		local markerLabel = Instance.new("TextLabel")
+		markerLabel.BackgroundTransparency = 1
+		markerLabel.Size = UDim2.fromScale(1, 1)
+		markerLabel.Font = Enum.Font.GothamBold
+		markerLabel.TextScaled = true
+		markerLabel.TextStrokeTransparency = 0.2
+		markerLabel.TextColor3 = gateColor
+		markerLabel.Text = "▲ GATE"
+		markerLabel.Parent = marker
+	end
+
+	local captureHint = Instance.new("BillboardGui")
+	captureHint.Name = "CaptureHint"
+	captureHint.Size = UDim2.fromOffset(220, 32)
+	captureHint.StudsOffset = Vector3.new(0, castleTier == "Capital" and 23 or 18, 0)
+	captureHint.AlwaysOnTop = true
+	captureHint.MaxDistance = 180
+	captureHint.Parent = model:FindFirstChild("Keep")
+	local hintLabel = Instance.new("TextLabel")
+	hintLabel.BackgroundTransparency = 1
+	hintLabel.Size = UDim2.fromScale(1, 1)
+	hintLabel.Font = Enum.Font.GothamBold
+	hintLabel.TextScaled = true
+	hintLabel.TextStrokeTransparency = 0.2
+	hintLabel.TextColor3 = Color3.fromRGB(236, 221, 181)
+	hintLabel.Text = "ENTER GATE • HOLD 10s"
+	hintLabel.Parent = captureHint
+end
 for name, data in pairs(selectedMap.Provinces) do
 	local zone = makePart(provinceFolder, name .. "_Territory", data.Size, data.Position, Color3.fromRGB(94, 121, 78), Enum.Material.Grass)
 	zone:SetAttribute("Owner", initialOwner(data))
@@ -310,28 +386,39 @@ local function makeArmyVisual(army)
 
 	local color = ownerColor(army.Team)
 	local rootPart = makePart(model, "Root", Vector3.new(4, 2, 4), army.Position, color, Enum.Material.SmoothPlastic)
-	rootPart.Transparency = 0.35
+	rootPart.Transparency = 0.2
 	rootPart.CanCollide = false
 
+	local classInfo = Config.ArmyTypes[army.Type]
 	local offsets = {
 		Vector3.new(-5,0,-3), Vector3.new(0,0,-3), Vector3.new(5,0,-3),
 		Vector3.new(-3,0,0), Vector3.new(3,0,0),
 		Vector3.new(-5,0,3), Vector3.new(0,0,3), Vector3.new(5,0,3),
 	}
-	local classInfo = Config.ArmyTypes[army.Type]
 	for i = 1, #offsets do
 		local offset = formationOffset(army.Formation, i)
-		local unit = makePart(model, "Unit" .. i, Vector3.new(2.2, 3.6, 2.2), army.Position + offset, classInfo.Color, Enum.Material.SmoothPlastic)
+		local unitSize = army.Type == "Cavalry" and Vector3.new(3.2, 3.8, 2.6) or Vector3.new(2.2, 3.6, 2.2)
+		local unit = makePart(model, "Unit" .. i, unitSize, army.Position + offset, classInfo.Color, Enum.Material.SmoothPlastic)
 		unit.CanCollide = false
 		unit.Shape = Enum.PartType.Cylinder
 		unit:SetAttribute("FormationIndex", i)
+
+		local accent = makePart(model, "Accent" .. i, Vector3.new(0.45, 2.6, 0.45), army.Position + offset + Vector3.new(0, 2.2, 0), classInfo.Accent, Enum.Material.Metal)
+		accent.CanCollide = false
+		accent:SetAttribute("FormationIndex", i)
 	end
+
+	local flagPole = makePart(model, "FlagPole", Vector3.new(0.35, 8, 0.35), army.Position + Vector3.new(0, 4, 0), classInfo.Accent, Enum.Material.Metal)
+	flagPole.CanCollide = false
+	local flag = makePart(model, "Flag", Vector3.new(3.2, 1.8, 0.3), army.Position + Vector3.new(1.5, 6.6, 0), color, Enum.Material.Fabric)
+	flag.CanCollide = false
 
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "ArmyLabel"
-	billboard.Size = UDim2.fromOffset(180, 38)
-	billboard.StudsOffset = Vector3.new(0, 7, 0)
+	billboard.Size = UDim2.fromOffset(210, 46)
+	billboard.StudsOffset = Vector3.new(0, 10, 0)
 	billboard.AlwaysOnTop = true
+	billboard.MaxDistance = 250
 	billboard.Parent = rootPart
 	local label = Instance.new("TextLabel")
 	label.BackgroundTransparency = 1
@@ -339,12 +426,11 @@ local function makeArmyVisual(army)
 	label.Font = Enum.Font.GothamBold
 	label.TextScaled = true
 	label.TextColor3 = color
-	label.TextStrokeTransparency = 0.2
-	label.Text = classInfo.Label
+	label.TextStrokeTransparency = 0.15
+	label.Text = classInfo.Short .. "  " .. classInfo.Label
 	label.Parent = billboard
 	army.Model = model
 end
-
 local function syncArmyVisual(army)
 	if not army.Model or not army.Model.Parent then return end
 	local model = army.Model
@@ -364,14 +450,33 @@ local function syncArmyVisual(army)
 end
 
 local function createArmy(player, armyType)
-	if workspace:GetAttribute("MatchActive") ~= true or matchEnded then return nil, "MATCH_NOT_ACTIVE" end
+	if workspace:GetAttribute("MatchActive") ~= true or matchEnded then
+		return nil, "MATCH_NOT_ACTIVE"
+	end
 	local team = findTeamForPlayer(player)
 	local info = Config.ArmyTypes[armyType]
-	if not info or teamSupplies[team] < info.Cost then return nil, "INSUFFICIENT SUPPLIES" end
+	if not info then
+		return nil, "UNKNOWN_ARMY"
+	end
+	if teamSupplies[team] < info.Cost then
+		return nil, "NEED_" .. tostring(info.Cost) .. "_SUPPLIES"
+	end
+
 	teamSupplies[team] -= info.Cost
 	nextArmyId += 1
-	local spawnBase = selectedMap.Spawns[team] or Vector3.new(0, ARMY_Y, 0)
-	local spawnPosition = Vector3.new(spawnBase.X, ARMY_Y, spawnBase.Z)
+
+	local rootPart = playerRoot(player)
+	local spawnBase = rootPart and rootPart.Position or selectedMap.Spawns[team] or Vector3.new(0, ARMY_Y, 0)
+	local slot = ((nextArmyId - 1) % 5) + 1
+	local spawnOffset = {
+		Vector3.new(8, 0, 0),
+		Vector3.new(-8, 0, 0),
+		Vector3.new(0, 0, 8),
+		Vector3.new(0, 0, -8),
+		Vector3.new(10, 0, 10),
+	}[slot]
+	local spawnPosition = Vector3.new(spawnBase.X + spawnOffset.X, ARMY_Y, spawnBase.Z + spawnOffset.Z)
+
 	local army = {
 		Id = nextArmyId,
 		Owner = player,
@@ -388,9 +493,15 @@ local function createArmy(player, armyType)
 	armies[army.Id] = army
 	makeArmyVisual(army)
 	playerSelectedArmy[player] = army.Id
+
+	feedbackRemote:FireClient(player, "ARMY_CREATED", {
+		ArmyId = army.Id,
+		ArmyType = armyType,
+		Cost = info.Cost,
+		Supplies = teamSupplies[team],
+	})
 	return army
 end
-
 local function armyOwnedBy(player, armyId)
 	local army = armies[armyId]
 	return army and army.Owner == player and army.Model and army.Model.Parent
@@ -542,7 +653,10 @@ commandRemote.OnServerEvent:Connect(function(player, action, payload)
 	if action == "RequestArmy" then
 		local armyType = payload.ArmyType
 		if type(armyType) ~= "string" then return end
-		createArmy(player, armyType)
+		local army, reason = createArmy(player, armyType)
+		if not army then
+			feedbackRemote:FireClient(player, "ARMY_FAILED", {Reason = reason or "UNAVAILABLE"})
+		end
 		return
 	end
 
