@@ -41,12 +41,12 @@
             "CanCollide": true,
             "Size": [
               740,
-              12,
+              2,
               12
             ],
             "Position": [
               -1100,
-              -7,
+              0,
               736
             ],
             "Color": [
@@ -69,12 +69,12 @@
             "CanCollide": true,
             "Size": [
               740,
-              12,
+              2,
               12
             ],
             "Position": [
               -1100,
-              -7,
+              0,
               1464
             ],
             "Color": [
@@ -97,12 +97,12 @@
             "CanCollide": true,
             "Size": [
               12,
-              12,
+              2,
               740
             ],
             "Position": [
               -736,
-              -7,
+              0,
               1100
             ],
             "Color": [
@@ -125,12 +125,12 @@
             "CanCollide": true,
             "Size": [
               12,
-              12,
+              2,
               740
             ],
             "Position": [
               -1464,
-              -7,
+              0,
               1100
             ],
             "Color": [
@@ -12083,21 +12083,110 @@
           10
         ],
         "Position": [
-          -1100,
+          -1015,
           1,
-          1415
+          1160
         ],
         "Color": [
-          0.8549,
-          0.6941,
-          0.3216
+          0.78,
+          0.63,
+          0.32
         ],
-        "Material": "Neon",
-        "Transparency": 0.5,
+        "Material": "Cobblestone",
+        "Transparency": 0.18,
         "Shape": "Block",
         "TopSurface": "Smooth",
         "BottomSurface": "Smooth"
-      }
+      },
+      "Children": [
+        {
+          "Name": "RegionHeader",
+          "ClassName": "BillboardGui",
+          "Properties": {
+            "Size": [
+              [
+                0,
+                190
+              ],
+              [
+                0,
+                54
+              ]
+            ],
+            "StudsOffset": [
+              0,
+              6,
+              0
+            ],
+            "AlwaysOnTop": false,
+            "LightInfluence": 0,
+            "MaxDistance": 110
+          },
+          "Children": [
+            {
+              "Name": "Title",
+              "ClassName": "TextLabel",
+              "Properties": {
+                "Size": [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    0.6,
+                    0
+                  ]
+                ],
+                "BackgroundTransparency": 1,
+                "Font": "GothamBlack",
+                "TextScaled": true,
+                "TextColor3": [
+                  0.9373,
+                  0.8863,
+                  0.7569
+                ],
+                "TextStrokeTransparency": 0.35,
+                "Text": "PALESTINE"
+              }
+            },
+            {
+              "Name": "Subtitle",
+              "ClassName": "TextLabel",
+              "Properties": {
+                "Position": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0.6,
+                    0
+                  ]
+                ],
+                "Size": [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    0.32,
+                    0
+                  ]
+                ],
+                "BackgroundTransparency": 1,
+                "Font": "GothamMedium",
+                "TextScaled": true,
+                "TextColor3": [
+                  0.7451,
+                  0.7294,
+                  0.6745
+                ],
+                "Text": "LEVANT • KINGDOMS REGION"
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "Name": "ReturnToLobby",
@@ -12106,23 +12195,50 @@
         "Anchored": true,
         "CanCollide": false,
         "Size": [
-          12,
+          10,
           1,
-          12
+          10
         ],
         "Position": [
-          -1100,
+          -1055,
           1,
-          1435
+          1200
         ],
         "Color": [
-          0.8549,
-          0.6941,
-          0.3216
+          0.28,
+          0.31,
+          0.29
         ],
-        "Material": "Neon",
-        "Transparency": 0.5,
+        "Material": "Cobblestone",
+        "Transparency": 0.18,
         "Shape": "Block",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+      }
+    },
+    {
+      "Name": "ArrivalPlaza",
+      "ClassName": "Part",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Size": [
+          38,
+          0.4,
+          30
+        ],
+        "Position": [
+          -1015,
+          0.15,
+          1160
+        ],
+        "Color": [
+          0.39,
+          0.37,
+          0.31
+        ],
+        "Material": "Cobblestone",
+        "Transparency": 0,
         "TopSurface": "Smooth",
         "BottomSurface": "Smooth"
       }
