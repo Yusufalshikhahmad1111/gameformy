@@ -77,6 +77,25 @@ local function prepareMap(mapId, display)
 			local province = castle.Name:sub(1, #castle.Name - 7)
 			castle:SetAttribute("Province", province)
 			castle:SetAttribute("CityName", province)
+			local keep = castle:FindFirstChild("Keep", true)
+			if keep and not keep:FindFirstChild("CityLabel") then
+				local gui = Instance.new("BillboardGui")
+				gui.Name = "CityLabel"
+				gui.Size = UDim2.fromOffset(180, 44)
+				gui.StudsOffset = Vector3.new(0, 11, 0)
+				gui.AlwaysOnTop = true
+				gui.MaxDistance = 280
+				gui.Parent = keep
+				local label = Instance.new("TextLabel")
+				label.BackgroundTransparency = 1
+				label.Size = UDim2.fromScale(1,1)
+				label.Font = Enum.Font.GothamBold
+				label.TextScaled = true
+				label.TextColor3 = Color3.fromRGB(239,226,193)
+				label.TextStrokeTransparency = .25
+				label.Text = province
+				label.Parent = gui
+			end
 			local gates = castle:FindFirstChild("Gates", true)
 			if gates then
 				for _, gate in ipairs(gates:GetChildren()) do
