@@ -2,6 +2,7 @@ local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local selectedMap = Config.Maps[Config.Game.MapId] or Config.Maps.Heartland
 local root = Workspace:WaitForChild("KingdomsConquest")
 local provinces = root:WaitForChild("Provinces")
 local terrain = root:WaitForChild("Terrain")
@@ -70,17 +71,18 @@ local function addCastleDetail(castle,isCentral)
 	end
 end
 
-addPath(Vector3.new(0,0,-58),Vector3.new(9,0.3,95),0)
-addPath(Vector3.new(-38,0,18),Vector3.new(80,0.3,9),math.rad(4))
-addPath(Vector3.new(42,0,18),Vector3.new(75,0.3,9),math.rad(-4))
-addPath(Vector3.new(0,0,58),Vector3.new(9,0.3,85),0)
+local center=selectedMap.Provinces[selectedMap.ProvinceOrder[math.ceil(#selectedMap.ProvinceOrder/2)]]
+if center then addPath(center.Position,Vector3.new(9,0.3,110),0) end
+addPath(Vector3.new(-45,0,18),Vector3.new(85,0.3,9),math.rad(4))
+addPath(Vector3.new(45,0,18),Vector3.new(85,0.3,9),math.rad(-4))
+addPath(Vector3.new(0,0,72),Vector3.new(9,0.3,90),0)
 
-for provinceName,_ in pairs(Config.Provinces) do
+for provinceName,_ in pairs(selectedMap.Provinces) do
 	local castle=provinces:FindFirstChild(provinceName.."_Castle")
 	if castle then addCastleDetail(castle,provinceName=="Central Keep") end
 end
 
-for _,data in pairs(Config.Provinces) do
+for _,data in pairs(selectedMap.Provinces) do
 	for i=1,4 do
 		local sign=data.Position+Vector3.new((i-2.5)*13,0,16+(i%2)*7)
 		addTree(sign,0.7+(i%2)*0.15)
@@ -96,7 +98,7 @@ end
 local marker=Instance.new("Part")
 marker.Name="CentralObjectiveMarker"
 marker.Size=Vector3.new(2,18,2)
-marker.Position=Vector3.new(0,10,-38)
+marker.Position=(center and center.Position or Vector3.new(0,0,0))+Vector3.new(0,10,-8)
 marker.Anchored=true
 marker.CanCollide=false
 marker.Material=Enum.Material.Neon
