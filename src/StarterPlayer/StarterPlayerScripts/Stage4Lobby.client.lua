@@ -53,6 +53,23 @@ end
 label(panel, "KINGDOMS CONQUEST", UDim2.fromScale(0.08, 0.07), UDim2.fromScale(0.84, 0.10), Enum.Font.GothamBold, Color3.fromRGB(238, 228, 205))
 label(panel, "MULTIPLAYER COMMAND", UDim2.fromScale(0.08, 0.16), UDim2.fromScale(0.84, 0.06), Enum.Font.GothamMedium, Color3.fromRGB(173, 168, 156))
 
+local function button(text, pos, size, callback)
+    local b = Instance.new("TextButton")
+    b.Position = pos
+    b.Size = size
+    b.Text = text
+    b.Font = Enum.Font.GothamBold
+    b.TextScaled = true
+    b.TextColor3 = Color3.fromRGB(236, 230, 214)
+    b.BackgroundColor3 = Color3.fromRGB(55, 61, 60)
+    b.AutoButtonColor = true
+    b.BorderSizePixel = 0
+    b.Parent = panel
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
+    b.MouseButton1Click:Connect(callback)
+    return b
+end
+
 local selectedMap = "Syria"
 local selectedTeams = 3
 
@@ -68,10 +85,19 @@ for i, item in ipairs(mapButtons) do
     local b = button(item.Text, UDim2.fromScale(0.08 + ((i-1)%2)*0.29, 0.30 + math.floor((i-1)/2)*0.075), UDim2.fromScale(0.26, 0.06), function()
         selectedMap = item.Id
         mapLabel.Text = "BATTLEFIELD  •  "..item.Text
+        mapInfo.Text = mapDetails[item.Id] or "SELECTED BATTLEFIELD"
         action:FireServer("SetMap", {MapId=selectedMap, TeamCount=selectedTeams})
     end)
     mapButtonRefs[item.Id] = b
 end
+
+local mapInfo = label(panel, "SELECT A BATTLEFIELD", UDim2.fromScale(0.08, 0.455), UDim2.fromScale(0.84, 0.045), Enum.Font.Gotham, Color3.fromRGB(175,170,160))
+local mapDetails = {
+    Syria = "LEVANT  •  12 CASTLES  •  MEDIUM",
+    SaudiArabia = "ARABIAN PENINSULA  •  12 CASTLES  •  HARD",
+    Palestine = "LEVANT  •  12 CASTLES  •  MEDIUM",
+    Europe = "EUROPE  •  16 CASTLES  •  EXPERT",
+}
 
 local teamsLabel = label(panel, "TEAMS  •  3", UDim2.fromScale(0.66, 0.30), UDim2.fromScale(0.26, 0.05), Enum.Font.GothamBold, Color3.fromRGB(222,191,117))
 local teamButtonRefs = {}
@@ -84,26 +110,11 @@ for i = 2, 4 do
     teamButtonRefs[i] = b
 end
 
+mapInfo.Text = mapDetails[selectedMap] or "SELECT A BATTLEFIELD"
+
 local partyText = label(panel, "NO PARTY", UDim2.fromScale(0.08, 0.52), UDim2.fromScale(0.84, 0.12), Enum.Font.GothamBold, Color3.fromRGB(218, 213, 202))
 local memberText = label(panel, "", UDim2.fromScale(0.08, 0.63), UDim2.fromScale(0.84, 0.12), Enum.Font.Gotham, Color3.fromRGB(190, 188, 181))
 local statusText = label(panel, "Connecting…", UDim2.fromScale(0.08, 0.75), UDim2.fromScale(0.84, 0.08), Enum.Font.GothamMedium, Color3.fromRGB(222, 191, 117))
-
-local function button(text, pos, size, callback)
-	local b = Instance.new("TextButton")
-	b.Position = pos
-	b.Size = size
-	b.Text = text
-	b.Font = Enum.Font.GothamBold
-	b.TextScaled = true
-	b.TextColor3 = Color3.fromRGB(236, 230, 214)
-	b.BackgroundColor3 = Color3.fromRGB(55, 61, 60)
-	b.AutoButtonColor = true
-	b.BorderSizePixel = 0
-	b.Parent = panel
-	Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
-	b.MouseButton1Click:Connect(callback)
-	return b
-end
 
 local createButton = button("CREATE PARTY", UDim2.fromScale(0.08, 0.82), UDim2.fromScale(0.26, 0.10), function()
 	action:FireServer("CreateParty")
@@ -144,6 +155,7 @@ local function render(s)
 	selectedMap = s.Party and s.Party.MapId or selectedMap
 	selectedTeams = s.Party and s.Party.TeamCount or selectedTeams
 	mapLabel.Text = "BATTLEFIELD  •  "..string.upper(selectedMap)
+	mapInfo.Text = mapDetails[selectedMap] or "SELECTED BATTLEFIELD"
 	teamsLabel.Text = "TEAMS  •  "..tostring(selectedTeams)
 	statusText.Text = s.Status or "Lobby ready"
 	backdrop.Visible = not s.MatchActive
