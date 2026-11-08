@@ -56,9 +56,11 @@ info.Parent=panel
 
 local function render(data)
  if not data then return end
- title.Text=data.Season.DisplayName
- info.Text=string.format("%s\nSeason XP: %d\nEnds: %s",data.Season.Theme,data.XP,os.date("!%Y-%m-%d",data.Season.EndUnix))
- badge.Text="SEASON • "..tostring(data.XP).." XP"
+ local s=data.Season or data
+ title.Text=s.DisplayName or "SEASON"
+ local ends=s.EndUnix and os.date("!%Y-%m-%d",s.EndUnix) or "-"
+ info.Text=string.format("%s\nSeason XP: %d\nEnds: %s",s.Theme or "",data.XP or 0,ends)
+ badge.Text="SEASON • "..tostring(data.XP or 0).." XP"
 end
 changed.OnClientEvent:Connect(render)
 local ok,data=pcall(function() return request:InvokeServer() end)
