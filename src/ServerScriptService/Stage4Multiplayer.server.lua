@@ -12,6 +12,7 @@ local RunService = game:GetService("RunService")
 
 local MAX_PARTY = 4
 local MAX_MATCH_PLAYERS = 8
+local AVAILABLE_MAPS = Config.MapPacks
 local QUEUE_EXPIRY = 35
 local RECONNECT_EXPIRY = 15 * 60
 local MATCH_TOPIC_PREFIX = "KC_MATCH_READY_"
@@ -114,6 +115,10 @@ local function newPartyCode()
 	return string.format("%06d", math.random(0, 999999))
 end
 
+local function defaultMapForParty(party)
+	return party and party.MapId or "Syria"
+end
+
 local function partyState(party)
 	if not party then return nil end
 	local members = {}
@@ -132,6 +137,8 @@ local function partyState(party)
 		LeaderUserId = party.LeaderUserId,
 		Members = members,
 		Queued = queuedParties[party.Id] == true,
+		MapId = party.MapId or "Syria",
+		TeamCount = party.TeamCount or (AVAILABLE_MAPS[party.MapId or "Syria"] and AVAILABLE_MAPS[party.MapId or "Syria"].DefaultTeamCount) or 2,
 	}
 end
 
@@ -165,6 +172,8 @@ local function createParty(player)
 		Id = id,
 		Code = newPartyCode(),
 		LeaderUserId = player.UserId,
+		MapId = "Syria",
+		TeamCount = AVAILABLE_MAPS.Syria.DefaultTeamCount,
 		Members = {[player.UserId] = true},
 	}
 	parties[id] = party
@@ -288,7 +297,10 @@ local function enqueueParty(party)
 	queuedParties[party.Id] = true
 	table.insert(localQueueOrder, party.Id)
 
+	local pack = AVAILABLE_MAPS[party.MapId or "Syria"] or AVAILABLE_MAPS.Syria
 	local ticket = {
+		MapId = party.MapId or pack.Id,
+		TeamCount = party.TeamCount or pack.DefaultTeamCount,
 		PartyId = party.Id,
 		Code = party.Code,
 		Nonce = nonce,
@@ -314,7 +326,7 @@ end
 
 local function assignTeams(playerIds, tickets)
 	local teams = {}
-	local teamCount = math.clamp(tonumber(Config.Game.TeamCount) or 2, 2, 4)
+	local teamCount = math.clamp(tonumber((tickets[1] and tickets[1].TeamCount) or Config.Game.TeamCount) or 2, 2, 4)
 	local team = 1
 	for _, ticket in ipairs(tickets) do
 		for _, userId in ipairs(ticket.PlayerUserIds) do
@@ -363,6 +375,8 @@ local function teleportPartyToMatch(payload)
 	options:SetTeleportData({
 		kcMatchId = payload.MatchId,
 		kcTeamMap = payload.TeamMap,
+		MapId = payload.MapId,
+		TeamCount = payload.TeamCount,
 		kcRejoin = false,
 	})
 
@@ -385,6 +399,8 @@ local function teleportPartyToMatch(payload)
 end
 
 local function publishMatch(selectedTickets)
+	local selectedMapId = (selectedTickets[1] and selectedTickets[1].MapId) or "Syria"
+	local selectedTeamCount = math.clamp(tonumber((selectedTickets[1] and selectedTickets[1].TeamCount) or 2) or 2, 2, 4)
 	local matchId = HttpService:GenerateGUID(false)
 	local reservedServerId = HttpService:GenerateGUID(false)
 	if matchDirectory then
@@ -401,6 +417,8 @@ local function publishMatch(selectedTickets)
 			PlaceId = game.PlaceId,
 			TeamId = nil,
 			ExpiresAt = os.time() + RECONNECT_EXPIRY,
+			MapId = selectedMapId,
+			TeamCount = selectedTeamCount,
 		}
 		for _, userId in ipairs(ticket.PlayerUserIds) do
 			reconnectData.TeamId = teamMap[tostring(userId)]
@@ -513,7 +531,15 @@ actionRemote.OnServerEvent:Connect(function(player, action, payload)
 	if type(action) ~= "string" then return end
 	payload = type(payload) == "table" and payload or {}
 
-	if action == "CreateParty" then
+	if action == "SetMap" then
+		local party = playerParty[player.UserId] and parties[playerParty[player.UserId]]
+		local mapId = tostring(payload.MapId or "")
+		if party and party.LeaderUserId == player.UserId and AVAILABLE_MAPS[mapId] then
+			party.MapId = mapId
+			party.TeamCount = math.clamp(tonumber(payload.TeamCount) or AVAILABLE_MAPS[mapId].DefaultTeamCount, 2, 4)
+			broadcastParty(party, "Battlefield selected • " .. AVAILABLE_MAPS[mapId].DisplayName)
+		end
+	elseif action == "CreateParty" then
 		createParty(player)
 	elseif action == "JoinParty" then
 		local ok, reason = joinParty(player, tostring(payload.Code or ""):sub(1, 6))
@@ -569,6 +595,8 @@ Players.PlayerAdded:Connect(function(player)
 	local teleportData = joinData and joinData.TeleportData
 	if type(teleportData) == "table" and teleportData.kcMatchId then
 		workspace:SetAttribute("MatchId", teleportData.kcMatchId)
+		if teleportData.MapId and AVAILABLE_MAPS[teleportData.MapId] then workspace:SetAttribute("KC_MapId", teleportData.MapId) end
+		if tonumber(teleportData.TeamCount) then workspace:SetAttribute("KC_TeamCount", math.clamp(tonumber(teleportData.TeamCount),2,4)) end
 		if type(teleportData.kcTeamMap) == "table" then
 			local teamId = teleportData.kcTeamMap[tostring(player.UserId)] or 1
 			player:SetAttribute("TeamId", teamId)
