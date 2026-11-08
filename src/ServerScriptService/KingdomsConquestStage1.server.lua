@@ -17,6 +17,10 @@ local commandRemote = Instance.new("RemoteEvent")
 commandRemote.Name = "Command"
 commandRemote.Parent = remotes
 
+local vfxRemote = Instance.new("RemoteEvent")
+vfxRemote.Name = "VFX"
+vfxRemote.Parent = remotes
+
 local stateRemote = Instance.new("RemoteEvent")
 stateRemote.Name = "State"
 stateRemote.Parent = remotes
@@ -50,6 +54,8 @@ local teamSupplies = {[1] = 60, [2] = 60}
 local armies = {}
 local playerSelectedArmy = {}
 local nextArmyId = 0
+local pingCooldown = {}
+local terrainZones = {}
 
 local provinceStates = {}
 for name, data in pairs(Config.Provinces) do
@@ -124,6 +130,7 @@ Lighting.FogColor = Color3.fromRGB(173, 184, 169)
 
 makePart(terrainFolder, "WorldFloor", Vector3.new(300, 2, 300), Vector3.new(0, -1, 0), Color3.fromRGB(76, 105, 67), Enum.Material.Grass)
 local river = makePart(terrainFolder, "River", Vector3.new(24, 0.3, 300), Vector3.new(35, 0.1, 0), Color3.fromRGB(72, 125, 154), Enum.Material.Glass)
+terrainZones.River = {Center = Vector3.new(35,0,0), HalfX = 12, HalfZ = 150, Speed = 0.55}
 river.Transparency = 0.35
 river.CanCollide = false
 
@@ -209,6 +216,16 @@ local function characterSpawn(player, character)
 	end
 end
 
+local function formationOffset(formation, index)
+	local offsets = {
+		Line = {Vector3.new(-6,0,-3),Vector3.new(-2,0,-3),Vector3.new(2,0,-3),Vector3.new(6,0,-3),Vector3.new(-4,0,2),Vector3.new(0,0,2),Vector3.new(4,0,2),Vector3.new(8,0,2)},
+		Wedge = {Vector3.new(0,0,-6),Vector3.new(-3,0,-2),Vector3.new(3,0,-2),Vector3.new(-6,0,2),Vector3.new(0,0,2),Vector3.new(6,0,2),Vector3.new(-9,0,6),Vector3.new(9,0,6)},
+		Column = {Vector3.new(0,0,-10),Vector3.new(0,0,-6),Vector3.new(0,0,-2),Vector3.new(0,0,2),Vector3.new(0,0,6),Vector3.new(0,0,10),Vector3.new(0,0,14),Vector3.new(0,0,18)},
+		Spread = {Vector3.new(-9,0,-5),Vector3.new(-3,0,-7),Vector3.new(3,0,-7),Vector3.new(9,0,-5),Vector3.new(-9,0,5),Vector3.new(-3,0,7),Vector3.new(3,0,7),Vector3.new(9,0,5)},
+	}
+	return offsets[formation] and offsets[formation][index] or offsets.Line[index]
+end
+
 local function makeArmyVisual(army)
 	local model = Instance.new("Model")
 	model.Name = "Army_" .. army.Id
@@ -255,6 +272,10 @@ local function syncArmyVisual(army)
 	if not army.Model or not army.Model.Parent then return end
 	local model = army.Model
 	model:PivotTo(CFrame.new(army.Position))
+	for _, unit in ipairs(model:GetChildren()) do
+		local index = unit:GetAttribute("FormationIndex")
+		if index then unit.Position = army.Position + formationOffset(army.Formation, index) end
+	end
 	local rootPart = model:FindFirstChild("Root")
 	if rootPart then
 		local label = rootPart:FindFirstChild("ArmyLabel")
@@ -400,6 +421,7 @@ local function attackTick(dt)
 						if army.Type == "Cavalry" and target.Type == "Archers" then multiplier = 1.35 end
 						if army.Type == "Archers" and target.Type == "Spearmen" then multiplier = 1.10 end
 						target.Health -= info.Damage * multiplier
+						vfxRemote:FireAllClients("Hit", target.Position, army.Type, target.Health <= 0)
 						army._cooldown = info.AttackCooldown
 						if target.Health <= 0 then removeArmy(target.Id) end
 					end
@@ -413,6 +435,16 @@ end
 
 commandRemote.OnServerEvent:Connect(function(player, action, payload)
 	if type(action) ~= "string" or type(payload) ~= "table" then return end
+	if action == "Ping" then
+		local now = os.clock()
+		if now - (pingCooldown[player] or 0) < 0.8 then return end
+		local p = payload.Position
+		if typeof(p) == "Vector3" and (p - Vector3.new(0,0,0)).Magnitude < 400 then
+			pingCooldown[player] = now
+			vfxRemote:FireAllClients("Ping", p, findTeamForPlayer(player), payload.Kind or "ATTACK")
+		end
+		return
+	end
 	if action == "RequestArmy" then
 		local armyType = payload.ArmyType
 		if type(armyType) ~= "string" then return end
@@ -547,7 +579,7 @@ RunService.Heartbeat:Connect(function(dt)
 		local info = Config.ArmyTypes[army.Type]
 		local distance = (army.TargetPosition - army.Position).Magnitude
 		if distance > 0.5 then
-			local step = info.MoveSpeed * dt
+			local step = info.MoveSpeed * terrainMultiplier(army.Position) * dt
 			local nextPos = distance <= step and army.TargetPosition or army.Position:Lerp(army.TargetPosition, step / distance)
 			army.Position = Vector3.new(nextPos.X, 6, nextPos.Z)
 			syncArmyVisual(army)
@@ -578,4 +610,4 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 end)
 
-print("[KingdomsConquest] Stage 1 vertical slice initialized.")
+print("[KingdomsConquest] Stage 2 combat-quality slice initialized.")
