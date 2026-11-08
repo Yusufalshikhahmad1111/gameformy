@@ -11,6 +11,7 @@ local stateRemote = remotes:WaitForChild("State")
 local requestState = remotes:WaitForChild("RequestState")
 
 local isTouch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+local enteredLobby = false
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "KingdomsStage4Lobby"
@@ -26,6 +27,7 @@ backdrop.BackgroundColor3 = Color3.fromRGB(12, 16, 15)
 backdrop.BackgroundTransparency = 0.12
 backdrop.BorderSizePixel = 0
 backdrop.Parent = gui
+backdrop.Visible = false
 
 local panel = Instance.new("Frame")
 panel.Name = "Panel"
@@ -215,7 +217,7 @@ local function render(s)
     statusText.Text = s.Status or "Lobby ready"
 
     local active = s.MatchActive == true
-    backdrop.Visible = not active
+    backdrop.Visible = enteredLobby and not active
 
     if active then
         return
@@ -240,6 +242,24 @@ local function render(s)
 end
 
 stateRemote.OnClientEvent:Connect(render)
+
+local function bindLobbyEntrance()
+	local entrance = workspace:WaitForChild("KingdomsLobbyEntrance", 20)
+	if not entrance then return end
+	local prompt = entrance:FindFirstChild("EnterKingdomsPrompt", true)
+	if not prompt then return end
+	prompt.Triggered:Connect(function(triggeringPlayer)
+		if triggeringPlayer == player then
+			enteredLobby = true
+			local ok, current = pcall(function()
+				return requestState:InvokeServer()
+			end)
+			if ok then render(current) else backdrop.Visible = true end
+		end
+	end)
+end
+
+task.defer(bindLobbyEntrance)
 
 local ok, state = pcall(function()
     return requestState:InvokeServer()
