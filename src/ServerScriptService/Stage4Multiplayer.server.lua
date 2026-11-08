@@ -433,6 +433,8 @@ local function publishMatch(selectedTickets)
 			MatchId = matchId,
 			ReservedServerId = reservedServerId,
 			TeamMap = teamMap,
+			MapId = selectedMapId,
+			TeamCount = selectedTeamCount,
 		}
 		local topic = topicForJob(ticket.JobId)
 		pcall(function()
@@ -451,13 +453,14 @@ local function processMemoryQueue()
 	local selected = {}
 	local totalPlayers = 0
 
+	local targetMap = items[1].MapId or "Syria"
+	local targetTeams = tonumber(items[1].TeamCount) or 2
 	for _, ticket in ipairs(items) do
 		local size = tonumber(ticket.PartySize) or #(ticket.PlayerUserIds or {})
-		if size <= MAX_PARTY and totalPlayers + size <= MAX_MATCH_PLAYERS then
-			if #selected == 0 or totalPlayers + size <= MAX_MATCH_PLAYERS then
-				table.insert(selected, ticket)
-				totalPlayers += size
-			end
+		local sameMode = (ticket.MapId or "Syria") == targetMap and (tonumber(ticket.TeamCount) or 2) == targetTeams
+		if sameMode and size <= MAX_PARTY and totalPlayers + size <= MAX_MATCH_PLAYERS then
+			table.insert(selected, ticket)
+			totalPlayers += size
 		end
 		if totalPlayers >= MAX_MATCH_PLAYERS then break end
 	end
