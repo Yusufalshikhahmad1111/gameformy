@@ -103,7 +103,20 @@ for name, data in pairs(selectedMap.Provinces) do
 	provinceStates[name] = {Owner=initialOwner(data), CaptureTeam=0, CaptureProgress=0, Income=data.Income, Strategic=data.Strategic}
 end
 
-local WORLD_HALF_EXTENT = 350
+local function computeWorldHalfExtent(map)
+	local maximum = 180
+	for _, data in pairs(map.Provinces or {}) do
+		maximum = math.max(maximum, math.abs(data.Position.X), math.abs(data.Position.Z))
+	end
+	for _, position in pairs(map.Spawns or {}) do
+		if typeof(position) == "Vector3" then
+			maximum = math.max(maximum, math.abs(position.X), math.abs(position.Z))
+		end
+	end
+	return math.max(350, math.ceil((maximum + 90) / 50) * 50)
+end
+
+local WORLD_HALF_EXTENT = computeWorldHalfExtent(selectedMap)
 local ARMY_Y = 3
 
 local function makePart(parent, name, size, position, color, material)
