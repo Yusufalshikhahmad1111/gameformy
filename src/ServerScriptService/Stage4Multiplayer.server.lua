@@ -60,6 +60,12 @@ local localQueueOrder = {}
 local pendingMatch = {}
 local reconnectMap = nil
 local matchmakingQueue = nil
+local rematchSignal = ReplicatedStorage:FindFirstChild("KingdomsRematchRequest")
+if not rematchSignal then
+	rematchSignal = Instance.new("BindableEvent")
+	rematchSignal.Name = "KingdomsRematchRequest"
+	rematchSignal.Parent = ReplicatedStorage
+end
 
 pcall(function()
 	reconnectMap = MemoryStoreService:GetHashMap(RECONNECT_MAP_NAME)
@@ -237,6 +243,34 @@ local function playerIdsForParty(party)
 	return ids
 end
 
+local function ensurePartyForRematch(player)
+	if playerParty[player.UserId] then
+		return parties[playerParty[player.UserId]]
+	end
+	local teamId = player:GetAttribute("TeamId") or 1
+	local id = HttpService:GenerateGUID(false)
+	local party = {
+		Id = id,
+		Code = newPartyCode(),
+		LeaderUserId = player.UserId,
+		Members = {[player.UserId] = true},
+	}
+	parties[id] = party
+	playerParty[player.UserId] = id
+
+	-- Rebuild a rematch party from current-match teammates, capped at four.
+	for _, candidate in ipairs(Players:GetPlayers()) do
+		if candidate ~= player and (candidate:GetAttribute("TeamId") or 0) == teamId and not playerParty[candidate.UserId] then
+			local count = 0
+			for _ in pairs(party.Members) do count += 1 end
+			if count >= MAX_PARTY then break end
+			party.Members[candidate.UserId] = true
+			playerParty[candidate.UserId] = party.Id
+		end
+	end
+	return party
+end
+
 local function enqueueParty(party)
 	if not party then return false, "NO_PARTY" end
 	if party.LeaderUserId == 0 then return false, "NO_LEADER" end
@@ -336,6 +370,7 @@ local function teleportPartyToMatch(payload)
 	end)
 	if ok then
 		removeFromQueue(party.Id)
+		pendingMatch[payload.MatchId].PartyId = party.Id
 		broadcastParty(party, "Teleporting to battle…")
 	else
 		warn("[KingdomsConquest][Stage4] Teleport failed:", err)
@@ -576,7 +611,29 @@ end
 
 TeleportService.TeleportInitFailed:Connect(function(player, result, errorMessage)
 	warn("[KingdomsConquest][Stage4] TeleportInitFailed:", player.Name, result, errorMessage)
-	sendState(player, "Teleport failed • queued state preserved")
+	local partyId = playerParty[player.UserId]
+	local party = partyId and parties[partyId]
+	if party and not queuedParties[party.Id] then
+		queuedParties[party.Id] = true
+		table.insert(localQueueOrder, party.Id)
+		partyQueueNonce[party.Id] = (partyQueueNonce[party.Id] or 0) + 1
+	end
+	sendState(player, "Teleport failed • re-queued")
+end)
+
+rematchSignal.Event:Connect(function(player)
+	if not player or not player:IsDescendantOf(Players) then return end
+	if workspace:GetAttribute("MatchActive") == true then
+		sendState(player, "Finish the current match before rematching")
+		return
+	end
+	local party = ensurePartyForRematch(player)
+	if party.LeaderUserId == player.UserId then
+		local ok, reason = enqueueParty(party)
+		if not ok then broadcastParty(party, "Rematch queue failed • " .. reason) end
+	else
+		broadcastParty(party, "Rematch party ready • leader is queuing")
+	end
 end)
 
 print("[KingdomsConquest] Stage 4 multiplayer/social initialized.")
