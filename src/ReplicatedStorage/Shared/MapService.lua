@@ -26,7 +26,7 @@ local function build(pack)
 
     for _, city in ipairs(pack.Cities or {}) do
         table.insert(map.ProvinceOrder, city.Id)
-        local position = Vector3.new(city.X, 0, city.Z)
+        local position = Vector3.new(city.X * WORLD_SCALE, 0, city.Z * WORLD_SCALE)
         map.Cities[city.Id] = city
         map.Provinces[city.Id] = {
             Index = #map.ProvinceOrder,
@@ -58,7 +58,7 @@ function MapService.GetMap(mapId, teamCount)
         -- Remaining nodes stay neutral until players capture them.
         for index, cityId in ipairs(cache[cacheKey].ProvinceOrder) do
             if index <= teamCount then
-                cache[cacheKey].Provinces[cityId].StartingOwners = {[index] = 1}
+                cache[cacheKey].Provinces[cityId].StartingOwners = {[teamCount] = index}
             else
                 cache[cacheKey].Provinces[cityId].StartingOwners = {}
             end
