@@ -13,11 +13,6 @@ gui.ResetOnSpawn=false
 gui.IgnoreGuiInset=true
 gui.DisplayOrder=95
 gui.Parent=player:WaitForChild("PlayerGui")
-gui.Enabled = workspace:GetAttribute("MatchActive") == true
-workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
-	gui.Enabled = workspace:GetAttribute("MatchActive") == true
-	if not gui.Enabled then panel.Visible = false end
-end)
 
 local badge=Instance.new("TextButton")
 badge.AnchorPoint=Vector2.new(1,0)
@@ -42,6 +37,11 @@ panel.Visible=false
 badge.Activated:Connect(function() panel.Visible=not panel.Visible end)
 panel.Parent=gui
 Instance.new("UICorner",panel).CornerRadius=UDim.new(0,12)
+gui.Enabled = workspace:GetAttribute("MatchActive") == true
+workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
+	gui.Enabled = workspace:GetAttribute("MatchActive") == true
+	if not gui.Enabled then panel.Visible = false end
+end)
 
 local title=Instance.new("TextLabel")
 title.BackgroundTransparency=1
