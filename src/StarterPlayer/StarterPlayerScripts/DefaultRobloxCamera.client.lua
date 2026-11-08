@@ -9,7 +9,6 @@ local player = Players.LocalPlayer
 
 local function restoreDefaultCamera(character)
 	player.CameraMode = Enum.CameraMode.Classic
-	player.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode.Zoom
 
 	local humanoid = character:FindFirstChildOfClass("Humanoid") or character:WaitForChild("Humanoid", 10)
 	local camera = Workspace.CurrentCamera
