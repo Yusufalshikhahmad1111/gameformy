@@ -4064,15 +4064,15 @@
           "ClassName": "Part",
           "Properties": {
             "Anchored": true,
-            "CanCollide": true,
+            "CanCollide": false,
             "Size": [
-              52,
-              2,
-              52
+              42,
+              0.2,
+              42
             ],
             "Position": [
               -1100,
-              2,
+              0.1,
               -916
             ],
             "Color": [
@@ -4081,7 +4081,7 @@
               0.2667
             ],
             "Material": "Grass",
-            "Transparency": 0.28,
+            "Transparency": 0.45,
             "Shape": "Block",
             "TopSurface": "Smooth",
             "BottomSurface": "Smooth"
@@ -4776,15 +4776,15 @@
           "ClassName": "Part",
           "Properties": {
             "Anchored": true,
-            "CanCollide": true,
+            "CanCollide": false,
             "Size": [
               42,
-              2,
+              0.2,
               42
             ],
             "Position": [
               -984,
-              2,
+              0.1,
               -1284
             ],
             "Color": [
@@ -4793,7 +4793,7 @@
               0.2667
             ],
             "Material": "Grass",
-            "Transparency": 0.28,
+            "Transparency": 0.45,
             "Shape": "Block",
             "TopSurface": "Smooth",
             "BottomSurface": "Smooth"
@@ -5488,15 +5488,15 @@
           "ClassName": "Part",
           "Properties": {
             "Anchored": true,
-            "CanCollide": true,
+            "CanCollide": false,
             "Size": [
               42,
-              2,
+              0.2,
               42
             ],
             "Position": [
               -1116,
-              2,
+              0.1,
               -1124
             ],
             "Color": [
@@ -5505,7 +5505,7 @@
               0.2667
             ],
             "Material": "Grass",
-            "Transparency": 0.28,
+            "Transparency": 0.45,
             "Shape": "Block",
             "TopSurface": "Smooth",
             "BottomSurface": "Smooth"
@@ -6200,15 +6200,15 @@
           "ClassName": "Part",
           "Properties": {
             "Anchored": true,
-            "CanCollide": true,
+            "CanCollide": false,
             "Size": [
               42,
-              2,
+              0.2,
               42
             ],
             "Position": [
               -1196,
-              2,
+              0.1,
               -1196
             ],
             "Color": [
@@ -6217,7 +6217,7 @@
               0.2667
             ],
             "Material": "Grass",
-            "Transparency": 0.28,
+            "Transparency": 0.45,
             "Shape": "Block",
             "TopSurface": "Smooth",
             "BottomSurface": "Smooth"
@@ -6912,15 +6912,15 @@
           "ClassName": "Part",
           "Properties": {
             "Anchored": true,
-            "CanCollide": true,
+            "CanCollide": false,
             "Size": [
               42,
-              2,
+              0.2,
               42
             ],
             "Position": [
               -1324,
-              2,
+              0.1,
               -1264
             ],
             "Color": [
@@ -6929,7 +6929,7 @@
               0.2667
             ],
             "Material": "Grass",
-            "Transparency": 0.28,
+            "Transparency": 0.45,
             "Shape": "Block",
             "TopSurface": "Smooth",
             "BottomSurface": "Smooth"
@@ -7624,15 +7624,15 @@
           "ClassName": "Part",
           "Properties": {
             "Anchored": true,
-            "CanCollide": true,
+            "CanCollide": false,
             "Size": [
               42,
-              2,
+              0.2,
               42
             ],
             "Position": [
               -1284,
-              2,
+              0.1,
               -1160
             ],
             "Color": [
@@ -7641,7 +7641,7 @@
               0.2667
             ],
             "Material": "Grass",
-            "Transparency": 0.28,
+            "Transparency": 0.45,
             "Shape": "Block",
             "TopSurface": "Smooth",
             "BottomSurface": "Smooth"
@@ -8336,15 +8336,15 @@
           "ClassName": "Part",
           "Properties": {
             "Anchored": true,
-            "CanCollide": true,
+            "CanCollide": false,
             "Size": [
               42,
-              2,
+              0.2,
               42
             ],
             "Position": [
               -1244,
-              2,
+              0.1,
               -1284
             ],
             "Color": [
@@ -8353,7 +8353,7 @@
               0.2667
             ],
             "Material": "Grass",
-            "Transparency": 0.28,
+            "Transparency": 0.45,
             "Shape": "Block",
             "TopSurface": "Smooth",
             "BottomSurface": "Smooth"
@@ -9048,15 +9048,15 @@
           "ClassName": "Part",
           "Properties": {
             "Anchored": true,
-            "CanCollide": true,
+            "CanCollide": false,
             "Size": [
               42,
-              2,
+              0.2,
               42
             ],
             "Position": [
               -948,
-              2,
+              0.1,
               -1120
             ],
             "Color": [
@@ -9065,7 +9065,7 @@
               0.2667
             ],
             "Material": "Grass",
-            "Transparency": 0.28,
+            "Transparency": 0.45,
             "Shape": "Block",
             "TopSurface": "Smooth",
             "BottomSurface": "Smooth"
@@ -9760,15 +9760,15 @@
           "ClassName": "Part",
           "Properties": {
             "Anchored": true,
-            "CanCollide": true,
+            "CanCollide": false,
             "Size": [
               42,
-              2,
+              0.2,
               42
             ],
             "Position": [
               -880,
-              2,
+              0.1,
               -1032
             ],
             "Color": [
@@ -9777,7 +9777,7 @@
               0.2667
             ],
             "Material": "Grass",
-            "Transparency": 0.28,
+            "Transparency": 0.45,
             "Shape": "Block",
             "TopSurface": "Smooth",
             "BottomSurface": "Smooth"
@@ -10472,15 +10472,15 @@
           "ClassName": "Part",
           "Properties": {
             "Anchored": true,
-            "CanCollide": true,
+            "CanCollide": false,
             "Size": [
               42,
-              2,
+              0.2,
               42
             ],
             "Position": [
               -884,
-              2,
+              0.1,
               -1284
             ],
             "Color": [
@@ -10489,7 +10489,7 @@
               0.2667
             ],
             "Material": "Grass",
-            "Transparency": 0.28,
+            "Transparency": 0.45,
             "Shape": "Block",
             "TopSurface": "Smooth",
             "BottomSurface": "Smooth"
@@ -11184,15 +11184,15 @@
           "ClassName": "Part",
           "Properties": {
             "Anchored": true,
-            "CanCollide": true,
+            "CanCollide": false,
             "Size": [
               42,
-              2,
+              0.2,
               42
             ],
             "Position": [
               -1144,
-              2,
+              0.1,
               -864
             ],
             "Color": [
@@ -11201,7 +11201,7 @@
               0.2667
             ],
             "Material": "Grass",
-            "Transparency": 0.28,
+            "Transparency": 0.45,
             "Shape": "Block",
             "TopSurface": "Smooth",
             "BottomSurface": "Smooth"
@@ -11896,15 +11896,15 @@
           "ClassName": "Part",
           "Properties": {
             "Anchored": true,
-            "CanCollide": true,
+            "CanCollide": false,
             "Size": [
               42,
-              2,
+              0.2,
               42
             ],
             "Position": [
               -1044,
-              2,
+              0.1,
               -876
             ],
             "Color": [
@@ -11913,7 +11913,7 @@
               0.2667
             ],
             "Material": "Grass",
-            "Transparency": 0.28,
+            "Transparency": 0.45,
             "Shape": "Block",
             "TopSurface": "Smooth",
             "BottomSurface": "Smooth"
