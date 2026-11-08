@@ -10,6 +10,9 @@ local stateRemote=remotes:WaitForChild("State")
 local requestState=remotes:WaitForChild("RequestState")
 local UITheme=require(ReplicatedStorage.Shared.UITheme)
 
+local stage4Remotes = ReplicatedStorage:WaitForChild("Stage4Remotes")
+local stage4StateRemote = stage4Remotes:WaitForChild("State")
+
 local lang="en"
 local state={}
 local selectedArmy=0
@@ -22,6 +25,7 @@ root.ResetOnSpawn=false
 root.IgnoreGuiInset=true
 root.DisplayOrder=100
 root.Parent=player:WaitForChild("PlayerGui")
+root.Enabled = false
 
 local function frame(parent,pos,size,color,trans)
  local x=Instance.new("Frame"); x.Position=pos; x.Size=size; x.BackgroundColor3=color; x.BackgroundTransparency=trans or 0; x.BorderSizePixel=0; x.Parent=parent
@@ -179,5 +183,18 @@ local function render(s)
  end
 end
 stateRemote.OnClientEvent:Connect(render)
+
+stage4StateRemote.OnClientEvent:Connect(function(s)
+ if type(s) ~= "table" then return end
+ root.Enabled = s.MatchActive == true
+end)
+
 local ok,s=pcall(function() return requestState:InvokeServer() end)
-if ok and s then render(s) end
+if ok and s then
+ render(s)
+ root.Enabled = Workspace:GetAttribute("MatchActive") == true
+end
+
+Workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
+ root.Enabled = Workspace:GetAttribute("MatchActive") == true
+end)
