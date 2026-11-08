@@ -80,8 +80,7 @@ supply.TextXAlignment=Enum.TextXAlignment.Right
 
 local context=frame(root,UDim2.fromScale(.03,.115),UDim2.fromScale(.27,.115),UITheme.Colors.Surface,.04)
 local contextTitle=text(context,UITheme.T(lang,"army"),UDim2.fromScale(.06,.08),UDim2.fromScale(.88,.25),Enum.Font.GothamBold,UITheme.Colors.Parchment)
-local contextBody=text(context,"SELECT AN ARMY
-Then choose a command below.",UDim2.fromScale(.06,.35),UDim2.fromScale(.88,.53),Enum.Font.Gotham,UITheme.Colors.Muted)
+local contextBody=text(context,"SELECT AN ARMY\nThen choose a command below.",UDim2.fromScale(.06,.35),UDim2.fromScale(.88,.53),Enum.Font.Gotham,UITheme.Colors.Muted)
 contextBody.TextWrapped=true
 
 local modeBar=frame(root,UDim2.fromScale(.27,.845),UDim2.fromScale(.46,.13),UITheme.Colors.Surface,.04)
@@ -238,6 +237,7 @@ end)
 
 local function render(s)
  state=s or state
+ selectedArmy=tonumber(s.SelectedArmy) or selectedArmy
  local team=s.Team or 0
  teamText.Text=UITheme.TeamName(team,lang).."  •  "..UITheme.T(lang,"territory").." "..tostring(s.Owned or 0).."/"..tostring(s.TotalProvinces or 0)
  supply.Text=UITheme.T(lang,"supplies").."  "..tostring(math.floor(s.Supplies or 0))
@@ -249,6 +249,9 @@ local function render(s)
  else
   hint.Text="ARMY #"..tostring(selectedArmy).."\n"..mode.." selected • click the world"
  end
+end
+if selectedArmy~=0 then
+ contextTitle.Text="ARMY #"..tostring(selectedArmy)
 end
  if s.MatchOver then
   announce((s.Winner==team and UITheme.T(lang,"victory") or UITheme.T(lang,"defeat")).."  •  "..tostring(s.MapId or "WORLD"))
