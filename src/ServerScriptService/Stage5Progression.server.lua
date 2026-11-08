@@ -94,14 +94,23 @@ local seasonChanged=Instance.new("RemoteEvent"); seasonChanged.Name="SeasonChang
 local seasonRequest=Instance.new("RemoteFunction"); seasonRequest.Name="RequestSeason"; seasonRequest.Parent=seasonRemotes
 local function activeSeason()
  local selected=workspace:GetAttribute("KC_SeasonId")
+ local candidate=nil
  if selected and selected~="" then
-  for _,s in ipairs(Config.Seasons) do if s.Id==selected then return s end end
+  for _,s in ipairs(Config.Seasons) do if s.Id==selected then candidate=s break end end
  end
- return Config.Seasons[1]
+ candidate=candidate or Config.Seasons[1]
+ if not candidate then return nil end
+ local now=os.time()
+ local finish=candidate.StartUnix + candidate.DurationSeconds
+ if now < candidate.StartUnix or now >= finish then return nil end
+ return candidate
 end
 local function seasonPublic(d)
  local s=activeSeason()
- return {Id=s and s.Id or "",DisplayName=s and s.DisplayName or "OFF SEASON",Theme=s and s.Theme or "",XP=d.SeasonXP or 0,SeasonId=d.SeasonId or "",Rewards=s and s.Rewards or {}}
+ if not s then
+  return {Id="",DisplayName="OFF SEASON",Theme="",XP=0,SeasonId=d.SeasonId or "",EndUnix=0,Active=false,Rewards={}}
+ end
+ return {Id=s.Id,DisplayName=s.DisplayName,Theme=s.Theme,XP=d.SeasonXP or 0,SeasonId=d.SeasonId or "",EndUnix=s.StartUnix+s.DurationSeconds,Active=true,Rewards=s.Rewards or {}}
 end
 local function pushSeason(p)
  if profiles[p] then seasonChanged:FireClient(p,seasonPublic(profiles[p])) end
@@ -136,7 +145,7 @@ local resultEvent=ReplicatedStorage:WaitForChild("KingdomsMatchResult",10)
 if resultEvent then resultEvent.Event:Connect(function(winner,_,duration)
  for _,p in ipairs(Players:GetPlayers()) do
   local d=profiles[p]; if d then local team=p:GetAttribute("TeamId") or 0; d.Matches+=1
-   if team~=0 and team==winner then d.Wins+=1; d.CurrentStreak+=1; d.BestStreak=math.max(d.BestStreak,d.CurrentStreak); d.Coins+=250; awardXP(p,300,"win"); awardSeason(p,Config.Seasons[1] and Config.Seasons[1].XPPerWin or 100); if d.Wins==1 then unlock(p,"First_Victory") end; if d.Wins>=10 then unlock(p,"Warlord") end
+   if team~=0 and team==winner then d.Wins+=1; d.CurrentStreak+=1; d.BestStreak=math.max(d.BestStreak,d.CurrentStreak); d.Coins+=250; awardXP(p,300,"win"); awardSeason(p,(activeSeason() and activeSeason().XPPerWin) or 100); if d.Wins==1 then unlock(p,"First_Victory") end; if d.Wins>=10 then unlock(p,"Warlord") end
    else d.Losses+=1; d.CurrentStreak=0; awardXP(p,100,"match"); awardSeason(p,25) end
    if duration and duration>0 and (d.BestMatchSeconds==0 or duration<d.BestMatchSeconds) then d.BestMatchSeconds=duration end
    dirtyMark(p); analytics(p,"KC_Match_Complete",team==winner and 1 or 0)
