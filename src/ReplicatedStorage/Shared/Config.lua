@@ -113,7 +113,18 @@ Config.Seasons = {
 Config.MapPacks = {
     Syria = {
         Id="Syria", DisplayName="SYRIA", Region="Levant", DefaultTeamCount=3,
+        Description="A dense Levantine campaign built around stone cities, fast inland routes and contested southern approaches.",
+        Difficulty="MEDIUM",
         VictoryRatio=0.58,
+        River = {Center=Vector3.new(40,0,0), HalfX=8, HalfZ=130, Speed=0.62, Size=Vector3.new(16,0.3,260)},
+        RiverCrossings = {"Homs","Raqqa"},
+        Art = {
+            Ground=Color3.fromRGB(120,107,79), Grass=Color3.fromRGB(88,107,68),
+            Stone=Color3.fromRGB(146,132,109), DarkStone=Color3.fromRGB(91,88,82),
+            Road=Color3.fromRGB(118,105,88), River=Color3.fromRGB(62,112,139),
+            Tree=Color3.fromRGB(61,91,52), Trunk=Color3.fromRGB(80,61,42),
+            BannerTrim=Color3.fromRGB(224,201,153), Theme="LEVANTINE_STONE"
+        },
         Spawns={[1]=Vector3.new(-105,3,-92),[2]=Vector3.new(105,3,-92),[3]=Vector3.new(0,3,108),[4]=Vector3.new(0,3,0)},
         Cities={
             {Id="Damascus",Name="Damascus",Province="Damascus",X=0,Z=92,Capital=true,Income=12},
@@ -138,7 +149,18 @@ Config.MapPacks = {
     },
     SaudiArabia = {
         Id="SaudiArabia", DisplayName="SAUDI ARABIA", Region="Arabian Peninsula", DefaultTeamCount=4,
+        Description="An open desert campaign where long roads, city hubs and fortified crossings create wide flanking routes.",
+        Difficulty="HARD",
         VictoryRatio=0.56,
+        River = {Center=Vector3.new(84,0,4), HalfX=5, HalfZ=115, Speed=0.72, Size=Vector3.new(10,0.3,230)},
+        RiverCrossings = {"Riyadh","Dammam"},
+        Art = {
+            Ground=Color3.fromRGB(171,139,91), Grass=Color3.fromRGB(140,119,71),
+            Stone=Color3.fromRGB(177,146,103), DarkStone=Color3.fromRGB(96,78,59),
+            Road=Color3.fromRGB(146,116,78), River=Color3.fromRGB(67,126,150),
+            Tree=Color3.fromRGB(71,102,54), Trunk=Color3.fromRGB(100,72,44),
+            BannerTrim=Color3.fromRGB(235,212,162), Theme="DESERT_SANDSTONE"
+        },
         Spawns={[1]=Vector3.new(-118,3,-88),[2]=Vector3.new(118,3,-88),[3]=Vector3.new(-118,3,94),[4]=Vector3.new(118,3,94)},
         Cities={
             {Id="Riyadh",Name="Riyadh",Province="Riyadh",X=0,Z=0,Capital=true,Income=14},
@@ -164,7 +186,18 @@ Config.MapPacks = {
     },
     Palestine = {
         Id="Palestine", DisplayName="PALESTINE", Region="Levant", DefaultTeamCount=3,
+        Description="A compact Mediterranean hill campaign where dense castle clusters make every route meaningful.",
+        Difficulty="MEDIUM",
         VictoryRatio=0.58,
+        River = {Center=Vector3.new(57,0,10), HalfX=6, HalfZ=120, Speed=0.66, Size=Vector3.new(12,0.3,240)},
+        RiverCrossings = {"Jerusalem","Jericho"},
+        Art = {
+            Ground=Color3.fromRGB(133,119,91), Grass=Color3.fromRGB(93,111,72),
+            Stone=Color3.fromRGB(181,170,143), DarkStone=Color3.fromRGB(96,91,84),
+            Road=Color3.fromRGB(132,119,102), River=Color3.fromRGB(61,112,142),
+            Tree=Color3.fromRGB(55,91,55), Trunk=Color3.fromRGB(83,61,43),
+            BannerTrim=Color3.fromRGB(229,211,173), Theme="MEDITERRANEAN_HILLS"
+        },
         Spawns={[1]=Vector3.new(-80,3,-100),[2]=Vector3.new(80,3,-100),[3]=Vector3.new(0,3,105),[4]=Vector3.new(0,3,0)},
         Cities={
             {Id="Jerusalem",Name="Jerusalem",Province="Jerusalem",X=0,Z=0,Capital=true,Income=13},
@@ -189,7 +222,18 @@ Config.MapPacks = {
     },
     Europe = {
         Id="Europe", DisplayName="EUROPE", Region="Europe", DefaultTeamCount=4,
+        Description="A broad continental theatre with many connected capitals, multiple fronts and high route density.",
+        Difficulty="EXPERT",
         VictoryRatio=0.50,
+        River = {Center=Vector3.new(2,0,5), HalfX=5, HalfZ=120, Speed=0.78, Size=Vector3.new(10,0.3,240)},
+        RiverCrossings = {"Berlin","Vienna","Rome"},
+        Art = {
+            Ground=Color3.fromRGB(112,119,91), Grass=Color3.fromRGB(70,100,69),
+            Stone=Color3.fromRGB(141,141,134), DarkStone=Color3.fromRGB(81,82,81),
+            Road=Color3.fromRGB(117,112,103), River=Color3.fromRGB(59,105,137),
+            Tree=Color3.fromRGB(56,83,58), Trunk=Color3.fromRGB(76,58,46),
+            BannerTrim=Color3.fromRGB(229,214,182), Theme="EUROPEAN_DIORAMA"
+        },
         Spawns={[1]=Vector3.new(-120,3,-105),[2]=Vector3.new(120,3,-105),[3]=Vector3.new(-120,3,105),[4]=Vector3.new(120,3,105)},
         Cities={
             {Id="London",Name="London",Province="United Kingdom",X=-100,Z=-70,Capital=true,Income=12},
