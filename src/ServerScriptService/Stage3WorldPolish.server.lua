@@ -61,12 +61,14 @@ local function addLandmark(castle, data)
 	local tier = castle:GetAttribute("CastleTier")
 	local keep=castle:FindFirstChild("Keep")
 	if not keep then return end
-	local towerCount = tier=="Capital" and 4 or tier=="Major" and 2 or 0
-	for i=1,towerCount do
-		local angle=math.rad((i-1)*360/towerCount+45)
-		local radius=tier=="Capital" and 18 or 15
-		make(castle,"ArtTower"..i,Vector3.new(5,12,5),keep.Position+Vector3.new(math.cos(angle)*radius,6,math.sin(angle)*radius),art.DarkStone or Color3.fromRGB(72,72,70),Enum.Material.Slate,false)
+
+	-- Stage 1 owns the playable castle geometry and its four real gate openings.
+	-- Stage 9 only adds presentation metadata here to avoid duplicate/out-of-footprint towers.
+	local existingTowers = castle:FindFirstChild("Towers")
+	if existingTowers then
+		existingTowers:SetAttribute("PresentationReady", true)
 	end
+
 	local banner=castle:FindFirstChild("Banner")
 	if banner then
 		banner:SetAttribute("CastleTier",tier)
