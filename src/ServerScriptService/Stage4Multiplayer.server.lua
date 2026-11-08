@@ -71,11 +71,13 @@ if not rematchSignal then
 	rematchSignal.Parent = ReplicatedStorage
 end
 
-pcall(function()
-	reconnectMap = MemoryStoreService:GetHashMap(RECONNECT_MAP_NAME)
-	matchmakingQueue = MemoryStoreService:GetQueue(QUEUE_NAME, 30)
-	matchDirectory = MemoryStoreService:GetHashMap("KingdomsConquest_MatchDirectory_v1")
-end)
+if not RunService:IsStudio() then
+	pcall(function()
+		reconnectMap = MemoryStoreService:GetHashMap(RECONNECT_MAP_NAME)
+		matchmakingQueue = MemoryStoreService:GetQueue(QUEUE_NAME, 30)
+		matchDirectory = MemoryStoreService:GetHashMap("KingdomsConquest_MatchDirectory_v1")
+	end)
+end
 
 local function safeSetReconnect(userId, data)
 	if not reconnectMap then return end
@@ -431,7 +433,7 @@ local function publishMatch(selectedTickets)
 			PartyId = ticket.PartyId,
 			Nonce = ticket.Nonce,
 			MatchId = matchId,
-			ReservedServerAccessCode = reservedServerAccessCode,
+			ReservedServerId = reservedServerId,
 			TeamMap = teamMap,
 			MapId = selectedMapId,
 			TeamCount = selectedTeamCount,
@@ -640,13 +642,15 @@ Players.PlayerRemoving:Connect(function(player)
 	playerParty[player.UserId] = nil
 end)
 
-pcall(function()
-	MessagingService:SubscribeAsync(topicForJob(game.JobId), function(message)
-		if type(message.Data) == "table" then
-			task.defer(teleportPartyToMatch, message.Data)
-		end
+if not RunService:IsStudio() then
+	pcall(function()
+		MessagingService:SubscribeAsync(topicForJob(game.JobId), function(message)
+			if type(message.Data) == "table" then
+				task.defer(teleportPartyToMatch, message.Data)
+			end
+		end)
 	end)
-end)
+end
 
 if not RunService:IsStudio() then
 	task.spawn(function()
@@ -686,4 +690,4 @@ rematchSignal.Event:Connect(function(player)
 	end
 end)
 
-print("[KingdomsConquest] Stage 4 multiplayer/social initialized.")
+print(string.format("[KingdomsConquest] Stage 4 multiplayer/social initialized | crossServer=%s | studio=%s", tostring(not RunService:IsStudio()), tostring(RunService:IsStudio())))
