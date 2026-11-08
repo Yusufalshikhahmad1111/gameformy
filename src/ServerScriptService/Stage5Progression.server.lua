@@ -1,11 +1,13 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local DataStoreService = game:GetService("DataStoreService")
 local AnalyticsService = game:GetService("AnalyticsService")
 local RateLimiter = require(ReplicatedStorage.Shared.RateLimiter)
 local Config = require(ReplicatedStorage.Shared.Config)
 
-local PROFILE_STORE = DataStoreService:GetDataStore("KC_PlayerProfiles_v1")
+local DATASTORE_ENABLED = not RunService:IsStudio()
+local PROFILE_STORE = DATASTORE_ENABLED and DataStoreService:GetDataStore("KC_PlayerProfiles_v1") or nil
 local PROFILE_VERSION = 2
 local SAVE_RETRIES = 3
 local AUTOSAVE_SECONDS = 90
@@ -59,7 +61,9 @@ local function unlock(p,id)
  d.Achievements[id]=true; d.Coins+=75; dirtyMark(p); analytics(p,"KC_Achievement",1)
 end
 local function save(p,reason)
- local d=profiles[p]; if not d or saving[p] then return false end; saving[p]=true; local snapshot=normalize(d); local ok=false
+ local d=profiles[p]; if not d or saving[p] then return false end
+ if not DATASTORE_ENABLED then dirty[p]=nil; return true end
+ saving[p]=true; local snapshot=normalize(d); local ok=false
  for attempt=1,SAVE_RETRIES do
   local success=pcall(function() PROFILE_STORE:UpdateAsync(key(p),function(old) local m=normalize(old); for k,v in pairs(snapshot) do m[k]=v end; m.Version=PROFILE_VERSION; return m end) end)
   if success then ok=true; break end; task.wait(attempt)
@@ -68,7 +72,17 @@ local function save(p,reason)
  saving[p]=nil; return ok
 end
 local function load(p)
- local raw; local ok=pcall(function() raw=PROFILE_STORE:GetAsync(key(p)) end); profiles[p]=normalize(ok and raw or nil); dirty[p]=false; p:SetAttribute("ProfileLoaded",true); p:SetAttribute("Level",profiles[p].Level); push(p)
+ local raw
+ local ok = true
+ if DATASTORE_ENABLED then
+  ok = pcall(function() raw=PROFILE_STORE:GetAsync(key(p)) end)
+ end
+ profiles[p]=normalize(ok and raw or nil)
+ dirty[p]=false
+ p:SetAttribute("ProfileLoaded",true)
+ p:SetAttribute("Level",profiles[p].Level)
+ p:SetAttribute("KC_StudioProfile", not DATASTORE_ENABLED)
+ push(p)
  if not ok then warn("[KingdomsConquest][Stage5] Profile load failed; safe defaults",p.UserId) end
 end
 local function claimDaily(p)
@@ -158,4 +172,4 @@ Players.PlayerRemoving:Connect(function(p) save(p,"PlayerRemoving"); profiles[p]
 task.spawn(function() while true do task.wait(AUTOSAVE_SECONDS); for p in pairs(profiles) do if dirty[p] then save(p,"Autosave") end end end end)
 game:BindToClose(function() for p in pairs(profiles) do task.spawn(function() save(p,"Shutdown") end) end; local deadline=os.clock()+25; while os.clock()<deadline do local busy=false; for _ in pairs(saving) do busy=true break end; if not busy then break end; task.wait(.1) end end)
 for _,p in ipairs(Players:GetPlayers()) do if profiles[p] then ensureSeason(p) end end
-print("[KingdomsConquest] Stage 5/7 progression, persistence and season profile initialized.")
+print(string.format("[KingdomsConquest] Stage 5/7 progression initialized | persistence=%s | studio=%s", tostring(DATASTORE_ENABLED), tostring(RunService:IsStudio())))
