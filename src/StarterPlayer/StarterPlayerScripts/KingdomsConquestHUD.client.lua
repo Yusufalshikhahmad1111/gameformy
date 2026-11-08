@@ -67,6 +67,13 @@ for i,f in ipairs({"Line","Wedge","Spread"}) do
  end)
 end
 
+local recruitBar=frame(root,UDim2.fromScale(.69,.355),UDim2.fromScale(.28,.09),UITheme.Colors.Surface,.04)
+for i,armyType in ipairs({"Spearmen","Archers","Cavalry"}) do
+ btn(recruitBar,armyType:upper(),UDim2.fromScale(.025+(i-1)*.325,.15),UDim2.fromScale(.30,.70),function()
+  command:FireServer("RequestArmy",{ArmyType=armyType})
+ end)
+end
+
 local info=frame(root,UDim2.fromScale(.03,.76),UDim2.fromScale(.22,.16),UITheme.Colors.Surface,.04)
 text(info,"",UDim2.fromScale(.08,.08),UDim2.fromScale(.84,.82),Enum.Font.GothamMedium,UITheme.Colors.Muted).Name="Hint"
 
@@ -120,11 +127,17 @@ local function clickWorld()
  local army=attributeUp(hit.Instance,"ArmyId")
  local province=attributeUp(hit.Instance,"Province")
  if army then
-  selectedArmy=tonumber(army) or 0
-  command:FireServer("SelectArmy",{ArmyId=selectedArmy})
-  contextTitle.Text=UITheme.T(lang,"army").." #"..tostring(selectedArmy)
-  contextBody.Text=UITheme.T(lang,"selectArmy").." • "..UITheme.T(lang,mode:lower())
-  announce("ARMY #"..tostring(selectedArmy).." SELECTED")
+  local targetId=tonumber(army) or 0
+  if mode=="Attack" and selectedArmy~=0 and targetId~=selectedArmy then
+   command:FireServer("Attack",{ArmyId=selectedArmy,TargetArmyId=targetId})
+   announce("ATTACK ORDER • ARMY #"..tostring(targetId))
+  else
+   selectedArmy=targetId
+   command:FireServer("SelectArmy",{ArmyId=selectedArmy})
+   contextTitle.Text=UITheme.T(lang,"army").." #"..tostring(selectedArmy)
+   contextBody.Text=UITheme.T(lang,"selectArmy").." • "..UITheme.T(lang,mode:lower())
+   announce("ARMY #"..tostring(selectedArmy).." SELECTED")
+  end
   return
  end
  if province then
