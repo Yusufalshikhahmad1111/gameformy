@@ -6,11 +6,11 @@ local RunService = game:GetService("RunService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 
-local DEFAULT_MAP = Config.Maps.Heartland and "Heartland" or next(Config.Maps)
+local DEFAULT_MAP = (Config.MapPacks and Config.MapPacks.Syria and "Syria") or (Config.Maps.Heartland and "Heartland" or next(Config.Maps))
 local DEFAULT_TEAMS = 2
 
 local function validMap(mapId)
-    return type(mapId) == "string" and Config.Maps[mapId] ~= nil
+    return type(mapId) == "string" and ((Config.MapPacks and Config.MapPacks[mapId] ~= nil) or Config.Maps[mapId] ~= nil)
 end
 
 local function validTeamCount(count)
