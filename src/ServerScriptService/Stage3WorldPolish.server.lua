@@ -93,7 +93,7 @@ for _,edge in ipairs(selectedMap.Edges or {}) do
 	local a=cities[edge[1]]
 	local b=cities[edge[2]]
 	if a and b then
-		addRoad(Vector3.new(a.X,0,a.Z),Vector3.new(b.X,0,b.Z),a.Capital or b.Capital and 9 or 7)
+		addRoad(Vector3.new(a.X,0,a.Z),Vector3.new(b.X,0,b.Z),(a.Capital or b.Capital) and 9 or 7)
 	end
 end
 
@@ -130,7 +130,7 @@ if selectedMap.River then
 	for _,crossingId in ipairs(pack and pack.RiverCrossings or {}) do
 		local city=cities[crossingId]
 		if city then
-			local bridge=make(accent,"Bridge_"..crossingId,Vector3.new(18,1,24),Vector3.new(city.X,1.0,city.Z),art.Stone or Color3.fromRGB(130,120,105),Enum.Material.WoodPlanks,false)
+			local bridge=make(accent,"Bridge_"..crossingId,Vector3.new(18,1,24),Vector3.new((selectedMap.River and selectedMap.River.Center.X) or city.X,1.0,city.Z),art.Stone or Color3.fromRGB(130,120,105),Enum.Material.WoodPlanks,false)
 			bridge:SetAttribute("CrossingCity",crossingId)
 		end
 	end
