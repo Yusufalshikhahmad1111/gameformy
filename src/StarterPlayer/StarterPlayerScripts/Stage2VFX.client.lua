@@ -2,7 +2,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 
-local remotes = ReplicatedStorage:WaitForChild("KingdomsRemotes")
+if workspace:GetAttribute("KC_RuntimeReady") ~= true then
+	workspace:GetAttributeChangedSignal("KC_RuntimeReady"):Wait()
+end
+local remotes = ReplicatedStorage:WaitForChild("KingdomsRemotes", 15)
+if not remotes then return end
 local vfx = remotes:WaitForChild("VFX")
 
 local function pulse(position, color, size, duration)
