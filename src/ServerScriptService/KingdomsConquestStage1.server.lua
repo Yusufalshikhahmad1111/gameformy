@@ -56,6 +56,20 @@ local playerSelectedArmy = {}
 local nextArmyId = 0
 local pingCooldown = {}
 local terrainZones = {}
+local matchStartedAt = 0
+local matchEnded = false
+local provinceCaptureEvent = ReplicatedStorage:FindFirstChild("KingdomsProvinceCaptured")
+if not provinceCaptureEvent then
+	provinceCaptureEvent = Instance.new("BindableEvent")
+	provinceCaptureEvent.Name = "KingdomsProvinceCaptured"
+	provinceCaptureEvent.Parent = ReplicatedStorage
+end
+local matchResultEvent = ReplicatedStorage:FindFirstChild("KingdomsMatchResult")
+if not matchResultEvent then
+	matchResultEvent = Instance.new("BindableEvent")
+	matchResultEvent.Name = "KingdomsMatchResult"
+	matchResultEvent.Parent = ReplicatedStorage
+end
 
 local function terrainMultiplier(position)
 	local river = terrainZones.River
@@ -182,6 +196,7 @@ end
 
 for name, data in pairs(Config.Provinces) do
 	local zone = makePart(provinceFolder, name .. "_Territory", data.Size, data.Position, Color3.fromRGB(94, 121, 78), Enum.Material.Grass)
+	zone:SetAttribute("Owner", data.Home)
 	zone.Transparency = 0.15
 	zone.CanCollide = true
 	zone:SetAttribute("Province", name)
@@ -353,58 +368,66 @@ local function updateProvinceVisual(name)
 	local gates = model:FindFirstChild("Gates")
 	if gates then for _, gate in ipairs(gates:GetChildren()) do gate.Color = color end end
 	local territory = provinceFolder:FindFirstChild(name .. "_Territory")
-	if territory then territory.Color = color:Lerp(Color3.fromRGB(92, 115, 80), 0.55) end
+	if territory then
+		territory.Color = color:Lerp(Color3.fromRGB(92, 115, 80), 0.55)
+		territory:SetAttribute("Owner", state.Owner)
+	end
 end
 
 local function captureTick(dt)
 	for name, state in pairs(provinceStates) do
-		if state.Owner ~= 0 then
-			local model = provinceFolder:FindFirstChild(name .. "_Castle")
-			local gates = model and model:FindFirstChild("Gates")
-			if gates then
-				local attackers = {}
-				local defenders = {}
-				for _, gate in ipairs(gates:GetChildren()) do
-					for _, player in ipairs(playersNearPosition(gate.Position, 9)) do
-						local team = findTeamForPlayer(player)
-						if team ~= state.Owner then
-							attackers[team] = true
-						else
-							defenders[team] = true
-						end
-					end
+		local model = provinceFolder:FindFirstChild(name .. "_Castle")
+		local gates = model and model:FindFirstChild("Gates")
+		if gates then
+			local presentTeams = {}
+			for _, gate in ipairs(gates:GetChildren()) do
+				for _, player in ipairs(playersNearPosition(gate.Position, 9)) do
+					presentTeams[findTeamForPlayer(player)] = true
 				end
-				local attackTeam = 0
-				for team in pairs(attackers) do attackTeam = team break end
-				if attackTeam ~= 0 then
-					local contested = defenders[state.Owner] == true or attackers[state.Owner] == true
-					if contested then
-						state.CaptureTeam = attackTeam
-						state.CaptureProgress = math.max(0, state.CaptureProgress - Config.Game.CaptureDecayPerSecond * dt)
-					else
-						if state.CaptureTeam ~= attackTeam then
-							state.CaptureTeam = attackTeam
-							state.CaptureProgress = 0
-						end
-						state.CaptureProgress += dt
-						if state.CaptureProgress >= Config.Game.CaptureSeconds then
-							state.Owner = attackTeam
-							state.CaptureTeam = 0
-							state.CaptureProgress = 0
-							updateProvinceVisual(name)
-						end
+			end
+
+			local activeTeam = 0
+			local teamCount = 0
+			for team in pairs(presentTeams) do
+				teamCount += 1
+				activeTeam = team
+			end
+
+			if teamCount == 1 then
+				local teamIsAttacker = state.Owner == 0 or activeTeam ~= state.Owner
+				if teamIsAttacker then
+					if state.CaptureTeam ~= activeTeam then
+						state.CaptureTeam = activeTeam
+						state.CaptureProgress = 0
+					end
+					state.CaptureProgress += dt
+					if state.CaptureProgress >= Config.Game.CaptureSeconds then
+						local oldOwner = state.Owner
+						state.Owner = activeTeam
+						state.CaptureTeam = 0
+						state.CaptureProgress = 0
+						updateProvinceVisual(name)
+						provinceCaptureEvent:Fire(name, activeTeam, oldOwner)
 					end
 				elseif state.CaptureProgress > 0 then
 					state.CaptureProgress = math.max(0, state.CaptureProgress - Config.Game.CaptureDecayPerSecond * dt)
 				end
+			elseif teamCount > 1 then
+				state.CaptureProgress = math.max(0, state.CaptureProgress - Config.Game.CaptureDecayPerSecond * dt)
+			elseif state.CaptureProgress > 0 then
+				state.CaptureProgress = math.max(0, state.CaptureProgress - Config.Game.CaptureDecayPerSecond * dt)
 			end
 		end
 	end
 end
 
 local function moveArmy(army, target)
-	army.TargetPosition = Vector3.new(target.X, 6, target.Z)
+	local flatTarget = Vector3.new(target.X, 6, target.Z)
+	if (flatTarget - army.Position).Magnitude > 260 then return false end
+	if math.abs(flatTarget.X) > 145 or math.abs(flatTarget.Z) > 145 then return false end
+	army.TargetPosition = flatTarget
 	army.AttackTarget = nil
+	return true
 end
 
 local function removeArmy(id)
@@ -479,7 +502,10 @@ commandRemote.OnServerEvent:Connect(function(player, action, payload)
 		army.TargetPosition = army.Position
 		army.AttackTarget = nil
 	elseif action == "Formation" then
-		if Config.Formations[payload.Formation] then army.Formation = payload.Formation end
+		if Config.Formations[payload.Formation] then
+			army.Formation = payload.Formation
+			syncArmyVisual(army)
+		end
 	elseif action == "Attack" then
 		local targetId = tonumber(payload.TargetArmyId)
 		local target = targetId and armies[targetId]
@@ -537,8 +563,27 @@ local function publishState()
 	end
 end
 
+local function finishMatch(winner, reason)
+	if matchEnded then return end
+	matchEnded = true
+	workspace:SetAttribute("MatchActive", false)
+	local duration = matchStartedAt > 0 and math.floor(os.clock() - matchStartedAt) or 0
+	local ownership = {}
+	for name, state in pairs(provinceStates) do
+		ownership[name] = state.Owner
+	end
+	matchResultEvent:Fire(winner, reason, duration, ownership)
+	stateRemote:FireAllClients({MatchOver=true, Winner=winner, Reason=reason, Duration=duration})
+end
+
 Players.PlayerAdded:Connect(function(player)
 	assignTeam(player)
+	if not matchStartedAt then matchStartedAt = 0 end
+	if matchStartedAt == 0 then
+		matchStartedAt = os.clock()
+		workspace:SetAttribute("MatchStartedAt", os.time())
+		workspace:SetAttribute("MatchActive", true)
+	end
 	player.CharacterAdded:Connect(function(character)
 		task.wait(0.2)
 		characterSpawn(player, character)
@@ -579,6 +624,7 @@ end)
 local broadcastClock = 0
 local captureClock = 0
 local attackClock = 0
+local resultClock = 0
 
 RunService.Heartbeat:Connect(function(dt)
 	captureClock += dt
@@ -609,15 +655,30 @@ RunService.Heartbeat:Connect(function(dt)
 		broadcastClock = 0
 	end
 
-	for team = 1, 2 do
-		local owned = 0
-		for _, state in pairs(provinceStates) do
-			if state.Owner == team then owned += 1 end
-		end
-		if owned >= Config.Game.VictoryTerritories then
-			stateRemote:FireAllClients({MatchOver=true, Winner=team, Owned=owned})
+	if not matchEnded and matchStartedAt > 0 then
+		resultClock += dt
+		if resultClock >= 1 then
+			resultClock = 0
+			local ownedCounts = {[1] = 0, [2] = 0}
+			for _, state in pairs(provinceStates) do
+				if state.Owner == 1 or state.Owner == 2 then ownedCounts[state.Owner] += 1 end
+			end
+			if ownedCounts[1] >= Config.Game.VictoryTerritories then
+				finishMatch(1, "territory_victory")
+			elseif ownedCounts[2] >= Config.Game.VictoryTerritories then
+				finishMatch(2, "territory_victory")
+			elseif os.clock() - matchStartedAt >= Config.Game.MatchLengthSeconds then
+				local winner = ownedCounts[1] == ownedCounts[2] and 0 or (ownedCounts[1] > ownedCounts[2] and 1 or 2)
+				finishMatch(winner, winner == 0 and "draw_time_limit" or "time_limit")
+			end
 		end
 	end
 end)
 
-print("[KingdomsConquest] Stage 2 combat-quality slice initialized.")
+if #Players:GetPlayers() > 0 and matchStartedAt == 0 then
+	matchStartedAt = os.clock()
+	workspace:SetAttribute("MatchStartedAt", os.time())
+	workspace:SetAttribute("MatchActive", true)
+end
+
+print("[KingdomsConquest] Stage 1/2 authoritative runtime initialized.")
