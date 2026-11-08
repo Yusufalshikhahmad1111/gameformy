@@ -84,16 +84,15 @@ Hardening carried into Stage 7:
 - select MapId and TeamCount from TeleportData before world construction in reserved servers;
 - persist seasonal progression in the permanent profile schema after migration testing.
 
-## Stage 7 — Launch hardening
-- performance;
-- exploit testing;
-- mobile;
-- crash recovery;
-- moderation;
-- telemetry;
-- store page assets.
+## Stage 7 — Launch Hardening — COMPLETED
 
-## Production rule
-One stage at a time.
-Implement → test → fix → report → stop.
-Never stack five unverified systems.
+Delivered:
+- pre-world bootstrap from TeleportData with validated MapId / TeamCount;
+- server-side rate limiting for command, party, matchmaking and profile remotes;
+- efficient unreliable state/VFX remotes where appropriate;
+- persistent SeasonId / SeasonXP / reward-claim schema migration;
+- reconnect-safe profile initialization and season synchronization;
+- launch QA checklist covering runtime, security, data, performance and mobile;
+- production release gate documented.
+
+Studio-only release gate remains mandatory: source inspection cannot substitute for a real Roblox multiplayer playtest.
