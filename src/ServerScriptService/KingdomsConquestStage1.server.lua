@@ -780,14 +780,18 @@ local function setupPlayer(player)
 	assignTeam(player)
 	player.CharacterAdded:Connect(function(character)
 		task.wait(0.2)
-		characterSpawn(player, character)
-		if workspace:GetAttribute("MatchActive") == true and not playerSelectedArmy[player] then
-			createArmy(player, "Spearmen")
+		-- The lobby owns pre-match spawning. Stage 1 only moves characters into
+		-- their battlefield spawn after the server explicitly activates a match.
+		if workspace:GetAttribute("MatchActive") == true then
+			characterSpawn(player, character)
+			if not playerSelectedArmy[player] then
+				createArmy(player, "Spearmen")
+			end
 		end
 	end)
-	if player.Character then
+	if player.Character and workspace:GetAttribute("MatchActive") == true then
 		characterSpawn(player, player.Character)
-		if workspace:GetAttribute("MatchActive") == true and not playerSelectedArmy[player] then
+		if not playerSelectedArmy[player] then
 			createArmy(player, "Spearmen")
 		end
 	end
