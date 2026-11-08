@@ -3,6 +3,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local ServerStorage = game:GetService("ServerStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 
@@ -44,14 +45,14 @@ local function applyMode(data)
     end
 end
 
-local firstPlayer = Players:GetPlayers()[1]
-if not firstPlayer then
-    firstPlayer = Players.PlayerAdded:Wait()
+local function readTeleportData()
+    local firstPlayer = Players:GetPlayers()[1]
+    if not firstPlayer then return nil end
+    local joinData = firstPlayer:GetJoinData()
+    return joinData and joinData.TeleportData
 end
 
-local joinData = firstPlayer:GetJoinData()
-local teleportData = joinData and joinData.TeleportData
-
+local teleportData = readTeleportData()
 applyMode(teleportData)
 workspace:SetAttribute("KC_BootstrapReady", true)
 
