@@ -20,7 +20,19 @@
     "Workspace": {
       "$className": "Workspace",
       "KingdomsLobbyEntrance": {
-        "$path": "assets/KingdomsLobbyEntrance.rbxmx"
+        "$path": "assets/KingdomsLobbyEntrance.model.json"
+      },
+      "Map_Syria": {
+        "$path": "assets/maps/Syria.model.json"
+      },
+      "Map_SaudiArabia": {
+        "$path": "assets/maps/SaudiArabia.model.json"
+      },
+      "Map_Palestine": {
+        "$path": "assets/maps/Palestine.model.json"
+      },
+      "Map_Europe": {
+        "$path": "assets/maps/Europe.model.json"
       }
     },
     "TextChatService": {
