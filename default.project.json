@@ -10,12 +10,24 @@
     },
     "StarterPlayer": {
       "$className": "StarterPlayer",
+      "$properties": {
+        "DevComputerCameraMovementMode": "UserChoice",
+        "DevTouchCameraMovementMode": "UserChoice",
+        "CameraMinZoomDistance": 0.5,
+        "CameraMaxZoomDistance": 128
+      },
       "StarterPlayerScripts": {
         "$path": "src/StarterPlayer/StarterPlayerScripts"
       }
     },
     "StarterGui": {
       "$className": "StarterGui"
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "KingdomsLobbyEntrance": {
+        "$path": "assets/KingdomsLobbyEntrance.model.json"
+      }
     }
   }
 }
