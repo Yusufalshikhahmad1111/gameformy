@@ -312,12 +312,13 @@ end
 
 local function assignTeams(playerIds, tickets)
 	local teams = {}
+	local teamCount = math.clamp(tonumber(Config.Game.TeamCount) or 2, 2, 4)
 	local team = 1
 	for _, ticket in ipairs(tickets) do
 		for _, userId in ipairs(ticket.PlayerUserIds) do
 			teams[tostring(userId)] = team
 		end
-		team = (team == 1) and 2 or 1
+		team = (team % teamCount) + 1
 	end
 	return teams
 end
@@ -329,7 +330,8 @@ local function activateLocalMatch(matchId, teamMap)
 		if player then
 			player:SetAttribute("TeamId", teamId)
 			local teams = game:GetService("Teams")
-			local teamObject = teams:FindFirstChild(teamId == 1 and "Crimson" or "Azure")
+			local configTeam = Config.Teams[teamId]
+			local teamObject = configTeam and teams:FindFirstChild(configTeam.Name)
 			if teamObject then
 				player.Team = teamObject
 				player.Neutral = false
@@ -568,7 +570,8 @@ Players.PlayerAdded:Connect(function(player)
 		if type(teleportData.kcTeamMap) == "table" then
 			local teamId = teleportData.kcTeamMap[tostring(player.UserId)] or 1
 			player:SetAttribute("TeamId", teamId)
-			local teamObject = game:GetService("Teams"):FindFirstChild(teamId == 1 and "Crimson" or "Azure")
+			local configTeam = Config.Teams[teamId]
+			local teamObject = configTeam and game:GetService("Teams"):FindFirstChild(configTeam.Name)
 			if teamObject then player.Team = teamObject player.Neutral = false end
 		end
 		workspace:SetAttribute("MatchActive", true)
