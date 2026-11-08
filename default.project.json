@@ -11,7 +11,16 @@
     "StarterPlayer": {
       "$className": "StarterPlayer",
       "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
         "$path": "src/StarterPlayer/StarterPlayerScripts"
+      },
+      "$properties": {
+        "CameraMode": "Classic",
+        "DevCameraOcclusionMode": "Zoom",
+        "CameraMinZoomDistance": 0.5,
+        "CameraMaxZoomDistance": 128,
+        "DevComputerCameraMovementMode": "UserChoice",
+        "DevTouchCameraMovementMode": "UserChoice"
       }
     },
     "StarterGui": {
