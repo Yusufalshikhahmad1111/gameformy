@@ -439,7 +439,7 @@ local function publishMatch(selectedTickets)
 			PartyId = ticket.PartyId,
 			Nonce = ticket.Nonce,
 			MatchId = matchId,
-			ReservedServerId = reservedServerId,
+			ReservedServerAccessCode = reservedServerAccessCode,
 			TeamMap = teamMap,
 			MapId = selectedMapId,
 			TeamCount = selectedTeamCount,
