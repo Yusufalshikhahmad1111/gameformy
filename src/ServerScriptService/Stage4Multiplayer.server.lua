@@ -55,6 +55,111 @@ if not lobbySpawn then
 	lobbySpawn.Parent = workspace
 end
 
+
+local lobbyEntrance = workspace:FindFirstChild("KingdomsLobbyEntrance")
+if lobbyEntrance then lobbyEntrance:Destroy() end
+
+local function lobbyPart(parent, name, size, position, color, material)
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Anchored = true
+	p.CanCollide = true
+	p.Size = size
+	p.Position = position
+	p.Color = color
+	p.Material = material or Enum.Material.Cobblestone
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	p.Parent = parent
+	return p
+end
+
+local function buildLobbyEntrance()
+	local model = Instance.new("Model")
+	model.Name = "KingdomsLobbyEntrance"
+	model.Parent = workspace
+	model:SetAttribute("LobbyEntrance", true)
+
+	local stone = Color3.fromRGB(108, 105, 96)
+	local darkStone = Color3.fromRGB(66, 65, 62)
+	local wood = Color3.fromRGB(96, 67, 43)
+	local gold = Color3.fromRGB(218, 177, 82)
+
+	lobbyPart(model, "Courtyard", Vector3.new(42, 1, 28), lobbySpawn.Position + Vector3.new(0, 1, -11), Color3.fromRGB(75, 81, 73), Enum.Material.Cobblestone)
+
+	local center = lobbySpawn.Position + Vector3.new(0, 0, 3)
+	lobbyPart(model, "LeftTower", Vector3.new(10, 18, 10), center + Vector3.new(-16, 9, 0), darkStone, Enum.Material.Slate)
+	lobbyPart(model, "RightTower", Vector3.new(10, 18, 10), center + Vector3.new(16, 9, 0), darkStone, Enum.Material.Slate)
+	lobbyPart(model, "Gatehouse", Vector3.new(22, 14, 7), center + Vector3.new(0, 7, 0), stone, Enum.Material.Cobblestone)
+
+	local door = lobbyPart(model, "GateDoor", Vector3.new(8, 10, 1.2), center + Vector3.new(0, 5, -3.7), wood, Enum.Material.Wood)
+	local arch = lobbyPart(model, "GateArch", Vector3.new(12, 2, 8), center + Vector3.new(0, 13.5, 0), stone, Enum.Material.Cobblestone)
+	arch.CanCollide = false
+
+	local signAnchor = lobbyPart(model, "SignAnchor", Vector3.new(1, 1, 1), center + Vector3.new(0, 16, -4), darkStone, Enum.Material.Slate)
+	signAnchor.CanCollide = false
+	local sign = Instance.new("BillboardGui")
+	sign.Name = "LobbySign"
+	sign.Size = UDim2.fromOffset(330, 90)
+	sign.StudsOffset = Vector3.new(0, 3, 0)
+	sign.AlwaysOnTop = true
+	sign.MaxDistance = 120
+	sign.Parent = signAnchor
+	local signText = Instance.new("TextLabel")
+	signText.BackgroundTransparency = 1
+	signText.Size = UDim2.fromScale(1, 0.58)
+	signText.Font = Enum.Font.GothamBlack
+	signText.Text = "KINGDOMS CONQUEST"
+	signText.TextScaled = true
+	signText.TextColor3 = Color3.fromRGB(241, 228, 197)
+	signText.TextStrokeTransparency = 0.25
+	signText.Parent = sign
+	local signHint = Instance.new("TextLabel")
+	signHint.BackgroundTransparency = 1
+	signHint.Position = UDim2.fromScale(0, 0.58)
+	signHint.Size = UDim2.fromScale(1, 0.42)
+	signHint.Font = Enum.Font.GothamBold
+	signHint.Text = "APPROACH THE GATE TO ENTER"
+	signHint.TextScaled = true
+	signHint.TextColor3 = gold
+	signHint.TextStrokeTransparency = 0.4
+	signHint.Parent = sign
+
+	for _, offset in ipairs({
+		Vector3.new(-16, 19, 0),
+		Vector3.new(16, 19, 0),
+	}) do
+		local flagPole = lobbyPart(model, "FlagPole", Vector3.new(0.5, 10, 0.5), center + offset, darkStone, Enum.Material.Metal)
+		flagPole.CanCollide = false
+		local flag = lobbyPart(model, "Flag", Vector3.new(4, 2.2, 0.3), center + offset + Vector3.new(2, -2, 0), gold, Enum.Material.Fabric)
+		flag.CanCollide = false
+	end
+
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "EnterKingdomsPrompt"
+	prompt.ActionText = "Enter Kingdoms"
+	prompt.ObjectText = "Royal Gate"
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
+	prompt.HoldDuration = 0.15
+	prompt.MaxActivationDistance = 14
+	prompt.RequiresLineOfSight = false
+	prompt.Style = Enum.ProximityPromptStyle.Default
+	prompt.Parent = door
+
+	workspace:SetAttribute("LobbyEntranceReady", true)
+	return prompt
+end
+
+local lobbyPrompt = buildLobbyEntrance()
+lobbyPrompt.Enabled = workspace:GetAttribute("MatchActive") ~= true
+
+workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
+	if lobbyPrompt and lobbyPrompt.Parent then
+		lobbyPrompt.Enabled = workspace:GetAttribute("MatchActive") ~= true
+	end
+end)
+
 local parties = {}
 local playerParty = {}
 local queuedParties = {}
