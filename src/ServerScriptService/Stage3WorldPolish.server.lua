@@ -18,6 +18,13 @@ local selectedMap = MapService.GetMap(mapId, teamCount)
 local pack = Config.MapPacks and Config.MapPacks[selectedMap.Name]
 local art = (pack and pack.Art) or {}
 
+-- Visible world art is authored in editable Map_<Name> prefabs. Do not create
+-- a second road/tree/castle layer over the same map at runtime.
+if Workspace:FindFirstChild("Map_" .. selectedMap.Name) then
+	print("[KingdomsConquest] Stage 9 using editable static world prefab:", selectedMap.Name)
+	return
+end
+
 local root = Workspace:WaitForChild("KingdomsConquest")
 local provinces = root:WaitForChild("Provinces")
 local terrain = root:WaitForChild("Terrain")
