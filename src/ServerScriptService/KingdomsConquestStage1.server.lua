@@ -170,9 +170,9 @@ local function createCastle(provinceName, data)
 	makePart(model, "WallEast", Vector3.new(3, 10, 58), base + Vector3.new(28, wallY, 0), Color3.fromRGB(104, 101, 95), Enum.Material.Cobblestone)
 	makePart(model, "WallWest", Vector3.new(3, 10, 58), base + Vector3.new(-28, wallY, 0), Color3.fromRGB(104, 101, 95), Enum.Material.Cobblestone)
 
-	local banner = makePart(model, "Banner", Vector3.new(1.5, 12, 1.5), base + Vector3.new(0, data.Capital and 22 or 16, -10), ownerColor(data.Home), Enum.Material.Wood)
+	local banner = makePart(model, "Banner", Vector3.new(1.5, 12, 1.5), base + Vector3.new(0, data.Capital and 22 or 16, -10), ownerColor(initialOwner(data)), Enum.Material.Wood)
 	banner.CanCollide = false
-	addBillboard(banner, provinceName .. "  •  CASTLE", ownerColor(data.Home))
+	addBillboard(banner, (data.CityName or provinceName) .. "  •  " .. castleTier, ownerColor(initialOwner(data)))
 
 	local gates = Instance.new("Folder")
 	gates.Name = "Gates"
@@ -195,7 +195,7 @@ end
 
 for name, data in pairs(selectedMap.Provinces) do
 	local zone = makePart(provinceFolder, name .. "_Territory", data.Size, data.Position, Color3.fromRGB(94, 121, 78), Enum.Material.Grass)
-	zone:SetAttribute("Owner", data.Home)
+	zone:SetAttribute("Owner", initialOwner(data))
 	zone.Transparency = 0.15
 	zone.CanCollide = true
 	zone:SetAttribute("Province", name)
