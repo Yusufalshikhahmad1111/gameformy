@@ -621,9 +621,11 @@ TeleportService.TeleportInitFailed:Connect(function(player, result, errorMessage
 	local partyId = playerParty[player.UserId]
 	local party = partyId and parties[partyId]
 	if party and not queuedParties[party.Id] then
-		queuedParties[party.Id] = true
-		table.insert(localQueueOrder, party.Id)
-		partyQueueNonce[party.Id] = (partyQueueNonce[party.Id] or 0) + 1
+		local ok, reason = enqueueParty(party)
+		if not ok then
+			sendState(player, "Teleport failed • queue retry unavailable: " .. tostring(reason))
+			return
+		end
 	end
 	sendState(player, "Teleport failed • re-queued")
 end)
