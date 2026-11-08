@@ -110,6 +110,8 @@ local mapDetails = {
     Europe = "EUROPE  •  16 CASTLES  •  EXPERT",
 }
 
+local mapInfo = label(panel, mapDetails[selectedMap], UDim2.fromScale(0.06, 0.49), UDim2.fromScale(0.88, 0.045), Enum.Font.Gotham, Color3.fromRGB(181, 177, 166))
+
 local mapButtonRefs = {}
 for i, item in ipairs(mapButtons) do
     local col = (i - 1) % 2
@@ -139,8 +141,6 @@ for i = 2, 4 do
         end)
     teamButtonRefs[i] = b
 end
-
-local mapInfo = label(panel, mapDetails[selectedMap], UDim2.fromScale(0.06, 0.49), UDim2.fromScale(0.88, 0.045), Enum.Font.Gotham, Color3.fromRGB(181, 177, 166))
 
 local partySection = Instance.new("Frame")
 partySection.Position = UDim2.fromScale(0.06, 0.555)
