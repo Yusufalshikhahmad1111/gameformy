@@ -50,7 +50,9 @@ spawnFolder.Name = "Spawns"
 spawnFolder.Parent = root
 
 local teamObjects = {}
-local teamSupplies = {[1] = 60, [2] = 60}
+local teamSupplies = {}
+local activeTeamCount = math.clamp(tonumber(Config.Game.TeamCount) or 2, 2, 4)
+for teamId = 1, activeTeamCount do teamSupplies[teamId] = 60 end
 local armies = {}
 local playerSelectedArmy = {}
 local nextArmyId = 0
@@ -80,9 +82,10 @@ local function terrainMultiplier(position)
 end
 
 local provinceStates = {}
-for name, data in pairs(Config.Provinces) do
+for name, data in pairs(selectedMap.Provinces) do
+	local startingOwners = data.StartingOwners or {[2] = 0}
 	provinceStates[name] = {
-		Owner = data.Home,
+		Owner = startingOwners[activeTeamCount] or 0,
 		CaptureTeam = 0,
 		CaptureProgress = 0,
 		Income = data.Income,
@@ -124,8 +127,8 @@ local function addBillboard(part, text, color)
 end
 
 local function ownerColor(owner)
-	if owner == 1 then return Config.Team.Red.Color end
-	if owner == 2 then return Config.Team.Blue.Color end
+	local team = Config.Teams[owner]
+	if team then return team.Color end
 	return Color3.fromRGB(150, 144, 128)
 end
 
@@ -140,8 +143,7 @@ local function createTeam(number, info)
 	teamObjects[number] = t
 end
 
-createTeam(1, Config.Team.Red)
-createTeam(2, Config.Team.Blue)
+for teamId = 1, activeTeamCount do createTeam(teamId, Config.Teams[teamId]) end
 
 Lighting.Brightness = 2
 Lighting.ClockTime = 14
@@ -150,9 +152,12 @@ Lighting.EnvironmentSpecularScale = 0.25
 Lighting.FogEnd = 900
 Lighting.FogColor = Color3.fromRGB(173, 184, 169)
 
-makePart(terrainFolder, "WorldFloor", Vector3.new(300, 2, 300), Vector3.new(0, -1, 0), Color3.fromRGB(76, 105, 67), Enum.Material.Grass)
-local river = makePart(terrainFolder, "River", Vector3.new(24, 0.3, 300), Vector3.new(35, 0.1, 0), Color3.fromRGB(72, 125, 154), Enum.Material.Glass)
-terrainZones.River = {Center = Vector3.new(35,0,0), HalfX = 12, HalfZ = 150, Speed = 0.55}
+local selectedMap = Config.Maps[Config.Game.MapId] or Config.Maps.Heartland
+local mapExtent = selectedMap.Name == "Riverlands" and 300 or 300
+makePart(terrainFolder, "WorldFloor", Vector3.new(mapExtent, 2, mapExtent), Vector3.new(0, -1, 0), Color3.fromRGB(76, 105, 67), Enum.Material.Grass)
+local riverData = selectedMap.River
+local river = makePart(terrainFolder, "River", riverData.Size, riverData.Center + Vector3.new(0, 0.1, 0), Color3.fromRGB(72, 125, 154), Enum.Material.Glass)
+terrainZones.River = riverData
 river.Transparency = 0.35
 river.CanCollide = false
 
@@ -194,7 +199,7 @@ local function createCastle(provinceName, data)
 	end
 end
 
-for name, data in pairs(Config.Provinces) do
+for name, data in pairs(selectedMap.Provinces) do
 	local zone = makePart(provinceFolder, name .. "_Territory", data.Size, data.Position, Color3.fromRGB(94, 121, 78), Enum.Material.Grass)
 	zone:SetAttribute("Owner", data.Home)
 	zone.Transparency = 0.15
@@ -204,15 +209,17 @@ for name, data in pairs(Config.Provinces) do
 	createCastle(name, data)
 end
 
-for team, position in pairs({[1] = Vector3.new(0, 3, -125), [2] = Vector3.new(0, 3, 125)}) do
+for team = 1, activeTeamCount do
+	local position = selectedMap.Spawns[team] or Vector3.new(0, 3, 0)
 	local spawnPart = makePart(spawnFolder, "Team" .. team, Vector3.new(16, 1, 16), position, ownerColor(team), Enum.Material.Neon)
 	spawnPart.Transparency = 0.55
 	spawnPart.CanCollide = false
 end
 
 local function findTeamForPlayer(player)
-	if player.Team == teamObjects[1] then return 1 end
-	if player.Team == teamObjects[2] then return 2 end
+	local id = player:GetAttribute("TeamId")
+	if id and teamObjects[id] then return id end
+	for teamId, teamObject in pairs(teamObjects) do if player.Team == teamObject then return teamId end end
 	return 1
 end
 
@@ -325,7 +332,8 @@ local function createArmy(player, armyType)
 	if not info or teamSupplies[team] < info.Cost then return nil, "INSUFFICIENT SUPPLIES" end
 	teamSupplies[team] -= info.Cost
 	nextArmyId += 1
-	local spawnPosition = (team == 1 and Vector3.new(0, 6, -108) or Vector3.new(0, 6, 108))
+	local spawnBase = selectedMap.Spawns[team] or Vector3.new(0, 3, 0)
+	local spawnPosition = spawnBase + Vector3.new(0, 3, 0)
 	local army = {
 		Id = nextArmyId,
 		Owner = player,
@@ -662,16 +670,16 @@ RunService.Heartbeat:Connect(function(dt)
 		resultClock += dt
 		if resultClock >= 1 then
 			resultClock = 0
-			local ownedCounts = {[1] = 0, [2] = 0}
-			for _, state in pairs(provinceStates) do
-				if state.Owner == 1 or state.Owner == 2 then ownedCounts[state.Owner] += 1 end
+			local ownedCounts = {}
+			for teamId = 1, activeTeamCount do ownedCounts[teamId] = 0 end
+			for _, state in pairs(provinceStates) do if ownedCounts[state.Owner] ~= nil then ownedCounts[state.Owner] += 1 end end
+			local target = math.max(1, math.ceil(#Config.ProvinceOrder * Config.Game.VictoryRatio))
+			for teamId = 1, activeTeamCount do
+				if ownedCounts[teamId] >= target then finishMatch(teamId, "territory_victory"); break end
 			end
-			if ownedCounts[1] >= Config.Game.VictoryTerritories then
-				finishMatch(1, "territory_victory")
-			elseif ownedCounts[2] >= Config.Game.VictoryTerritories then
-				finishMatch(2, "territory_victory")
-			elseif os.clock() - matchStartedAt >= Config.Game.MatchLengthSeconds then
-				local winner = ownedCounts[1] == ownedCounts[2] and 0 or (ownedCounts[1] > ownedCounts[2] and 1 or 2)
+			if not matchEnded and os.clock() - matchStartedAt >= Config.Game.MatchLengthSeconds then
+				local winner, best = 0, -1
+				for teamId = 1, activeTeamCount do if ownedCounts[teamId] > best then winner, best = teamId, ownedCounts[teamId] elseif ownedCounts[teamId] == best then winner = 0 end end
 				finishMatch(winner, winner == 0 and "draw_time_limit" or "time_limit")
 			end
 		end
