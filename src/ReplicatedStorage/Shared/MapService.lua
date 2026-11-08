@@ -12,6 +12,11 @@ local function build(pack)
         Name = pack.Id,
         DisplayName = pack.DisplayName,
         VictoryRatio = pack.VictoryRatio,
+        Description = pack.Description,
+        Difficulty = pack.Difficulty,
+        Art = pack.Art,
+        River = pack.River,
+        RiverCrossings = pack.RiverCrossings or {},
         Spawns = pack.Spawns,
         ProvinceOrder = {},
         Provinces = {},
@@ -49,11 +54,13 @@ function MapService.GetMap(mapId, teamCount)
     if Config.MapPacks[mapId] then
         cache[cacheKey] = build(Config.MapPacks[mapId])
         local total = #cache[cacheKey].ProvinceOrder
+        -- Give each participating team one visually separated home castle.
+        -- Remaining nodes stay neutral until players capture them.
         for index, cityId in ipairs(cache[cacheKey].ProvinceOrder) do
             if index <= teamCount then
                 cache[cacheKey].Provinces[cityId].StartingOwners = {[index] = 1}
             else
-                cache[cacheKey].Provinces[cityId].StartingOwners = {[2] = 0}
+                cache[cacheKey].Provinces[cityId].StartingOwners = {}
             end
         end
         return cache[cacheKey]
