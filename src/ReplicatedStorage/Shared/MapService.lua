@@ -40,22 +40,30 @@ local function build(pack)
     return map
 end
 
-function MapService.GetMap(mapId)
+function MapService.GetMap(mapId, teamCount)
     mapId = mapId or Config.Game.MapId
-    if cache[mapId] then return cache[mapId] end
+    teamCount = math.clamp(tonumber(teamCount) or Config.Game.TeamCount or 2, 2, 4)
+    local cacheKey = mapId .. ":" .. tostring(teamCount)
+    if cache[cacheKey] then return cache[cacheKey] end
 
     if Config.MapPacks[mapId] then
-        cache[mapId] = build(Config.MapPacks[mapId])
-        return cache[mapId]
+        cache[cacheKey] = build(Config.MapPacks[mapId])
+        local total = #cache[cacheKey].ProvinceOrder
+        for index, cityId in ipairs(cache[cacheKey].ProvinceOrder) do
+            local team = ((index - 1) % teamCount) + 1
+            if index > total - teamCount then team = ((index - 1) % teamCount) + 1 end
+            cache[cacheKey].Provinces[cityId].StartingOwners = {[team] = 1}
+        end
+        return cache[cacheKey]
     end
 
     if Config.Maps[mapId] then
-        cache[mapId] = Config.Maps[mapId]
-        return cache[mapId]
+        cache[cacheKey] = Config.Maps[mapId]
+        return cache[cacheKey]
     end
 
-    cache[mapId] = Config.Maps.Heartland
-    return cache[mapId]
+    cache[cacheKey] = Config.Maps.Heartland
+    return cache[cacheKey]
 end
 
 function MapService.ListMaps()
