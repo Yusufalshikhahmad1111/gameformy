@@ -6,6 +6,8 @@ local remotes=ReplicatedStorage:WaitForChild("KingdomsRemotes")
 local stateRemote=remotes:WaitForChild("State")
 local requestState=remotes:WaitForChild("RequestState")
 
+local UITheme=require(ReplicatedStorage.Shared.UITheme)
+
 local gui=Instance.new("ScreenGui")
 gui.Name="KingdomsStage9Minimap"
 gui.ResetOnSpawn=false
@@ -13,7 +15,9 @@ gui.IgnoreGuiInset=true
 gui.DisplayOrder=88
 gui.Parent=player:WaitForChild("PlayerGui")
 
-local panel=Instance.new("Frame")
+local panel=Instance.new("TextButton")
+panel.Text=""
+panel.AutoButtonColor=false
 panel.AnchorPoint=Vector2.new(1,0)
 panel.Position=UDim2.fromScale(.975,.155)
 panel.Size=UDim2.fromScale(.25,.34)
@@ -21,6 +25,9 @@ panel.BackgroundColor3=Color3.fromRGB(22,27,28)
 panel.BackgroundTransparency=.06
 panel.BorderSizePixel=0
 panel.Parent=gui
+panel.Activated:Connect(function()
+ panel.Size = panel.Size == UDim2.fromScale(.25,.34) and UDim2.fromScale(.42,.55) or UDim2.fromScale(.25,.34)
+end)
 Instance.new("UICorner",panel).CornerRadius=UDim.new(0,12)
 local stroke=Instance.new("UIStroke",panel)
 stroke.Color=Color3.fromRGB(111,101,82)
@@ -34,7 +41,7 @@ title.Font=Enum.Font.GothamBold
 title.TextScaled=true
 title.TextColor3=Color3.fromRGB(238,228,205)
 title.TextXAlignment=Enum.TextXAlignment.Left
-title.Text="TACTICAL MAP"
+title.Text=UITheme.T("en","map").."  •  TACTICAL"
 title.Parent=panel
 
 local subtitle=Instance.new("TextLabel")
@@ -117,7 +124,7 @@ local function render(s)
  if not s or not s.MapNodes then return end
  clear()
  title.Text="TACTICAL MAP"
- subtitle.Text=string.upper(tostring(s.MapId or "WORLD")).."  •  "..tostring(s.TeamCount or 2).." TEAMS"
+ subtitle.Text=string.upper(tostring(s.MapId or "WORLD")).."  •  "..tostring(s.TeamCount or 2).." TEAMS  •  TAP TO EXPAND"
  footer.Text=string.format("%d / %d CASTLES CONTROLLED",s.Owned or 0,s.TotalProvinces or 0)
 
  local minX,maxX,minZ,maxZ=math.huge,-math.huge,math.huge,-math.huge
