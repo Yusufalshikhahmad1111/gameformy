@@ -50,6 +50,10 @@ UITheme.Text = {
         world="WORLD", timer="TIME", owned="OWNED", armies="ARMIES", castleAction="CASTLE ACTIONS",
         economy="ECONOMY", recruitHint="Create a new army or reinforce the selected one",
         languageShort="EN", languageAlt="AR",
+        safe="SAFE", assaulted="ASSAULTED", stabilizing="STABILIZING", searching="SEARCHING",
+        approaching="APPROACHING", engaging="ENGAGING", ranged="RANGED", retreating="RETREATING",
+        recovering="RECOVERING", following="FOLLOWING", moving="MOVING", holding="HOLDING",
+        spearmen="SPEARMEN", archers="ARCHERS", cavalry="CAVALRY",
     },
     ar = {
         move="تحريك", attack="هجوم", hold="ثبات", follow="تَـبِـع", retreat="انسحاب",
@@ -73,6 +77,10 @@ UITheme.Text = {
         world="العالم", timer="الوقت", owned="مملوك", armies="الجيوش", castleAction="أوامر القلعة",
         economy="الاقتصاد", recruitHint="أنشئ جيشاً جديداً أو عزّز الجيش المحدد",
         languageShort="AR", languageAlt="EN",
+        safe="آمن", assaulted="تحت الهجوم", stabilizing="قيد الاستقرار", searching="يبحث",
+        approaching="يقترب", engaging="اشتباك", ranged="بعيد المدى", retreating="ينسحب",
+        recovering="يتعافى", following="يتبع", moving="يتحرك", holding="ثابت",
+        spearmen="رماح", archers="رماة", cavalry="فرسان",
     }
 }
 
