@@ -642,7 +642,7 @@ local function addSoldierToArmy(owner, army, armyType)
 	ArmyService.RefreshAggregate(army, SoldierService)
 	makeArmyVisual(army)
 
-	if owner and owner:IsA and owner:IsA("Player") then
+	if typeof(owner) == "Instance" and owner:IsA("Player") then
 		playerSelectedArmy[owner] = army.Id
 		feedbackRemote:FireClient(owner, "SOLDIER_RECRUITED", {
 			ArmyId = army.Id,
@@ -1374,6 +1374,13 @@ requestState.OnServerInvoke = function(player)
 		Provinces = states,
 		SelectedArmy = playerSelectedArmy[player] or 0,
 		Armies = publicArmies,
+		Bots = (function()
+			local result = {}
+			for teamId, bot in pairs(botByTeam) do
+				result[tostring(teamId)] = {Team=bot.Team, Name=bot.Name, Difficulty=bot.Difficulty, State=bot.State, LastAction=bot.LastAction, ObjectiveId=bot.ObjectiveId}
+			end
+			return result
+		end)(),
 		Castles = (function()
 			local result = {}
 			for name, province in pairs(provinceStates) do
@@ -1417,6 +1424,13 @@ local function publishState()
 			Provinces = capture,
 			SelectedArmy = playerSelectedArmy[player] or 0,
 			Armies = publicArmies,
+			Bots = (function()
+				local result = {}
+				for teamId, bot in pairs(botByTeam) do
+					result[tostring(teamId)] = {Team=bot.Team, Name=bot.Name, Difficulty=bot.Difficulty, State=bot.State, LastAction=bot.LastAction, ObjectiveId=bot.ObjectiveId}
+				end
+				return result
+			end)(),
 			Castles = (function()
 				local result = {}
 				for name, province in pairs(provinceStates) do
@@ -1502,12 +1516,14 @@ local captureClock = 0
 local attackClock = 0
 local resultClock = 0
 local soldierClock = 0
+local botClock = 0
 
 RunService.Heartbeat:Connect(function(dt)
 	captureClock += dt
 	attackClock += dt
 	broadcastClock += dt
 	soldierClock += dt
+	botClock += dt
 
 	for _, army in pairs(armies) do
 		local info = Config.ArmyTypes[army.Type]
@@ -1553,6 +1569,14 @@ RunService.Heartbeat:Connect(function(dt)
 		broadcastClock = 0
 	end
 
+	if botClock >= 0.2 and workspace:GetAttribute("MatchActive") == true then
+		local now = os.clock()
+		for _, bot in pairs(botByTeam) do
+			botThink(bot, now, botClock)
+		end
+		botClock = 0
+	end
+
 	if not matchEnded and matchStartedAt > 0 then
 		resultClock += dt
 		if resultClock >= 1 then
@@ -1585,9 +1609,12 @@ workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
 				createArmy(player, "Spearmen")
 			end
 		end
+		ensureBotCommanders()
 	else
 		matchStartedAt = 0
 		matchEnded = false
+		clearBots()
+		workspace:SetAttribute("KC_BotsReady", false)
 		for id, army in pairs(armies) do
 			if army.Model then army.Model:Destroy() end
 			armies[id] = nil
@@ -1613,8 +1640,10 @@ end)
 if workspace:GetAttribute("MatchActive") == true then
 	startMatchClock()
 	for _, player in ipairs(Players:GetPlayers()) do
+		assignTeam(player)
 		if not playerSelectedArmy[player] then createArmy(player, "Spearmen") end
 	end
+	ensureBotCommanders()
 end
 
 print("[KingdomsConquest] Stage 1/2 authoritative runtime initialized.")
