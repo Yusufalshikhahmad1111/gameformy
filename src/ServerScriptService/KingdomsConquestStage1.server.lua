@@ -11,6 +11,7 @@ local MapService = require(ReplicatedStorage.Shared.MapService)
 local NetworkContract = require(ReplicatedStorage.Shared.NetworkContract)
 local StateSchemas = require(ReplicatedStorage.Shared.StateSchemas)
 local ArmyService = require(script.Parent.Services.ArmyService)
+local SoldierService = require(script.Parent.Services.SoldierService)
 local EconomyService = require(script.Parent.Services.EconomyService)
 local MatchService = require(script.Parent.Services.MatchService)
 local CaptureService = require(script.Parent.Services.CaptureService)
@@ -412,117 +413,180 @@ local function formationOffset(formation, index)
 	return offsets[formation] and offsets[formation][index] or offsets.Line[index]
 end
 
+local function sortedAliveSoldiers(army)
+	local list = {}
+	for _, soldier in pairs(army.Soldiers or {}) do
+		if SoldierService.IsAlive(soldier) then
+			table.insert(list, soldier)
+		end
+	end
+	table.sort(list, function(x, y)
+		return tostring(x.Id) < tostring(y.Id)
+	end)
+	return list
+end
+
+local function buildSoldierVisual(armyModel, soldier, position, forward, teamColor, classInfo)
+	local model = Instance.new("Model")
+	model.Name = "Soldier_" .. tostring(soldier.Id)
+	model:SetAttribute("SoldierId", tostring(soldier.Id))
+	model:SetAttribute("ArmyId", armyModel:GetAttribute("ArmyId"))
+	model.Parent = armyModel
+
+	local root = makePart(model, "Root", Vector3.new(1.2, 0.5, 1.2), position, teamColor, Enum.Material.SmoothPlastic)
+	root.Transparency = 1
+	root.CanCollide = false
+	model.PrimaryPart = root
+
+	local skin = Color3.fromRGB(214, 177, 139)
+	local cloth = classInfo.Color
+	local dark = Color3.fromRGB(48, 48, 44)
+
+	local function add(name, size, offset, color, material)
+		local p = makePart(model, name, size, position + offset, color, material)
+		p.CanCollide = false
+		return p
+	end
+
+	if armyModel:GetAttribute("ArmyType") == "Cavalry" then
+		add("HorseBody", Vector3.new(3.4, 2, 4.8), Vector3.new(0, 1.35, 0), dark, Enum.Material.SmoothPlastic)
+		add("HorseHead", Vector3.new(1.8, 2.1, 1.9), Vector3.new(0, 2.7, -1.8), dark, Enum.Material.SmoothPlastic)
+		add("RiderBody", Vector3.new(1.4, 2.3, 1.1), Vector3.new(0, 3.7, 0), cloth, Enum.Material.Fabric)
+		add("RiderHead", Vector3.new(1.25, 1.25, 1.25), Vector3.new(0, 5.35, 0), skin, Enum.Material.SmoothPlastic)
+		add("Lance", Vector3.new(0.16, 4.8, 0.16), Vector3.new(0.9, 4.6, -0.8), classInfo.Accent, Enum.Material.Metal)
+	else
+		add("Body", Vector3.new(1.45, 2.3, 1.05), Vector3.new(0, 1.7, 0), cloth, Enum.Material.Fabric)
+		add("Head", Vector3.new(1.2, 1.2, 1.2), Vector3.new(0, 3.35, 0), skin, Enum.Material.SmoothPlastic)
+		add("LegL", Vector3.new(0.5, 1.7, 0.62), Vector3.new(-0.4, 0.25, 0), dark, Enum.Material.SmoothPlastic)
+		add("LegR", Vector3.new(0.5, 1.7, 0.62), Vector3.new(0.4, 0.25, 0), dark, Enum.Material.SmoothPlastic)
+		if armyModel:GetAttribute("ArmyType") == "Spearmen" then
+			add("Spear", Vector3.new(0.15, 4.6, 0.15), Vector3.new(0.92, 2.8, -0.3), classInfo.Accent, Enum.Material.Wood)
+			add("Shield", Vector3.new(1.05, 1.35, 0.25), Vector3.new(-0.86, 1.8, -0.15), teamColor, Enum.Material.Metal)
+		else
+			add("Bow", Vector3.new(0.22, 2.55, 0.22), Vector3.new(0.9, 2.2, -0.25), classInfo.Accent, Enum.Material.Wood)
+			add("Quiver", Vector3.new(0.55, 1.4, 0.35), Vector3.new(-0.75, 2.05, 0.2), dark, Enum.Material.Fabric)
+		end
+	end
+
+	local healthGui = Instance.new("BillboardGui")
+	healthGui.Name = "SoldierHealth"
+	healthGui.Size = UDim2.fromOffset(54, 14)
+	healthGui.StudsOffset = Vector3.new(0, 6.2, 0)
+	healthGui.AlwaysOnTop = true
+	healthGui.MaxDistance = 90
+	healthGui.Parent = root
+	local health = Instance.new("Frame")
+	health.BackgroundColor3 = Color3.fromRGB(40, 40, 36)
+	health.BorderSizePixel = 0
+	health.Size = UDim2.fromScale(1, 0.42)
+	health.Parent = healthGui
+	local fill = Instance.new("Frame")
+	fill.Name = "Fill"
+	fill.BorderSizePixel = 0
+	fill.BackgroundColor3 = teamColor
+	fill.Size = UDim2.fromScale(math.max(0.04, soldier.Health / math.max(1, soldier.MaxHealth)), 1)
+	fill.Parent = health
+
+	model:PivotTo(CFrame.lookAt(position, position + forward))
+	return model
+end
+
 local function makeArmyVisual(army)
+	if army.Model then army.Model:Destroy() end
+
 	local model = Instance.new("Model")
 	model.Name = "Army_" .. army.Id
 	model.Parent = armyFolder
 	model:SetAttribute("ArmyId", army.Id)
 	model:SetAttribute("OwnerUserId", army.Owner.UserId)
+	model:SetAttribute("ArmyType", army.Type)
 
 	local color = ownerColor(army.Team)
 	local classInfo = Config.ArmyTypes[army.Type]
-
-	local function botPart(name, size, position, material, botColor, index, canCollide)
-		local p = makePart(model, name, size, position, botColor, material)
-		p.CanCollide = canCollide == true
-		p:SetAttribute("FormationIndex", index)
-		return p
-	end
-
-	local offsets = {
-		Line = {Vector3.new(-6,0,-3),Vector3.new(-2,0,-3),Vector3.new(2,0,-3),Vector3.new(6,0,-3),Vector3.new(-4,0,2),Vector3.new(0,0,2),Vector3.new(4,0,2),Vector3.new(8,0,2)},
-		Wedge = {Vector3.new(0,0,-6),Vector3.new(-3,0,-2),Vector3.new(3,0,-2),Vector3.new(-6,0,2),Vector3.new(0,0,2),Vector3.new(6,0,2),Vector3.new(-9,0,6),Vector3.new(9,0,6)},
-		Column = {Vector3.new(0,0,-10),Vector3.new(0,0,-6),Vector3.new(0,0,-2),Vector3.new(0,0,2),Vector3.new(0,0,6),Vector3.new(0,0,10),Vector3.new(0,0,14),Vector3.new(0,0,18)},
-		Spread = {Vector3.new(-9,0,-5),Vector3.new(-3,0,-7),Vector3.new(3,0,-7),Vector3.new(9,0,-5),Vector3.new(-9,0,5),Vector3.new(-3,0,7),Vector3.new(3,0,7),Vector3.new(9,0,5)},
-	}
-
-	for i = 1, 8 do
-		local offset = offsets.Line[i]
-		local pos = army.Position + offset
-		local skin = Color3.fromRGB(214, 177, 139)
-		local cloth = classInfo.Color
-		local dark = Color3.fromRGB(48, 48, 44)
-
-		if army.Type == "Cavalry" then
-			botPart("HorseBody"..i, Vector3.new(3.8,2.2,5.2), pos + Vector3.new(0,1.6,0), Enum.Material.SmoothPlastic, dark, i)
-			botPart("HorseHead"..i, Vector3.new(2.2,2.4,2.2), pos + Vector3.new(0,2.7,-2.0), Enum.Material.SmoothPlastic, dark, i)
-			for leg=1,4 do
-				local lx = leg%2==0 and .9 or -.9
-				local lz = leg<=2 and -1.4 or 1.4
-				botPart("HorseLeg"..i.."_"..leg, Vector3.new(.65,2.1,.65), pos + Vector3.new(lx,.7,lz), Enum.Material.SmoothPlastic, dark, i)
-			end
-			botPart("RiderBody"..i, Vector3.new(1.5,2.4,1.1), pos + Vector3.new(0,4.0,0), Enum.Material.Fabric, cloth, i)
-			botPart("RiderHead"..i, Vector3.new(1.35,1.35,1.35), pos + Vector3.new(0,5.8,0), Enum.Material.SmoothPlastic, skin, i, false)
-			botPart("Lance"..i, Vector3.new(.18,5.2,.18), pos + Vector3.new(1.0,5.0,-1.0), Enum.Material.Metal, classInfo.Accent, i, false)
-		else
-			botPart("Body"..i, Vector3.new(1.6,2.5,1.1), pos + Vector3.new(0,2.0,0), Enum.Material.Fabric, cloth, i)
-			botPart("Head"..i, Vector3.new(1.35,1.35,1.35), pos + Vector3.new(0,4.0,0), Enum.Material.SmoothPlastic, skin, i, false)
-			botPart("LegL"..i, Vector3.new(.55,1.8,.7), pos + Vector3.new(-.45,.35,0), Enum.Material.SmoothPlastic, dark, i, false)
-			botPart("LegR"..i, Vector3.new(.55,1.8,.7), pos + Vector3.new(.45,.35,0), Enum.Material.SmoothPlastic, dark, i, false)
-			if army.Type == "Spearmen" then
-				botPart("Spear"..i, Vector3.new(.16,5.2,.16), pos + Vector3.new(1.0,3.2,-.2), Enum.Material.Wood, classInfo.Accent, i, false)
-				botPart("Shield"..i, Vector3.new(1.2,1.5,.28), pos + Vector3.new(-.95,2.1,-.2), Enum.Material.Metal, color, i, false)
-			elseif army.Type == "Archers" then
-				botPart("Bow"..i, Vector3.new(.25,2.7,.25), pos + Vector3.new(1.0,2.5,-.3), Enum.Material.Wood, classInfo.Accent, i, false)
-				botPart("Arrow"..i, Vector3.new(.12,2.4,.12), pos + Vector3.new(1.25,2.7,-.7), Enum.Material.Metal, classInfo.Accent, i, false)
-			end
-		end
-	end
-
-	local flagPole = makePart(model, "FlagPole", Vector3.new(.35, 8, .35), army.Position + Vector3.new(0, 4, 0), classInfo.Accent, Enum.Material.Metal)
-	flagPole.CanCollide = false
-	local flag = makePart(model, "Flag", Vector3.new(3.2, 1.8, .3), army.Position + Vector3.new(1.5, 6.6, 0), color, Enum.Material.Fabric)
-	flag.CanCollide = false
-
-	local rootPart = makePart(model, "Root", Vector3.new(4, 2, 4), army.Position, color, Enum.Material.SmoothPlastic)
-	rootPart.Transparency = 1
-	rootPart.CanCollide = false
+	local anchor = makePart(model, "ArmyAnchor", Vector3.new(2, 1, 2), army.Position, color, Enum.Material.SmoothPlastic)
+	anchor.Transparency = 1
+	anchor.CanCollide = false
 
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "ArmyLabel"
-	billboard.Size = UDim2.fromOffset(210, 46)
-	billboard.StudsOffset = Vector3.new(0, 10, 0)
+	billboard.Size = UDim2.fromOffset(230, 56)
+	billboard.StudsOffset = Vector3.new(0, 9, 0)
 	billboard.AlwaysOnTop = true
-	billboard.MaxDistance = 250
-	billboard.Parent = rootPart
+	billboard.MaxDistance = 220
+	billboard.Parent = anchor
+
 	local label = Instance.new("TextLabel")
+	label.Name = "Text"
 	label.BackgroundTransparency = 1
-	label.Size = UDim2.fromScale(1,1)
+	label.Size = UDim2.fromScale(1, 0.58)
 	label.Font = Enum.Font.GothamBold
 	label.TextScaled = true
 	label.TextColor3 = color
 	label.TextStrokeTransparency = 0.15
-	label.Text = classInfo.Label .. " • " .. math.floor(army.Health)
 	label.Parent = billboard
+
+	local stateLabel = Instance.new("TextLabel")
+	stateLabel.Name = "State"
+	stateLabel.BackgroundTransparency = 1
+	stateLabel.Position = UDim2.fromScale(0, 0.56)
+	stateLabel.Size = UDim2.fromScale(1, 0.38)
+	stateLabel.Font = Enum.Font.GothamMedium
+	stateLabel.TextScaled = true
+	stateLabel.TextColor3 = Color3.fromRGB(225, 218, 202)
+	stateLabel.TextStrokeTransparency = 0.25
+	stateLabel.Parent = billboard
+
 	army.Model = model
+	army.SoldierModels = {}
+	local soldiers = sortedAliveSoldiers(army)
+	for index, soldier in ipairs(soldiers) do
+		local offset = ArmyService.GetFormationOffset(army.Formation, index, #soldiers)
+		local position = army.Position + offset
+		army.SoldierModels[soldier.Id] = buildSoldierVisual(model, soldier, position, Vector3.new(0, 0, 1), color, classInfo)
+	end
 end
+
 local function syncArmyVisual(army)
-	if not army.Model or not army.Model.Parent then return end
-	local model = army.Model
-	model:PivotTo(CFrame.new(army.Position))
-	local combatPulse = army.AttackTarget and math.sin(os.clock() * 12 + army.Id) * 0.9 or 0
-	for _, unit in ipairs(model:GetChildren()) do
-		local index = unit:GetAttribute("FormationIndex")
-		if index then
-			local base = army.Position + formationOffset(army.Formation, index)
-			if unit.Name:find("^Body") or unit.Name:find("^RiderBody") then
-				unit.Position = base + Vector3.new(0, 2 + math.max(0, combatPulse) * 0.35, combatPulse)
-			elseif unit.Name:find("^Head") or unit.Name:find("^RiderHead") then
-				unit.Position = base + Vector3.new(0, 4 + math.max(0, combatPulse) * 0.35, combatPulse)
-			elseif unit.Name:find("^Spear") or unit.Name:find("^Lance") then
-				unit.Position = base + Vector3.new(1 + combatPulse * 0.5, 3.2, -.2)
-			else
-				unit.Position = base
-			end
+	if not army.Model or not army.Model.Parent then
+		if ArmyService.IsAlive(army) then makeArmyVisual(army) end
+		return
+	end
+
+	local anchor = army.Model:FindFirstChild("ArmyAnchor")
+	if anchor then anchor.Position = army.Position end
+
+	local soldiers = sortedAliveSoldiers(army)
+	local count = #soldiers
+	local targetDelta = army.TargetPosition - army.Position
+	local forward = targetDelta.Magnitude > 0.2 and targetDelta.Unit or Vector3.new(0, 0, 1)
+
+	for index, soldier in ipairs(soldiers) do
+		local offset = ArmyService.GetFormationOffset(army.Formation, index, count)
+		local position = army.Position + offset
+		local soldierModel = army.SoldierModels and army.SoldierModels[soldier.Id]
+		if not soldierModel or not soldierModel.Parent then
+			makeArmyVisual(army)
+			return
+		end
+		soldierModel:PivotTo(CFrame.lookAt(position, position + forward))
+		local root = soldierModel:FindFirstChild("Root")
+		local healthGui = root and root:FindFirstChild("SoldierHealth")
+		local fill = healthGui and healthGui:FindFirstChild("Fill", true)
+		if fill and fill:IsA("Frame") then
+			fill.Size = UDim2.fromScale(math.max(0.04, soldier.Health / math.max(1, soldier.MaxHealth)), 1)
 		end
 	end
-	local rootPart = model:FindFirstChild("Root")
-	if rootPart then
-		local label = rootPart:FindFirstChild("ArmyLabel")
-		local textLabel = label and label:FindFirstChildOfClass("TextLabel")
-		if textLabel then
-			textLabel.Text = Config.ArmyTypes[army.Type].Label .. " • " .. math.max(0, math.floor(army.Health)) .. (army.AttackTarget and "  ⚔ FIGHTING" or "")
-		end
+
+	local labelGui = anchor and anchor:FindFirstChild("ArmyLabel")
+	local label = labelGui and labelGui:FindFirstChild("Text")
+	local stateLabel = labelGui and labelGui:FindFirstChild("State")
+	local classInfo = Config.ArmyTypes[army.Type]
+	if label and classInfo then
+		label.Text = string.format("%s • %d/%d", classInfo.Label, army.SoldierCount or count, count)
+	end
+	if stateLabel then
+		local order = army.Order or "Hold"
+		stateLabel.Text = string.format("%s  •  MOR %d  •  FAT %d", order:upper(), math.floor(army.Morale or 0), math.floor(army.Fatigue or 0))
 	end
 end
 
