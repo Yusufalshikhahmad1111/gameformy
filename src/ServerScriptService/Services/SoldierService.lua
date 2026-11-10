@@ -77,9 +77,10 @@ function SoldierService.Recover(soldier, amount)
     local recovery = math.max(0, amount or 0)
     local discipline = 0.88 + clamp(soldier.Discipline or 50, 0, 100) / 850
     local loyalty = 0.90 + clamp(soldier.Loyalty or 50, 0, 100) / 1000
-    soldier.Fatigue = clamp((soldier.Fatigue or 0) - recovery * discipline, 0, 100)
+    local moraleFactor = 0.86 + clamp(soldier.Morale or 0, 0, 100) / 714
+    soldier.Fatigue = clamp((soldier.Fatigue or 0) - recovery * discipline * loyalty, 0, 100)
     soldier.Morale = clamp(
-        (soldier.Morale or 0) + recovery * 0.45 * discipline * loyalty,
+        (soldier.Morale or 0) + recovery * 0.45 * discipline * loyalty * moraleFactor,
         0,
         100
     )
