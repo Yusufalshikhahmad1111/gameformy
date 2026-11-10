@@ -596,7 +596,7 @@ local function syncArmyVisual(army)
 	end
 	if stateLabel then
 		local order = army.Order or "Hold"
-		stateLabel.Text = string.format("%s  •  MOR %d  •  FAT %d", order:upper(), math.floor(army.Morale or 0), math.floor(army.Fatigue or 0))
+		stateLabel.Text = string.format("%s  •  %s  •  MOR %d  •  FAT %d", order:upper(), tostring(army.CombatState or "SEARCHING"):upper(), math.floor(army.Morale or 0), math.floor(army.Fatigue or 0))
 	end
 end
 
