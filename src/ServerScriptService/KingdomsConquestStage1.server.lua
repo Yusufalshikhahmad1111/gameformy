@@ -1043,6 +1043,7 @@ local function captureTick(dt)
 				model:SetAttribute("CastleState", castle.State)
 				model:SetAttribute("Garrison", math.floor(castle.Garrison))
 				model:SetAttribute("CaptureTeam", castle.AssaultTeam or 0)
+				model:SetAttribute("CaptureProgress", castle.CaptureProgress or 0)
 			end
 			local staticCastle = staticMap and staticMap:FindFirstChild(name .. "_Castle", true)
 			if staticCastle then
@@ -1050,6 +1051,7 @@ local function captureTick(dt)
 				staticCastle:SetAttribute("CastleState", castle.State or "Safe")
 				staticCastle:SetAttribute("Garrison", math.floor(castle.Garrison or 0))
 				staticCastle:SetAttribute("CaptureTeam", castle.AssaultTeam or 0)
+				staticCastle:SetAttribute("CaptureProgress", castle.CaptureProgress or 0)
 			end
 		end
 	end
