@@ -182,7 +182,6 @@ function BotCommanderService.RecordFailure(bot, objectiveName, now)
     bot.ObjectiveFailureCount += 1
 end
 
-return BotCommanderService
 
 function BotCommanderService.ChooseReinforcement(bot, armies, teamSupplies)
     if (teamSupplies or 0) < 5 then return nil end
@@ -211,3 +210,4 @@ function BotCommanderService.GetStateForAction(bot, action)
     return "Idle"
 end
 
+return BotCommanderService
