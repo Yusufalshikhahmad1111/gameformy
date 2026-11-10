@@ -29,7 +29,7 @@ Config.Team = {Red=Config.Teams[1], Blue=Config.Teams[2]}
 
 Config.ArmyTypes = {
     Spearmen = {
-        Cost=20, CostPerSoldier=5, InitialSoldiers=4, MaxSoldiers=24,
+        Cost=20, CostPerSoldier=5, GoldCostPerSoldier=10, SupplyCostPerSoldier=2, UpkeepGoldPerMinute=0.60, InitialSoldiers=4, MaxSoldiers=24,
         SoldierHealth=60, Power=14, Defense=15, Accuracy=0.72, Speed=18,
         Damage=14, MoveSpeed=18, AttackRange=16, AttackCooldown=0.75,
         PowerVariance=2.2, DefenseVariance=2.5, AccuracyVariance=0.04,
@@ -37,7 +37,7 @@ Config.ArmyTypes = {
         Label="SPEARMEN", Short="S", Role="FRONTLINE",
     },
     Archers = {
-        Cost=24, CostPerSoldier=6, InitialSoldiers=4, MaxSoldiers=24,
+        Cost=24, CostPerSoldier=6, GoldCostPerSoldier=12, SupplyCostPerSoldier=2, UpkeepGoldPerMinute=0.80, InitialSoldiers=4, MaxSoldiers=24,
         SoldierHealth=45, Power=19, Defense=8, Accuracy=0.80, Speed=15,
         Damage=19, MoveSpeed=15, AttackRange=34, AttackCooldown=1.15,
         PowerVariance=2.8, DefenseVariance=1.8, AccuracyVariance=0.05,
@@ -45,13 +45,27 @@ Config.ArmyTypes = {
         Label="ARCHERS", Short="A", Role="RANGED",
     },
     Cavalry = {
-        Cost=32, CostPerSoldier=8, InitialSoldiers=4, MaxSoldiers=20,
+        Cost=32, CostPerSoldier=8, GoldCostPerSoldier=16, SupplyCostPerSoldier=3, UpkeepGoldPerMinute=1.20, InitialSoldiers=4, MaxSoldiers=20,
         SoldierHealth=75, Power=16, Defense=12, Accuracy=0.68, Speed=26,
         Damage=16, MoveSpeed=26, AttackRange=14, AttackCooldown=0.65,
         PowerVariance=2.6, DefenseVariance=2.3, AccuracyVariance=0.05,
         Color=Color3.fromRGB(118,118,128), Accent=Color3.fromRGB(73,84,105),
         Label="CAVALRY", Short="C", Role="MOBILE",
     },
+}
+
+Config.Economy = {
+    StartingGold = 120,
+    StartingSupplies = 40,
+    EconomyTickSeconds = 2,
+    IncomeDisplayDecimals = 1,
+    ConnectedIncomeMultiplier = 1.0,
+    DisconnectedIncomeMultiplier = 0.55,
+    StabilizedIncomeMultiplier = 0.60,
+    ComebackIncomeMultiplier = 1.12,
+    ComebackRecruitmentMultiplier = 0.90,
+    ComebackReinforcementMultiplier = 0.88,
+    SupplyIncomeRatio = 0.28,
 }
 
 Config.Combat = {
