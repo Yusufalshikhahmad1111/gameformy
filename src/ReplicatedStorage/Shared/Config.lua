@@ -71,6 +71,18 @@ Config.Castles = {
     Regional = {Garrison=60, Defense=1.00, Recovery=1.05, Stabilization=7},
 }
 
+Config.Bots = {
+    MaxArmiesPerCommander = 3,
+    ThinkFloorSeconds = 0.85,
+    Difficulties = {"Recruit", "Veteran", "Warlord"},
+    DifficultyByTeam = {
+        [1] = "Veteran",
+        [2] = "Recruit",
+        [3] = "Warlord",
+        [4] = "Recruit",
+    },
+}
+
 Config.Formations = {
     Line={Label="LINE"},
     Wedge={Label="WEDGE"},
