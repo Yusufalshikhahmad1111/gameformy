@@ -627,51 +627,62 @@ local function playerRoot(player)
 end
 
 local function addSoldierToArmy(owner, army, armyType)
-	if not army or not ArmyService.IsAlive(army) then
-		return false, "ARMY_NOT_ACTIVE"
-	end
-	local info = Config.ArmyTypes[armyType or army.Type]
-	if not info then return false, "UNKNOWN_ARMY" end
-	if army.Type ~= (armyType or army.Type) then
-		return false, "ROLE_MISMATCH"
-	end
+    if not army or not ArmyService.IsAlive(army) then
+        return false, "ARMY_NOT_ACTIVE"
+    end
+    local info = Config.ArmyTypes[armyType or army.Type]
+    if not info then return false, "UNKNOWN_ARMY" end
+    if army.Type ~= (armyType or army.Type) then
+        return false, "ROLE_MISMATCH"
+    end
 
-	local maxSoldiers = ArmyService.GetMaxSoldiers(info)
-	if (army.SoldierCount or 0) >= maxSoldiers then
-		return false, "ARMY_FULL"
-	end
+    local maxSoldiers = ArmyService.GetMaxSoldiers(info)
+    if (army.SoldierCount or 0) >= maxSoldiers then
+        return false, "ARMY_FULL"
+    end
 
-	local cost = ArmyService.GetRecruitCost(info, 1)
-	local team = army.Team
-	if (teamSupplies[team] or 0) < cost then
-		return false, "NEED_" .. tostring(cost) .. "_SUPPLIES"
-	end
+    local team = army.Team
+    local cost = EconomyService.GetReinforcementCost(info, teamEconomyState[team])
+    if not EconomyService.CanAfford(teamGold[team], teamSupplies[team], cost) then
+        return false, string.format("NEED_%dG_%dS", math.ceil(cost.Gold), math.ceil(cost.Supplies))
+    end
 
-	teamSupplies[team] -= cost
-	local soldierId = ArmyService.NextSoldierId(army)
-	local seedOwnerId = owner and owner.UserId or 0
-	local soldier = SoldierService.Create(Config, {
-		Id = soldierId,
-		ArmyId = army.Id,
-		Role = army.Type,
-		PersonalitySeed = (army.Id * 1009) + army.SoldierSequence * 7919 + seedOwnerId,
-	})
-	army.Soldiers[soldier.Id] = soldier
-	ArmyService.RefreshAggregate(army, SoldierService)
-	makeArmyVisual(army)
+    teamGold[team], teamSupplies[team] = EconomyService.ApplyCost(teamGold[team], teamSupplies[team], cost)
+    teamEconomyState[team].Gold = teamGold[team]
+    teamEconomyState[team].Supplies = teamSupplies[team]
 
-	if typeof(owner) == "Instance" and owner:IsA("Player") then
-		playerSelectedArmy[owner] = army.Id
-		feedbackRemote:FireClient(owner, "SOLDIER_RECRUITED", {
-			ArmyId = army.Id,
-			ArmyType = army.Type,
-			SoldierId = soldier.Id,
-			SoldierCount = army.SoldierCount,
-			Cost = cost,
-			Supplies = teamSupplies[team],
-		})
-	end
-	return true, soldier
+    local soldierId = ArmyService.NextSoldierId(army)
+    local seedOwnerId = 0
+    if typeof(owner) == "Instance" and owner:IsA("Player") then
+        seedOwnerId = owner.UserId
+    elseif owner and owner.UserId then
+        seedOwnerId = owner.UserId
+    end
+
+    local soldier = SoldierService.Create(Config, {
+        Id = soldierId,
+        ArmyId = army.Id,
+        Role = army.Type,
+        PersonalitySeed = (army.Id * 1009) + army.SoldierSequence * 7919 + seedOwnerId,
+    })
+    army.Soldiers[soldier.Id] = soldier
+    ArmyService.RefreshAggregate(army, SoldierService)
+    makeArmyVisual(army)
+
+    if typeof(owner) == "Instance" and owner:IsA("Player") then
+        playerSelectedArmy[owner] = army.Id
+        feedbackRemote:FireClient(owner, "SOLDIER_RECRUITED", {
+            ArmyId = army.Id,
+            ArmyType = army.Type,
+            SoldierId = soldier.Id,
+            SoldierCount = army.SoldierCount,
+            CostGold = cost.Gold,
+            CostSupplies = cost.Supplies,
+            Supplies = teamSupplies[team],
+            Gold = teamGold[team],
+        })
+    end
+    return true, soldier
 end
 
 local function createArmyForOwner(owner, team, armyType, spawnBase)
