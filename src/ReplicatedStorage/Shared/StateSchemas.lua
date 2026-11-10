@@ -9,7 +9,7 @@ StateSchemas.Forms = {
     },
     Army = {
         "Id", "Team", "OwnerUserId", "Type", "Position", "TargetPosition",
-        "Formation", "Order", "AttackTarget", "Health", "MaxHealth",
+        "Formation", "Order", "CombatState", "AttackTarget", "Health", "MaxHealth",
         "SoldierCount", "Power", "Defense", "Morale", "Fatigue", "Experience",
     },
     Soldier = {
@@ -22,6 +22,10 @@ StateSchemas.Forms = {
     },
     Economy = {
         "Supplies", "Gold", "Upkeep", "IncomePerMinute",
+    },
+    Castle = {
+        "Province", "Tier", "Owner", "State", "Garrison", "MaxGarrison",
+        "CaptureTeam", "CaptureProgress", "StabilizationRemaining",
     },
 }
 
