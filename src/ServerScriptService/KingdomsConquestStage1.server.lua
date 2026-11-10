@@ -12,6 +12,8 @@ local NetworkContract = require(ReplicatedStorage.Shared.NetworkContract)
 local StateSchemas = require(ReplicatedStorage.Shared.StateSchemas)
 local ArmyService = require(script.Parent.Services.ArmyService)
 local SoldierService = require(script.Parent.Services.SoldierService)
+local CombatService = require(script.Parent.Services.CombatService)
+local CastleService = require(script.Parent.Services.CastleService)
 local EconomyService = require(script.Parent.Services.EconomyService)
 local MatchService = require(script.Parent.Services.MatchService)
 local CaptureService = require(script.Parent.Services.CaptureService)
@@ -96,7 +98,15 @@ local provinceStates = {}
 local mapNodes = {}
 for name, data in pairs(selectedMap.Provinces) do
 	mapNodes[name] = {Name=data.CityName or name, Province=data.ProvinceName or name, Position=data.Position, Capital=data.Capital == true}
-	provinceStates[name] = {Owner=initialOwner(data), CaptureTeam=0, CaptureProgress=0, Income=data.Income, Strategic=data.Strategic}
+	local tier = data.Capital and "Capital" or (data.Strategic and "Major" or "Regional")
+	provinceStates[name] = {
+		Owner=initialOwner(data),
+		CaptureTeam=0,
+		CaptureProgress=0,
+		Income=data.Income,
+		Strategic=data.Strategic,
+		Castle=CastleService.Create(name, tier, initialOwner(data), Config),
+	}
 end
 
 local function computeWorldHalfExtent(map)
@@ -682,6 +692,7 @@ local function createArmy(player, armyType)
 		Type = armyType,
 		Position = spawnPosition,
 		TargetPosition = spawnPosition,
+		FallbackPosition = selectedMap.Spawns[team] or spawnPosition,
 	})
 	armies[army.Id] = army
 
@@ -773,53 +784,107 @@ for name in pairs(provinceStates) do
 	updateStaticProvinceVisual(name)
 end
 
+local function gatePresence(provinceName)
+	local model = provinceFolder:FindFirstChild(provinceName .. "_Castle")
+	local gates = model and model:FindFirstChild("Gates")
+	if not gates then return {}, 0, 0 end
+
+	local presentTeams = {}
+	local activeArmies = {}
+	for _, gate in ipairs(gates:GetChildren()) do
+		for _, army in pairs(armies) do
+			if ArmyService.IsAlive(army) and (army.Position - gate.Position).Magnitude <= 14 then
+				presentTeams[army.Team] = true
+				activeArmies[army.Id] = army
+			end
+		end
+	end
+
+	local activeTeam = 0
+	local teamCount = 0
+	for team in pairs(presentTeams) do
+		teamCount += 1
+		activeTeam = team
+	end
+	return presentTeams, activeTeam, teamCount
+end
+
 local function captureTick(dt)
 	for name, state in pairs(provinceStates) do
-		local model = provinceFolder:FindFirstChild(name .. "_Castle")
-		local gates = model and model:FindFirstChild("Gates")
-		if gates then
-			local presentTeams = {}
-			for _, gate in ipairs(gates:GetChildren()) do
-				for _, player in ipairs(playersNearPosition(gate.Position, 9)) do
-					presentTeams[findTeamForPlayer(player)] = true
-				end
-				for _, army in pairs(armies) do
-					if (army.Position - gate.Position).Magnitude <= 12 then
-						presentTeams[army.Team] = true
+		local castle = state.Castle
+		if castle then
+			local _, activeTeam, teamCount = gatePresence(name)
+			local attackerPower, defenderPower = 0, 0
+
+			local model = provinceFolder:FindFirstChild(name .. "_Castle")
+			local gates = model and model:FindFirstChild("Gates")
+			if gates then
+				for _, gate in ipairs(gates:GetChildren()) do
+					for _, army in pairs(armies) do
+						if ArmyService.IsAlive(army) and (army.Position - gate.Position).Magnitude <= 14 then
+							ArmyService.RefreshAggregate(army, SoldierService)
+							if army.Team == castle.Owner then
+								defenderPower += army.Power
+							else
+								attackerPower += army.Power
+							end
+						end
 					end
 				end
 			end
 
-			local activeTeam = 0
-			local teamCount = 0
-			for team in pairs(presentTeams) do
-				teamCount += 1
-				activeTeam = team
-			end
-
-			if teamCount == 1 then
-				local teamIsAttacker = state.Owner == 0 or activeTeam ~= state.Owner
-				if teamIsAttacker then
-					if state.CaptureTeam ~= activeTeam then
-						state.CaptureTeam = activeTeam
-						state.CaptureProgress = 0
+			if teamCount > 1 then
+				castle.State = "Contested"
+				castle.CaptureProgress = math.max(0, castle.CaptureProgress - Config.Game.CaptureDecayPerSecond * dt)
+			elseif teamCount == 1 and activeTeam ~= castle.Owner then
+				if castle.Garrison > 0 then
+					CastleService.ApplyAssault(castle, attackerPower / math.max(1, 1 + defenderPower * 0.02), dt)
+					castle.State = "Assaulted"
+					for _, army in pairs(armies) do
+						if ArmyService.IsAlive(army) and army.Team == activeTeam then
+							for _, soldier in pairs(army.Soldiers) do
+								if SoldierService.IsAlive(soldier) then
+									soldier.Morale = math.max(0, soldier.Morale - 0.35 * dt)
+								end
+							end
+							ArmyService.RefreshAggregate(army, SoldierService)
+						end
 					end
-					state.CaptureProgress += dt
-					if state.CaptureProgress >= Config.Game.CaptureSeconds then
-						local oldOwner = state.Owner
+				else
+					castle.State = "Assaulted"
+					local oldOwner = castle.Owner
+					local captured = CastleService.AdvanceCapture(
+						castle,
+						activeTeam,
+						dt,
+						Config.Game.CaptureSeconds,
+						Config.Game.CaptureDecayPerSecond,
+						Config
+					)
+					state.CaptureTeam = castle.AssaultTeam
+					state.CaptureProgress = castle.CaptureProgress
+					if captured then
 						state.Owner = activeTeam
 						state.CaptureTeam = 0
 						state.CaptureProgress = 0
 						updateProvinceVisual(name)
 						provinceCaptureEvent:Fire(name, activeTeam, oldOwner)
 					end
-				elseif state.CaptureProgress > 0 then
-					state.CaptureProgress = math.max(0, state.CaptureProgress - Config.Game.CaptureDecayPerSecond * dt)
 				end
-			elseif teamCount > 1 then
-				-- Contesting stops capture progress; it does not punish either side.
-			elseif state.CaptureProgress > 0 then
-				state.CaptureProgress = math.max(0, state.CaptureProgress - Config.Game.CaptureDecayPerSecond * dt)
+			elseif teamCount == 1 and activeTeam == castle.Owner then
+				castle.State = "Safe"
+				castle.AssaultTeam = 0
+				castle.CaptureProgress = 0
+			else
+				CastleService.TickRecovery(castle, dt, Config)
+				state.CaptureTeam = castle.AssaultTeam
+				state.CaptureProgress = castle.CaptureProgress
+			end
+
+			if model then
+				model:SetAttribute("CastleState", castle.State)
+				model:SetAttribute("Garrison", math.floor(castle.Garrison))
+				model:SetAttribute("CaptureTeam", castle.AssaultTeam or 0)
 			end
 		end
 	end
@@ -831,6 +896,10 @@ local function moveArmy(army, target)
 	if math.abs(flatTarget.X) > WORLD_HALF_EXTENT - 8 or math.abs(flatTarget.Z) > WORLD_HALF_EXTENT - 8 then return false end
 	army.TargetPosition = flatTarget
 	army.AttackTarget = nil
+	if army.Order ~= "Retreat" then
+		army.Order = "Move"
+	end
+	army.CombatState = "Searching"
 	return true
 end
 
@@ -856,56 +925,141 @@ local function firstAliveSoldier(army)
 	return chosen
 end
 
+local function chooseRangedSoldier(army)
+	local chosen = nil
+	for _, soldier in pairs(army.Soldiers or {}) do
+		if SoldierService.IsAlive(soldier) and (not chosen or soldier.Accuracy > chosen.Accuracy) then
+			chosen = soldier
+		end
+	end
+	return chosen
+end
+
+local function beginRetreat(army)
+	army.Order = "Retreat"
+	army.CombatState = "Retreating"
+	army.AttackTarget = nil
+	army.TargetPosition = army.FallbackPosition or army.Position
+	for _, soldier in pairs(army.Soldiers or {}) do
+		if SoldierService.IsAlive(soldier) then
+			soldier.Morale = math.min(100, soldier.Morale + 1.5)
+		end
+	end
+end
+
+local function resolveArmyAttack(army, target, dt)
+	local info = Config.ArmyTypes[army.Type]
+	if not info or not ArmyService.IsAlive(target) then return false end
+
+	ArmyService.RefreshAggregate(army, SoldierService)
+	ArmyService.RefreshAggregate(target, SoldierService)
+
+	local terrain = CombatService.GetTerrainModifiers(army.Position, terrainZones)
+	local range = CombatService.GetAttackRange(army, info, Config, terrain.Range)
+	local distance = (army.Position - target.Position).Magnitude
+
+	if distance > range then
+		army.TargetPosition = target.Position
+		army.CombatState = "Approaching"
+		return false
+	end
+
+	army.TargetPosition = army.Position
+	army.CombatState = CombatService.IsRanged(army) and "Ranged" or "Engaging"
+	army._cooldown = (army._cooldown or 0) - dt
+	if army._cooldown > 0 then return false end
+
+	local defender = firstAliveSoldier(target)
+	local attackerSoldier = CombatService.IsRanged(army) and chooseRangedSoldier(army) or firstAliveSoldier(army)
+	if not defender or not attackerSoldier then return false end
+
+	local hitChance = CombatService.GetHitChance(army, target, attackerSoldier, terrain.Range)
+	local rng = Random.new(attackerSoldier.PersonalitySeed + math.floor(os.clock() * 30) + army.Id)
+	if rng:NextNumber() > hitChance then
+		SoldierService.AddFatigue(attackerSoldier, CombatService.IsRanged(army) and 0.45 or 0.7)
+		army._cooldown = ArmyService.GetAttackCooldown(info, army.Morale, army.Fatigue)
+		if CombatService.IsRanged(army) then
+			vfxRemote:FireAllClients("ArrowMiss", army.Position, target.Position, army.Team)
+		else
+			vfxRemote:FireAllClients("Melee", target.Position, army.Type, false)
+		end
+		return true
+	end
+
+	local formationMultiplier = CombatService.GetFormationModifier(army.Formation, "Attack")
+	local damage = CombatService.GetBaseDamage(army, target, attackerSoldier, formationMultiplier, defender.Defense)
+	if CombatService.IsRanged(army) then
+		damage *= Config.Combat.RangedDamageMultiplier
+	end
+	if army.Type == "Cavalry" then
+		damage *= terrain.Cavalry
+	end
+
+	local killed = SoldierService.ApplyDamage(defender, damage)
+	attackerSoldier.Experience += killed and 2 or 0.5
+	SoldierService.AddFatigue(attackerSoldier, CombatService.IsRanged(army) and 0.55 or 0.85)
+
+	if killed then
+		for _, soldier in pairs(target.Soldiers or {}) do
+			if SoldierService.IsAlive(soldier) then
+				soldier.Morale = math.max(0, soldier.Morale - 3.2)
+			end
+		end
+	end
+
+	ArmyService.RefreshAggregate(army, SoldierService)
+	ArmyService.RefreshAggregate(target, SoldierService)
+
+	if CombatService.IsRanged(army) then
+		vfxRemote:FireAllClients("Arrow", army.Position, target.Position, army.Team, killed)
+	else
+		vfxRemote:FireAllClients("Melee", target.Position, army.Type, killed)
+	end
+
+	army._cooldown = ArmyService.GetAttackCooldown(info, army.Morale, army.Fatigue)
+
+	if target.SoldierCount <= 0 then
+		removeArmy(target.Id)
+	else
+		if killed then
+			makeArmyVisual(target)
+		else
+			syncArmyVisual(target)
+		end
+	end
+	return true
+end
+
 local function attackTick(dt)
 	for _, army in pairs(armies) do
-		if army.AttackTarget then
-			local target = armies[army.AttackTarget]
-			if not target or not ArmyService.IsAlive(target) then
-				army.AttackTarget = nil
-				army.Order = "Hold"
-			else
-				local distance = (army.Position - target.Position).Magnitude
-				local info = Config.ArmyTypes[army.Type]
-				if distance <= info.AttackRange then
-					army._cooldown = (army._cooldown or 0) - dt
-					if army._cooldown <= 0 then
-						ArmyService.RefreshAggregate(army, SoldierService)
-						ArmyService.RefreshAggregate(target, SoldierService)
-						local defender = firstAliveSoldier(target)
-						if not defender then
-							removeArmy(target.Id)
-						else
-							local averagePower = army.SoldierCount > 0 and army.Power / army.SoldierCount or 0
-							local damage = ArmyService.GetAttackDamage(info, army.Type, target.Type, averagePower)
-							local killed = SoldierService.ApplyDamage(defender, damage)
-							for _, soldier in pairs(army.Soldiers) do
-								if SoldierService.IsAlive(soldier) then
-									soldier.Experience += killed and 1.5 or 0.2
-									SoldierService.AddFatigue(soldier, killed and 1.2 or 0.4)
-								end
-							end
-							for _, soldier in pairs(target.Soldiers) do
-								if SoldierService.IsAlive(soldier) and not killed then
-									soldier.Morale = math.max(0, soldier.Morale - 1.5)
-								end
-							end
-							ArmyService.RefreshAggregate(army, SoldierService)
-							ArmyService.RefreshAggregate(target, SoldierService)
-							vfxRemote:FireAllClients("Hit", target.Position, army.Type, killed)
-							army._cooldown = ArmyService.GetAttackCooldown(info, army.Morale, army.Fatigue)
-							if killed then
-								makeArmyVisual(target)
-							else
-								syncArmyVisual(target)
-							end
-							if target.SoldierCount <= 0 then
-								removeArmy(target.Id)
-							end
-						end
-					end
+		if ArmyService.IsAlive(army) then
+			ArmyService.RefreshAggregate(army, SoldierService)
+
+			if CombatService.GetRetreatThreshold(army, Config) and army.Order ~= "Retreat" then
+				beginRetreat(army)
+			end
+
+			if army.Order == "Retreat" then
+				if (army.Position - (army.FallbackPosition or army.Position)).Magnitude <= 4 then
+					army.CombatState = "Recovering"
+					army.TargetPosition = army.Position
 				else
-					army.TargetPosition = target.Position
-					army.Order = "Attack"
+					army.CombatState = "Retreating"
+				end
+			else
+				local target = armies[army.AttackTarget]
+				if not target or not ArmyService.IsAlive(target) then
+					target = CombatService.ChooseTarget(army, armies, SoldierService)
+					if target then
+						army.AttackTarget = target.Id
+						army.Order = "Attack"
+					end
+				end
+
+				if target then
+					resolveArmyAttack(army, target, dt)
+				else
+					army.CombatState = "Searching"
 				end
 			end
 		end
@@ -1000,6 +1154,7 @@ local function publicArmyState(army)
 		Formation = army.Formation,
 		Order = army.Order or "Hold",
 		AttackTarget = army.AttackTarget,
+		CombatState = army.CombatState or "Searching",
 		Health = army.Health,
 		MaxHealth = army.MaxHealth,
 		SoldierCount = army.SoldierCount or 0,
@@ -1038,6 +1193,13 @@ requestState.OnServerInvoke = function(player)
 		Provinces = states,
 		SelectedArmy = playerSelectedArmy[player] or 0,
 		Armies = publicArmies,
+		Castles = (function()
+			local result = {}
+			for name, province in pairs(provinceStates) do
+				if province.Castle then result[name] = CastleService.PublicState(province.Castle) end
+			end
+			return result
+		end)(),
 	}
 end
 
@@ -1074,6 +1236,13 @@ local function publishState()
 			Provinces = capture,
 			SelectedArmy = playerSelectedArmy[player] or 0,
 			Armies = publicArmies,
+			Castles = (function()
+				local result = {}
+				for name, province in pairs(provinceStates) do
+					if province.Castle then result[name] = CastleService.PublicState(province.Castle) end
+				end
+				return result
+			end)(),
 		})
 	end
 end
@@ -1251,6 +1420,8 @@ workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
 			state.CaptureProgress = 0
 			state.IncomeStartAt = 0
 			state.Owner = initialOwner(selectedMap.Provinces[name])
+			local tier = selectedMap.Provinces[name].Capital and "Capital" or (selectedMap.Provinces[name].Strategic and "Major" or "Regional")
+			state.Castle = CastleService.Create(name, tier, state.Owner, Config)
 			updateProvinceVisual(name)
 		end
 		for player in pairs(playerSelectedArmy) do
