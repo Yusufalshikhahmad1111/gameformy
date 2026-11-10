@@ -269,9 +269,9 @@ feedbackRemote.OnClientEvent:Connect(function(kind,payload)
   selectedArmy=tonumber(payload.ArmyId) or selectedArmy
   contextTitle.Text="ARMY #"..tostring(selectedArmy).." • "..tostring(payload.ArmyType)
   contextBody.Text="Army created and selected.\nMove mode is ready."
-  announce("ARMY READY • "..tostring(payload.SoldierCount or 0).." SOLDIERS • -"..tostring(payload.Cost).." SUPPLIES")
+  announce(string.format("ARMY READY • %d SOLDIERS • -%dG -%dS", tonumber(payload.SoldierCount) or 0, math.floor(payload.CostGold or 0), math.floor(payload.CostSupplies or 0)))
  elseif kind=="SOLDIER_RECRUITED" then
-  announce("+1 SOLDIER • "..tostring(payload.ArmyType).." • "..tostring(payload.SoldierCount).." TOTAL • -"..tostring(payload.Cost).." SUP")
+  announce(string.format("+1 SOLDIER • %s • %d TOTAL • -%dG -%dS", tostring(payload.ArmyType), tonumber(payload.SoldierCount) or 0, math.floor(payload.CostGold or 0), math.floor(payload.CostSupplies or 0)))
  elseif kind=="ARMY_FAILED" then
   announce("RECRUIT FAILED • "..tostring(payload.Reason))
  elseif kind=="COMMAND_REJECTED" then
