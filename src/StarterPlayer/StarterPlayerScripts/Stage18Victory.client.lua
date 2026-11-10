@@ -145,7 +145,7 @@ local function openResult(payload)
 		"Territory  •  %d\n"
 			.. "Surviving Armies  •  %d\n"
 			.. "Surviving Soldiers  •  %d\n"
-			.. "Field Reward  •  %d XP\n"
+			.. "Field Reward  •  %d\n"
 			.. "Gold  •  %d    Supplies  •  %d\n\n"
 			.. "الإقليم  •  %d\n"
 			.. "الجيوش الباقية  •  %d\n"
