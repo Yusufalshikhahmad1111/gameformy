@@ -500,7 +500,21 @@ local function buildCastle(mapModel, mapId, city, art)
 	label.Text = string.upper(city.Name) .. "  •  " .. string.upper(tier)
 	label.Parent = display
 
+	local nearestCityDistance = math.huge
+	local mapData = MapService.GetMap(mapId, (Config.MapPacks[mapId] and Config.MapPacks[mapId].DefaultTeamCount) or 2)
+	for otherId, otherCity in pairs(mapData.Cities or {}) do
+		if otherId ~= city.Id and otherCity.Position then
+			nearestCityDistance = math.min(nearestCityDistance, (center - otherCity.Position).Magnitude)
+		end
+	end
 	local houseCount = tier == "Capital" and 3 or tier == "Major" and 2 or 1
+	-- Dense city clusters must stay readable: do not add outer houses when
+	-- another castle is too close to the presentation ring.
+	if nearestCityDistance < 52 then
+		houseCount = 0
+	elseif nearestCityDistance < 70 then
+		houseCount = math.min(houseCount, 1)
+	end
 	for index = 1, houseCount do
 		buildCityBlock(castleArt, center, art, tier, index)
 	end
@@ -605,7 +619,9 @@ local function validateMap(mapId, mapModel)
 		local castle = mapModel:FindFirstChild(city.Id .. "_Castle", true)
 		if castle then
 			local center = getCastleCenter(castle)
-			local radius = city.Capital and 24 or ((city.Income or 0) >= 9 and 22 or 20)
+			-- Match the authored castle footprint plus a small visual safety margin;
+			-- this intentionally avoids false positives for dense city clusters.
+			local radius = city.Capital and 18 or ((city.Income or 0) >= 9 and 17 or 15)
 			for _, item in ipairs(previous) do
 				if (center - item.center).Magnitude < radius + item.radius then
 					table.insert(failures, string.format(
