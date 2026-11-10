@@ -1,7 +1,7 @@
 -- Kingdoms Conquest — state contracts shared by server and clients
 local StateSchemas = {}
 
-StateSchemas.Version = 1
+StateSchemas.Version = 2
 
 StateSchemas.Forms = {
     Match = {
