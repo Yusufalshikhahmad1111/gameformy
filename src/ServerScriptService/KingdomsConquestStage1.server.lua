@@ -485,16 +485,29 @@ local function buildSoldierVisual(armyModel, soldier, position, forward, teamCol
 		add("HorseBody", Vector3.new(3.4, 2, 4.8), Vector3.new(0, 1.35, 0), dark, Enum.Material.SmoothPlastic)
 		add("HorseHead", Vector3.new(1.8, 2.1, 1.9), Vector3.new(0, 2.7, -1.8), dark, Enum.Material.SmoothPlastic)
 		add("RiderBody", Vector3.new(1.4, 2.3, 1.1), Vector3.new(0, 3.7, 0), cloth, Enum.Material.Fabric)
+		add("RiderArmor", Vector3.new(1.55, 1.45, 1.2), Vector3.new(0, 4.0, -0.02), classInfo.Accent, Enum.Material.Metal)
 		add("RiderHead", Vector3.new(1.25, 1.25, 1.25), Vector3.new(0, 5.35, 0), skin, Enum.Material.SmoothPlastic)
+		local riderHelm = add("RiderHelmet", Vector3.new(1.45, 0.75, 1.45), Vector3.new(0, 6.05, 0), dark, Enum.Material.Metal)
+		riderHelm.Shape = Enum.PartType.Ball
+		local riderPlume = add("RiderPlume", Vector3.new(0.28, 1.1, 0.28), Vector3.new(0, 6.7, 0.25), classInfo.Accent, Enum.Material.Fabric)
+		riderPlume.Shape = Enum.PartType.Cylinder
+		add("Saddle", Vector3.new(2.8, 0.35, 2.4), Vector3.new(0, 2.55, 0.2), cloth, Enum.Material.Fabric)
 		add("Lance", Vector3.new(0.16, 4.8, 0.16), Vector3.new(0.9, 4.6, -0.8), classInfo.Accent, Enum.Material.Metal)
 	else
 		add("Body", Vector3.new(1.45, 2.3, 1.05), Vector3.new(0, 1.7, 0), cloth, Enum.Material.Fabric)
+		add("TorsoArmor", Vector3.new(1.58, 1.25, 1.12), Vector3.new(0, 2.05, -0.02), classInfo.Accent, Enum.Material.Metal)
 		add("Head", Vector3.new(1.2, 1.2, 1.2), Vector3.new(0, 3.35, 0), skin, Enum.Material.SmoothPlastic)
+		local helm = add("Helmet", Vector3.new(1.35, 0.7, 1.35), Vector3.new(0, 4.05, 0), dark, Enum.Material.Metal)
+		helm.Shape = Enum.PartType.Ball
+		add("HelmetRidge", Vector3.new(0.18, 1.0, 0.9), Vector3.new(0, 4.28, -0.04), classInfo.Accent, Enum.Material.Metal)
+		add("ShoulderL", Vector3.new(0.48, 0.42, 0.95), Vector3.new(-0.8, 2.65, 0), classInfo.Accent, Enum.Material.Metal)
+		add("ShoulderR", Vector3.new(0.48, 0.42, 0.95), Vector3.new(0.8, 2.65, 0), classInfo.Accent, Enum.Material.Metal)
 		add("LegL", Vector3.new(0.5, 1.7, 0.62), Vector3.new(-0.4, 0.25, 0), dark, Enum.Material.SmoothPlastic)
 		add("LegR", Vector3.new(0.5, 1.7, 0.62), Vector3.new(0.4, 0.25, 0), dark, Enum.Material.SmoothPlastic)
 		if armyModel:GetAttribute("ArmyType") == "Spearmen" then
 			add("Spear", Vector3.new(0.15, 4.6, 0.15), Vector3.new(0.92, 2.8, -0.3), classInfo.Accent, Enum.Material.Wood)
-			add("Shield", Vector3.new(1.05, 1.35, 0.25), Vector3.new(-0.86, 1.8, -0.15), teamColor, Enum.Material.Metal)
+			local shield = add("Shield", Vector3.new(1.05, 1.35, 0.25), Vector3.new(-0.86, 1.8, -0.15), teamColor, Enum.Material.Metal)
+			shield.Shape = Enum.PartType.Cylinder
 		else
 			add("Bow", Vector3.new(0.22, 2.55, 0.22), Vector3.new(0.9, 2.2, -0.25), classInfo.Accent, Enum.Material.Wood)
 			add("Quiver", Vector3.new(0.55, 1.4, 0.35), Vector3.new(-0.75, 2.05, 0.2), dark, Enum.Material.Fabric)
@@ -524,6 +537,42 @@ local function buildSoldierVisual(armyModel, soldier, position, forward, teamCol
 	return model
 end
 
+local function buildArmyBanner(model, army, color, classInfo)
+	local banner = Instance.new("Model")
+	banner.Name = "ArmyBanner"
+	banner.Parent = model
+	local pole = makePart(
+		banner,
+		"Pole",
+		Vector3.new(0.18, 5.2, 0.18),
+		army.Position + Vector3.new(-2.8, 2.6, 0),
+		Color3.fromRGB(78, 64, 48),
+		Enum.Material.Wood
+	)
+	pole.CanQuery = false
+	local cloth = makePart(
+		banner,
+		"Pennant",
+		Vector3.new(2.6, 1.35, 0.18),
+		army.Position + Vector3.new(-1.65, 4.25, 0),
+		color,
+		Enum.Material.Fabric
+	)
+	cloth.CanQuery = false
+	local accent = makePart(
+		banner,
+		"PennantAccent",
+		Vector3.new(0.32, 1.35, 0.20),
+		army.Position + Vector3.new(-0.45, 4.25, 0),
+		classInfo.Accent,
+		Enum.Material.Fabric
+	)
+	accent.CanQuery = false
+	banner.PrimaryPart = pole
+	banner:PivotTo(CFrame.lookAt(army.Position + Vector3.new(-2.8, 0, 0), army.Position + Vector3.new(-2.8, 0, -1)))
+	return banner
+end
+
 local function makeArmyVisual(army)
 	if army.Model then army.Model:Destroy() end
 
@@ -536,6 +585,8 @@ local function makeArmyVisual(army)
 
 	local color = ownerColor(army.Team)
 	local classInfo = Config.ArmyTypes[army.Type]
+	local banner = buildArmyBanner(model, army, color, classInfo)
+	army.BannerModel = banner
 	local anchor = makePart(model, "ArmyAnchor", Vector3.new(2, 1, 2), army.Position, color, Enum.Material.SmoothPlastic)
 	anchor.Transparency = 1
 	anchor.CanCollide = false
@@ -587,6 +638,10 @@ local function syncArmyVisual(army)
 
 	local anchor = army.Model:FindFirstChild("ArmyAnchor")
 	if anchor then anchor.Position = army.Position end
+	if army.BannerModel and army.BannerModel.Parent then
+		local bannerOffset = Vector3.new(-2.8, 0, 0)
+		army.BannerModel:PivotTo(CFrame.lookAt(army.Position + bannerOffset, army.Position + bannerOffset + Vector3.new(0, 0, -1)))
+	end
 
 	local soldiers = sortedAliveSoldiers(army)
 	local count = #soldiers
