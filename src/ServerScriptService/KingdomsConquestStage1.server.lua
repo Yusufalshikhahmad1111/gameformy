@@ -1039,6 +1039,9 @@ local function botThink(bot, now, dt)
 	bot.ThinkAccumulator = 0
 
 	reconcileBotCommanders()
+	if botByTeam[bot.Team] ~= bot then
+		return
+	end
 	removeDeadBotArmyRefs()
 
 	local armyCount = 0
