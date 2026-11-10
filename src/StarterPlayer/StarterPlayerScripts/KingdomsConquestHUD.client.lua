@@ -218,7 +218,22 @@ local function clickWorld()
   selectedCastle=province
   castlePanel.Visible=true
   castleTitle.Text=tostring(province)
-  castleBody.Text=UITheme.T(lang,"castle").." • "..UITheme.T(lang,mode:lower()).."\n"..UITheme.T(lang,"territory")..": "..tostring((state.Provinces and state.Provinces[province] and state.Provinces[province].Owner) or 0)
+  local castleState = state.Castles and state.Castles[province]
+  if castleState then
+   castleBody.Text=string.format(
+    "%s • %s\nOWNER: %s\nSTATE: %s\nGARRISON: %d/%d\nCAPTURE: %d%%\n%s",
+    tostring(province),
+    tostring(castleState.Tier or "REGIONAL"),
+    tostring(castleState.Owner or 0),
+    tostring(castleState.State or "Safe"):upper(),
+    tonumber(castleState.Garrison) or 0,
+    tonumber(castleState.MaxGarrison) or 0,
+    math.floor((tonumber(castleState.CaptureProgress) or 0) / math.max(1, (tonumber(state.MatchCaptureSeconds) or 10)) * 100),
+    (castleState.StabilizationRemaining or 0) > 0 and "STABILIZING" or "ARMY AT GATE TO ASSAULT"
+   )
+  else
+   castleBody.Text=UITheme.T(lang,"castle").." • "..UITheme.T(lang,mode:lower()).."\n"..UITheme.T(lang,"territory")..": "..tostring((state.Provinces and state.Provinces[province] and state.Provinces[province].Owner) or 0)
+  end
   if selectedArmy~=0 then
    if mode=="Move" then
     command:FireServer("Move",{ArmyId=selectedArmy,Position=hit.Position})
@@ -299,6 +314,21 @@ if selectedArmy~=0 then
   contextBody.Text="ARMY LOST OR DISBANDED\nRecruit a new army."
  end
 end
+ if selectedCastle and state.Castles and state.Castles[selectedCastle] then
+  local castleState = state.Castles[selectedCastle]
+  castlePanel.Visible = true
+  castleTitle.Text = tostring(selectedCastle)
+  castleBody.Text = string.format(
+   "%s • %s\nOWNER: %s\nSTATE: %s\nGARRISON: %d/%d\nCAPTURE: %d%%",
+   tostring(selectedCastle),
+   tostring(castleState.Tier or "REGIONAL"),
+   tostring(castleState.Owner or 0),
+   tostring(castleState.State or "Safe"):upper(),
+   tonumber(castleState.Garrison) or 0,
+   tonumber(castleState.MaxGarrison) or 0,
+   math.floor((tonumber(castleState.CaptureProgress) or 0) / math.max(1, tonumber(s.MatchCaptureSeconds) or 10) * 100)
+  )
+ end
  if s.MatchOver then
   announce((s.Winner==team and UITheme.T(lang,"victory") or UITheme.T(lang,"defeat")).."  •  "..tostring(s.MapId or "WORLD"))
  end
