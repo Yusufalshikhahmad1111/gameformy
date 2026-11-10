@@ -417,6 +417,10 @@ local function buildCastle(mapModel, mapId, city, art)
 	end
 
 	local tier = city.Capital and "Capital" or ((city.Income or 0) >= 9 and "Major" or "Regional")
+	local previousArt = castle:FindFirstChild("Stage16Art")
+	if previousArt then
+		previousArt:Destroy()
+	end
 	castle:SetAttribute("CastleTier", castle:GetAttribute("CastleTier") or tier)
 	castle:SetAttribute("Stage16ArtReady", true)
 	castle:SetAttribute("CityName", city.Name)
