@@ -1466,6 +1466,7 @@ commandRemote.OnServerEvent:Connect(function(player, action, payload)
 	if not army then return end
 
 	if action == "Move" then
+		army.FollowTargetArmyId = nil
 		local p = payload.Position
 		if typeof(p) == "Vector3" and p.X == p.X and p.Y == p.Y and p.Z == p.Z then
 			if moveArmy(army, p) then army.Order = "Move" end
@@ -1473,13 +1474,27 @@ commandRemote.OnServerEvent:Connect(function(player, action, payload)
 	elseif action == "Hold" then
 		army.TargetPosition = army.Position
 		army.AttackTarget = nil
+		army.FollowTargetArmyId = nil
 		army.Order = "Hold"
+	elseif action == "Follow" then
+		local targetId = tonumber(payload.TargetArmyId)
+		local target = targetId and armies[targetId]
+		if target and ArmyService.IsAlive(target) and target.Team == army.Team and target.Id ~= army.Id then
+			army.FollowTargetArmyId = target.Id
+			army.AttackTarget = nil
+			army.Order = "Follow"
+			army.CombatState = "Following"
+		end
+	elseif action == "Retreat" then
+		army.FollowTargetArmyId = nil
+		beginRetreat(army)
 	elseif action == "Formation" then
 		if RateLimiter.Allow("KCFormation", player.UserId, 1, 6) and Config.Formations[payload.Formation] then
 			army.Formation = payload.Formation
 			syncArmyVisual(army)
 		end
 	elseif action == "Attack" then
+		army.FollowTargetArmyId = nil
 		local targetId = tonumber(payload.TargetArmyId)
 		local target = targetId and armies[targetId]
 		if target and target.Team ~= army.Team and target.Model and target.Model.Parent then
@@ -1533,6 +1548,7 @@ local function publicArmyState(army)
 		Formation = army.Formation,
 		Order = army.Order or "Hold",
 		AttackTarget = army.AttackTarget,
+		FollowTargetArmyId = army.FollowTargetArmyId,
 		CombatState = army.CombatState or "Searching",
 		Health = army.Health,
 		MaxHealth = army.MaxHealth,
@@ -1721,6 +1737,17 @@ RunService.Heartbeat:Connect(function(dt)
 
 	for _, army in pairs(armies) do
 		local info = Config.ArmyTypes[army.Type]
+		if ArmyService.IsAlive(army) and army.Order == "Follow" then
+			local followed = army.FollowTargetArmyId and armies[army.FollowTargetArmyId]
+			if followed and ArmyService.IsAlive(followed) then
+				army.TargetPosition = followed.Position
+			else
+				army.FollowTargetArmyId = nil
+				army.Order = "Hold"
+				army.CombatState = "Searching"
+				army.TargetPosition = army.Position
+			end
+		end
 		local distance = (army.TargetPosition - army.Position).Magnitude
 		if distance > 0.5 and ArmyService.IsAlive(army) then
 			local step = ArmyService.GetMovementSpeed(info, terrainMultiplier(army.Position), army.Morale, army.Fatigue) * dt
