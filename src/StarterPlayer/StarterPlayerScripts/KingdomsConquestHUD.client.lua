@@ -121,14 +121,19 @@ end
 local recruitBar=frame(root,UDim2.fromScale(.69,.60),UDim2.fromScale(.28,.16),UITheme.Colors.Surface,.04)
 text(recruitBar,"RECRUIT  •  PAY WITH SUPPLIES",UDim2.fromScale(.04,.04),UDim2.fromScale(.92,.20),Enum.Font.GothamBold,UITheme.Colors.Parchment)
 local armyDefs={
- {id="Spearmen",icon="⚔",cost=20,sub="Front line"},
- {id="Archers",icon="➶",cost=24,sub="Long range"},
- {id="Cavalry",icon="♞",cost=30,sub="Fast / charge"},
+ {id="Spearmen",icon="⚔",cost=5,sub="per soldier"},
+ {id="Archers",icon="➶",cost=6,sub="per soldier"},
+ {id="Cavalry",icon="♞",cost=8,sub="per soldier"},
 }
 for i,armyDef in ipairs(armyDefs) do
  labeledButton(recruitBar,armyDef.icon,armyDef.id:upper(),tostring(armyDef.cost).." SUP • "..armyDef.sub,
   UDim2.fromScale(.03+(i-1)*.32,.29),UDim2.fromScale(.30,.61),function()
-   command:FireServer("RequestArmy",{ArmyType=armyDef.id})
+   local selected = state.Armies and state.Armies[tostring(selectedArmy)]
+   if selected and selected.Type == armyDef.id then
+    command:FireServer("RecruitSoldier",{ArmyId=selectedArmy})
+   else
+    command:FireServer("RequestArmy",{ArmyType=armyDef.id})
+   end
   end)
 end
 
@@ -248,9 +253,13 @@ feedbackRemote.OnClientEvent:Connect(function(kind,payload)
   selectedArmy=tonumber(payload.ArmyId) or selectedArmy
   contextTitle.Text="ARMY #"..tostring(selectedArmy).." • "..tostring(payload.ArmyType)
   contextBody.Text="Army created and selected.\nMove mode is ready."
-  announce("ARMY READY • "..tostring(payload.ArmyType).."  •  -"..tostring(payload.Cost).." SUPPLIES")
+  announce("ARMY READY • "..tostring(payload.SoldierCount or 0).." SOLDIERS • -"..tostring(payload.Cost).." SUPPLIES")
+ elseif kind=="SOLDIER_RECRUITED" then
+  announce("+1 SOLDIER • "..tostring(payload.ArmyType).." • "..tostring(payload.SoldierCount).." TOTAL • -"..tostring(payload.Cost).." SUP")
  elseif kind=="ARMY_FAILED" then
   announce("RECRUIT FAILED • "..tostring(payload.Reason))
+ elseif kind=="COMMAND_REJECTED" then
+  announce("COMMAND REJECTED • "..tostring(payload.Reason))
  end
 end)
 
@@ -270,7 +279,25 @@ local function render(s)
  end
 end
 if selectedArmy~=0 then
- contextTitle.Text="ARMY #"..tostring(selectedArmy)
+ local selectedState = s.Armies and s.Armies[tostring(selectedArmy)]
+ if selectedState then
+  contextTitle.Text=string.format("ARMY #%d • %s", selectedArmy, tostring(selectedState.Type):upper())
+  contextBody.Text=string.format(
+   "%d soldiers • %d/%d HP\nMORALE %d • FATIGUE %d\nPOWER %.0f • %s • %s\nClick the world to issue orders.",
+   tonumber(selectedState.SoldierCount) or 0,
+   math.floor(selectedState.Health or 0),
+   math.floor(selectedState.MaxHealth or 0),
+   math.floor(selectedState.Morale or 0),
+   math.floor(selectedState.Fatigue or 0),
+   tonumber(selectedState.Power) or 0,
+   tostring(selectedState.Formation or "Line"),
+   tostring(selectedState.Order or "Hold")
+  )
+ else
+  selectedArmy=0
+  contextTitle.Text=UITheme.T(lang,"army")
+  contextBody.Text="ARMY LOST OR DISBANDED\nRecruit a new army."
+ end
 end
  if s.MatchOver then
   announce((s.Winner==team and UITheme.T(lang,"victory") or UITheme.T(lang,"defeat")).."  •  "..tostring(s.MapId or "WORLD"))
