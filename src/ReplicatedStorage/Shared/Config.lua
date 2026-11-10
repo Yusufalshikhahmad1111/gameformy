@@ -54,6 +54,23 @@ Config.ArmyTypes = {
     },
 }
 
+Config.Combat = {
+    DetectionRange = 48,
+    RangedProjectileSpeed = 105,
+    RangedDamageMultiplier = 0.92,
+    RangedAccuracyFloor = 0.22,
+    MeleeDamageMultiplier = 1.0,
+    RetreatMorale = 20,
+    RetreatHealthRatio = 0.22,
+    CombatTickSeconds = 0.12,
+}
+
+Config.Castles = {
+    Capital = {Garrison=140, Defense=1.35, Recovery=1.6, Stabilization=12},
+    Major = {Garrison=95, Defense=1.18, Recovery=1.35, Stabilization=9},
+    Regional = {Garrison=60, Defense=1.00, Recovery=1.05, Stabilization=7},
+}
+
 Config.Formations = {
     Line={Label="LINE"},
     Wedge={Label="WEDGE"},
