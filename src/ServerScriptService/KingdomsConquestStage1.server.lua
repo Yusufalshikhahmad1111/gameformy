@@ -964,45 +964,48 @@ local function countHumanPlayersOnTeam(teamId)
 	return count
 end
 
-local function clearBots()
-	for teamId, bot in pairs(botByTeam) do
-		for id, army in pairs(armies) do
-			if army.Owner == bot then
-				removeArmy(id)
-			end
-		end
-		botByTeam[teamId] = nil
+local function removeBot(teamId)
+	local bot = botByTeam[teamId]
+	if not bot then return end
+	local toRemove = {}
+	for id, army in pairs(armies) do
+		if army.Owner == bot then table.insert(toRemove, id) end
 	end
-	for id in pairs(botCommanders) do
-		botCommanders[id] = nil
-	end
+	for _, id in ipairs(toRemove) do removeArmy(id) end
+	botByTeam[teamId] = nil
+	botCommanders[teamId] = nil
 end
 
-local function ensureBotCommanders()
-	clearBots()
+local function reconcileBotCommanders()
 	for teamId = 1, activeTeamCount do
-		if countHumanPlayersOnTeam(teamId) == 0 then
+		local hasHuman = countHumanPlayersOnTeam(teamId) > 0
+		if hasHuman then
+			removeBot(teamId)
+		elseif not botByTeam[teamId] then
 			local difficulty = teamId == 1 and "Veteran" or (teamId % 3 == 0 and "Warlord" or "Recruit")
 			local spawn = selectedMap.Spawns[teamId] or Vector3.new(0, ARMY_Y, 0)
 			local bot = BotCommanderService.Create(teamId, teamId, difficulty, spawn)
 			botCommanders[teamId] = bot
 			botByTeam[teamId] = bot
-		end
-	end
-
-	for teamId, bot in pairs(botByTeam) do
-		bot.State = "Recruiting"
-		local armyType = BotCommanderService.ChooseRecruitment(teamSupplies[teamId] or 0, 0, bot.Difficulty)
-		if armyType then
-			local army = createArmyForOwner(bot, teamId, armyType, bot.SpawnPosition)
-			if army then
-				bot.ArmyIds[army.Id] = true
-				bot.State = "Idle"
+			bot.State = "Recruiting"
+			local armyType = BotCommanderService.ChooseRecruitment(teamSupplies[teamId] or 0, 0, bot.Difficulty)
+			if armyType then
+				local army = createArmyForOwner(bot, teamId, armyType, bot.SpawnPosition)
+				if army then
+					bot.ArmyIds[army.Id] = true
+					bot.State = "Idle"
+				end
 			end
 		end
 	end
-
 	workspace:SetAttribute("KC_BotsReady", true)
+end
+
+local function clearBots()
+	for teamId in pairs(botByTeam) do
+		removeBot(teamId)
+	end
+	workspace:SetAttribute("KC_BotsReady", false)
 end
 
 local function removeDeadBotArmyRefs()
@@ -1035,14 +1038,17 @@ local function botThink(bot, now, dt)
 	if bot.ThinkAccumulator < profile.ThinkSeconds then return end
 	bot.ThinkAccumulator = 0
 
+	reconcileBotCommanders()
 	removeDeadBotArmyRefs()
 
 	local armyCount = 0
 	for armyId in pairs(bot.ArmyIds) do
-		if armies[armyId] and ArmyService.IsAlive(armies[armyId]) then armyCount += 1 end
+		if armies[armyId] and ArmyService.IsAlive(armies[armyId]) then
+			armyCount += 1
+		end
 	end
 
-	local bestProvince, bestScore = BotCommanderService.FindBestProvince(bot, provinceStates, selectedMap, armies, now)
+	local bestProvince = BotCommanderService.FindBestProvince(bot, provinceStates, selectedMap, armies, now)
 	if not bestProvince then
 		bot.State = "Idle"
 		return
@@ -1050,11 +1056,27 @@ local function botThink(bot, now, dt)
 
 	local targetData = selectedMap.Provinces[bestProvince]
 	local targetState = provinceStates[bestProvince]
-
 	local chosenArmy = BotCommanderService.ChooseArmyForObjective(bot, targetData.Position, armies)
 	local enemyThreat = nearestEnemyStrength(bot, targetData.Position)
 
+	-- Reinforce a damaged, rested army before creating another army.
+	if chosenArmy and armyCount > 0 then
+		local reinforcement = BotCommanderService.ChooseReinforcement(bot, armies, teamSupplies[bot.Team] or 0)
+		if reinforcement then
+			local ok = addSoldierToArmy(bot, reinforcement, reinforcement.Type)
+			if ok then
+				bot.State = "Reinforcing"
+				bot.LastAction = "Reinforce Army #" .. tostring(reinforcement.Id)
+				return
+			end
+		end
+	end
+
 	if not chosenArmy then
+		if armyCount >= 3 then
+			bot.State = "Recovering"
+			return
+		end
 		bot.State = "Recruiting"
 		local recruitType = BotCommanderService.ChooseRecruitment(teamSupplies[bot.Team] or 0, armyCount, bot.Difficulty)
 		if recruitType then
@@ -1062,6 +1084,7 @@ local function botThink(bot, now, dt)
 			if army then
 				bot.ArmyIds[army.Id] = true
 				bot.State = "Marching"
+				bot.LastAction = "Recruit " .. recruitType
 			end
 		end
 		return
@@ -1072,19 +1095,32 @@ local function botThink(bot, now, dt)
 		chosenArmy.CombatState = "Retreating"
 		chosenArmy.TargetPosition = chosenArmy.FallbackPosition or bot.SpawnPosition
 		bot.State = "Retreating"
-		bot.LastAction = "Retreat"
+		bot.LastAction = "Retreat Army #" .. tostring(chosenArmy.Id)
 		return
 	end
 
 	if targetState.Owner == bot.Team and enemyThreat > BotCommanderService.GetArmyStrength(chosenArmy) * 1.15 then
 		chosenArmy.Order = "Hold"
 		chosenArmy.TargetPosition = chosenArmy.Position
+		chosenArmy.AttackTarget = nil
+		chosenArmy.CombatState = "Searching"
 		bot.State = "Defending"
+		bot.ObjectiveId = bestProvince
 		bot.LastAction = "Defend " .. bestProvince
 		return
 	end
 
-	chosenArmy.Formation = BotCommanderService.ChooseFormation(chosenArmy, "Spearmen", bot.Difficulty)
+	local targetType = "Spearmen"
+	for _, enemy in pairs(armies) do
+		if enemy.Team ~= bot.Team and ArmyService.IsAlive(enemy) then
+			if (enemy.Position - chosenArmy.Position).Magnitude <= 80 then
+				targetType = enemy.Type
+				break
+			end
+		end
+	end
+
+	chosenArmy.Formation = BotCommanderService.ChooseFormation(chosenArmy, targetType, bot.Difficulty)
 	chosenArmy.TargetPosition = targetData.Position
 	chosenArmy.Order = targetState.Owner ~= bot.Team and "Attack" or "Move"
 	chosenArmy.CombatState = "Approaching"
@@ -1092,7 +1128,6 @@ local function botThink(bot, now, dt)
 	bot.State = targetState.Owner ~= bot.Team and "Attacking" or "Marching"
 	bot.LastAction = (chosenArmy.Order == "Attack" and "Attack " or "Move ") .. bestProvince
 end
-
 
 local function firstAliveSoldier(army)
 	local chosen = nil
@@ -1494,6 +1529,9 @@ end
 Players.PlayerAdded:Connect(function(player)
 	setupPlayer(player)
 	startMatchClock()
+	if workspace:GetAttribute("MatchActive") == true then
+		task.defer(reconcileBotCommanders)
+	end
 end)
 
 task.spawn(function()
@@ -1609,7 +1647,7 @@ workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
 				createArmy(player, "Spearmen")
 			end
 		end
-		ensureBotCommanders()
+		reconcileBotCommanders()
 	else
 		matchStartedAt = 0
 		matchEnded = false
@@ -1643,7 +1681,7 @@ if workspace:GetAttribute("MatchActive") == true then
 		assignTeam(player)
 		if not playerSelectedArmy[player] then createArmy(player, "Spearmen") end
 	end
-	ensureBotCommanders()
+	reconcileBotCommanders()
 end
 
 print("[KingdomsConquest] Stage 1/2 authoritative runtime initialized.")
