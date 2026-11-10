@@ -123,15 +123,16 @@ function EconomyService.GetOwnedProvinceCount(provinceStates, team)
     return count
 end
 
-function EconomyService.GetComebackModifiers(provinceStates, team, totalProvinces)
+function EconomyService.GetComebackModifiers(provinceStates, team, totalProvinces, config)
     local owned = EconomyService.GetOwnedProvinceCount(provinceStates, team)
     local ratio = owned / math.max(1, totalProvinces or 1)
 
     if ratio <= 0.30 then
+        local economy = config and config.Economy or {}
         return {
-            IncomeMultiplier = 1.12,
-            RecruitmentMultiplier = 0.90,
-            ReinforcementMultiplier = 0.88,
+            IncomeMultiplier = economy.ComebackIncomeMultiplier or 1.12,
+            RecruitmentMultiplier = economy.ComebackRecruitmentMultiplier or 0.90,
+            ReinforcementMultiplier = economy.ComebackReinforcementMultiplier or 0.88,
             IsComeback = true,
         }
     end
@@ -148,7 +149,7 @@ function EconomyService.ComputeTeamEconomy(provinceStates, mapData, armies, team
     local homeCapital = EconomyService.GetHomeCapital(provinceStates, mapData, team)
     local connected = EconomyService.GetConnectedProvinces(provinceStates, mapData, team, homeCapital)
     local totalProvinces = #(mapData.ProvinceOrder or {})
-    local comeback = EconomyService.GetComebackModifiers(provinceStates, team, totalProvinces)
+    local comeback = EconomyService.GetComebackModifiers(provinceStates, team, totalProvinces, config)
 
     local goldIncome = 0
     local supplyIncome = 0
