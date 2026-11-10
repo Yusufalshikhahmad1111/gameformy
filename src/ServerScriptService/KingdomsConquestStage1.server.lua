@@ -1049,7 +1049,7 @@ local function attackTick(dt)
 			else
 				local target = armies[army.AttackTarget]
 				if not target or not ArmyService.IsAlive(target) then
-					target = CombatService.ChooseTarget(army, armies, SoldierService)
+					target = CombatService.ChooseTarget(army, armies, SoldierService, Config)
 					if target then
 						army.AttackTarget = target.Id
 						army.Order = "Attack"
