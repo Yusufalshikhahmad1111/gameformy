@@ -2,6 +2,16 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 
+-- Stage 18 is the authoritative presentation layer. Keep this legacy VFX
+-- client only as a fallback for boot failures.
+local stage18Deadline = os.clock() + 15
+while workspace:GetAttribute("KC_Stage18Ready") ~= true and os.clock() < stage18Deadline do
+	task.wait(0.1)
+end
+if workspace:GetAttribute("KC_Stage18Ready") == true then
+	return
+end
+
 if workspace:GetAttribute("KC_RuntimeReady") ~= true then
 	workspace:GetAttributeChangedSignal("KC_RuntimeReady"):Wait()
 end
