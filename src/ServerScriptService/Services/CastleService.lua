@@ -6,18 +6,19 @@ local clamp = function(value, minValue, maxValue)
     return math.max(minValue, math.min(maxValue, value))
 end
 
-local TierConfig = {
+local DefaultTierConfig = {
     Capital = {Garrison=140, Defense=1.35, Recovery=1.6, Stabilization=12},
     Major = {Garrison=95, Defense=1.18, Recovery=1.35, Stabilization=9},
     Regional = {Garrison=60, Defense=1.00, Recovery=1.05, Stabilization=7},
 }
 
-function CastleService.GetTierConfig(tier)
-    return TierConfig[tier] or TierConfig.Regional
+function CastleService.GetTierConfig(tier, config)
+    local source = config and config.Castles or DefaultTierConfig
+    return source[tier] or source.Regional or DefaultTierConfig.Regional
 end
 
-function CastleService.Create(provinceName, tier, owner)
-    local cfg = CastleService.GetTierConfig(tier)
+function CastleService.Create(provinceName, tier, owner, config)
+    local cfg = CastleService.GetTierConfig(tier, config)
     return {
         Province = provinceName,
         Tier = tier,
@@ -48,7 +49,7 @@ function CastleService.ApplyAssault(castle, attackerPower, dt)
     return damage
 end
 
-function CastleService.AdvanceCapture(castle, team, dt, captureSeconds, decayPerSecond)
+function CastleService.AdvanceCapture(castle, team, dt, captureSeconds, decayPerSecond, config)
     if not castle or CastleService.IsStabilizing(castle) then return false end
     if (castle.Garrison or 0) > 0 then return false end
 
@@ -64,7 +65,7 @@ function CastleService.AdvanceCapture(castle, team, dt, captureSeconds, decayPer
         castle.AssaultTeam = 0
         castle.CaptureProgress = 0
         castle.Garrison = castle.MaxGarrison
-        castle.StabilizationRemaining = CastleService.GetTierConfig(castle.Tier).Stabilization
+        castle.StabilizationRemaining = CastleService.GetTierConfig(castle.Tier, config).Stabilization
         castle.State = "Stabilizing"
         return true
     end
@@ -76,7 +77,7 @@ function CastleService.Contest(castle)
     castle.State = "Contested"
 end
 
-function CastleService.TickRecovery(castle, dt)
+function CastleService.TickRecovery(castle, dt, config)
     if not castle then return end
 
     if castle.StabilizationRemaining > 0 then
@@ -88,7 +89,7 @@ function CastleService.TickRecovery(castle, dt)
     end
 
     if castle.State ~= "Assaulted" and castle.State ~= "Contested" then
-        local cfg = CastleService.GetTierConfig(castle.Tier)
+        local cfg = CastleService.GetTierConfig(castle.Tier, config)
         castle.Garrison = math.min(castle.MaxGarrison, castle.Garrison + cfg.Recovery * dt)
         if castle.Garrison >= castle.MaxGarrison then
             castle.State = "Safe"
