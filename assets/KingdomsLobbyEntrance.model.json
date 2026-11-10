@@ -331,7 +331,8 @@
                   0.7569
                 ],
                 "TextStrokeTransparency": 0.3,
-                "Text": "KINGDOMS CONQUEST"
+                "Text": "KINGDOMS CONQUEST",
+                "Font": "GothamBlack"
               }
             },
             {
@@ -369,7 +370,8 @@
                   0.7294,
                   0.6745
                 ],
-                "Text": "ENTER THE REALM"
+                "Text": "ENTER THE REALM",
+                "Font": "GothamMedium"
               }
             }
           ]
@@ -538,7 +540,8 @@
                   0.7569
                 ],
                 "TextStrokeTransparency": 0.35,
-                "Text": "SYRIA"
+                "Text": "SYRIA",
+                "Font": "GothamBlack"
               }
             },
             {
@@ -576,7 +579,8 @@
                   0.7294,
                   0.6745
                 ],
-                "Text": "LEVANT"
+                "Text": "LEVANT",
+                "Font": "GothamMedium"
               }
             }
           ]
@@ -689,7 +693,8 @@
                   0.7569
                 ],
                 "TextStrokeTransparency": 0.35,
-                "Text": "SAUDI ARABIA"
+                "Text": "SAUDI ARABIA",
+                "Font": "GothamBlack"
               }
             },
             {
@@ -727,7 +732,8 @@
                   0.7294,
                   0.6745
                 ],
-                "Text": "ARABIAN REGION"
+                "Text": "ARABIAN REGION",
+                "Font": "GothamMedium"
               }
             }
           ]
@@ -840,7 +846,8 @@
                   0.7569
                 ],
                 "TextStrokeTransparency": 0.35,
-                "Text": "PALESTINE"
+                "Text": "PALESTINE",
+                "Font": "GothamBlack"
               }
             },
             {
@@ -878,7 +885,8 @@
                   0.7294,
                   0.6745
                 ],
-                "Text": "LEVANT"
+                "Text": "LEVANT",
+                "Font": "GothamMedium"
               }
             }
           ]
@@ -991,7 +999,8 @@
                   0.7569
                 ],
                 "TextStrokeTransparency": 0.35,
-                "Text": "EUROPE"
+                "Text": "EUROPE",
+                "Font": "GothamBlack"
               }
             },
             {
@@ -1029,7 +1038,8 @@
                   0.7294,
                   0.6745
                 ],
-                "Text": "EUROPE"
+                "Text": "EUROPE",
+                "Font": "GothamMedium"
               }
             }
           ]
