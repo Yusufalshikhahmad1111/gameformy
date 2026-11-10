@@ -14,6 +14,7 @@ local stateRemote=remotes:WaitForChild("State")
 local requestState=remotes:WaitForChild("RequestState")
 local feedbackRemote=remotes:WaitForChild("Feedback")
 local UITheme=require(ReplicatedStorage.Shared.UITheme)
+local Config=require(ReplicatedStorage.Shared.Config)
 
 local stage4Remotes = ReplicatedStorage:WaitForChild("Stage4Remotes", 15)
 if not stage4Remotes then return end
@@ -121,12 +122,12 @@ end
 local recruitBar=frame(root,UDim2.fromScale(.69,.60),UDim2.fromScale(.28,.16),UITheme.Colors.Surface,.04)
 text(recruitBar,"RECRUIT  •  PAY WITH SUPPLIES",UDim2.fromScale(.04,.04),UDim2.fromScale(.92,.20),Enum.Font.GothamBold,UITheme.Colors.Parchment)
 local armyDefs={
- {id="Spearmen",icon="⚔",cost=5,sub="per soldier"},
- {id="Archers",icon="➶",cost=6,sub="per soldier"},
- {id="Cavalry",icon="♞",cost=8,sub="per soldier"},
+ {id="Spearmen",icon="⚔",gold=Config.ArmyTypes.Spearmen.GoldCostPerSoldier,sup=Config.ArmyTypes.Spearmen.SupplyCostPerSoldier,sub="per soldier"},
+ {id="Archers",icon="➶",gold=Config.ArmyTypes.Archers.GoldCostPerSoldier,sup=Config.ArmyTypes.Archers.SupplyCostPerSoldier,sub="per soldier"},
+ {id="Cavalry",icon="♞",gold=Config.ArmyTypes.Cavalry.GoldCostPerSoldier,sup=Config.ArmyTypes.Cavalry.SupplyCostPerSoldier,sub="per soldier"},
 }
 for i,armyDef in ipairs(armyDefs) do
- labeledButton(recruitBar,armyDef.icon,armyDef.id:upper(),tostring(armyDef.cost).." SUP • "..armyDef.sub,
+ labeledButton(recruitBar,armyDef.icon,armyDef.id:upper(),tostring(armyDef.gold).." G + "..tostring(armyDef.sup).." S • "..armyDef.sub,
   UDim2.fromScale(.03+(i-1)*.32,.29),UDim2.fromScale(.30,.61),function()
    local selected = state.Armies and state.Armies[tostring(selectedArmy)]
    if selected and selected.Type == armyDef.id then
@@ -283,7 +284,7 @@ local function render(s)
  selectedArmy=tonumber(s.SelectedArmy) or selectedArmy
  local team=s.Team or 0
  teamText.Text=UITheme.TeamName(team,lang).."  •  "..UITheme.T(lang,"territory").." "..tostring(s.Owned or 0).."/"..tostring(s.TotalProvinces or 0)
- supply.Text=UITheme.T(lang,"supplies").."  "..tostring(math.floor(s.Supplies or 0))
+ supply.Text=string.format("GOLD %d • SUP %d • IN %s/m • UP %s/m", math.floor(s.Gold or 0), math.floor(s.Supplies or 0), tostring(math.floor((s.Economy and s.Economy.GoldIncomePerMinute) or 0)), tostring(math.floor((s.Economy and s.Economy.UpkeepGoldPerMinute) or 0)))
  objective.Text=UITheme.T(lang,"objective").."  •  "..tostring(s.MapId or "WORLD").."  •  "..tostring(s.TeamCount or 2).." TEAMS"
  local hint=info:FindFirstChild("Hint")
  if hint then
@@ -298,7 +299,7 @@ if selectedArmy~=0 then
  if selectedState then
   contextTitle.Text=string.format("ARMY #%d • %s", selectedArmy, tostring(selectedState.Type):upper())
   contextBody.Text=string.format(
-   "%d soldiers • %d/%d HP\nMORALE %d • FATIGUE %d\nPOWER %.0f • %s • %s\nClick the world to issue orders.",
+   "%d soldiers • %d/%d HP\nMORALE %d • FATIGUE %d\nPOWER %.0f • %s • %s\nECONOMY: %s\nClick the world to issue orders.",
    tonumber(selectedState.SoldierCount) or 0,
    math.floor(selectedState.Health or 0),
    math.floor(selectedState.MaxHealth or 0),
@@ -306,7 +307,8 @@ if selectedArmy~=0 then
    math.floor(selectedState.Fatigue or 0),
    tonumber(selectedState.Power) or 0,
    tostring(selectedState.Formation or "Line"),
-   tostring(selectedState.Order or "Hold")
+   tostring(selectedState.Order or "Hold"),
+   ((s.Economy and s.Economy.EconomyStrain) and "UPKEEP STRAIN" or ((s.Economy and s.Economy.Comeback) and "COMEBACK BONUS" or "STABLE"))
   )
  else
   selectedArmy=0
