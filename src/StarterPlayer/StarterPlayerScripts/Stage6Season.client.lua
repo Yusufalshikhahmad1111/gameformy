@@ -3,6 +3,17 @@ local UserInputService=game:GetService("UserInputService")
 local UITheme=require(game:GetService("ReplicatedStorage").Shared.UITheme)
 local ReplicatedStorage=game:GetService("ReplicatedStorage")
 local player=Players.LocalPlayer
+
+-- Stage 17 is the primary match command surface. The old season badge
+-- would overlap the new top command bar, so it remains fallback-only.
+local stage17Deadline = os.clock() + 15
+while workspace:GetAttribute("KC_Stage17Ready") ~= true and os.clock() < stage17Deadline do
+	task.wait(0.1)
+end
+if workspace:GetAttribute("KC_Stage17Ready") == true then
+	return
+end
+
 local remotes=ReplicatedStorage:WaitForChild("Stage7SeasonRemotes")
 local request=remotes:WaitForChild("RequestSeason")
 local changed=remotes:WaitForChild("SeasonChanged")
