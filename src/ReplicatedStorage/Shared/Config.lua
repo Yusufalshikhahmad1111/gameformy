@@ -79,6 +79,25 @@ Config.Combat = {
     CombatTickSeconds = 0.12,
 }
 
+Config.Stage18 = {
+    PersonalityMin = 0,
+    PersonalityMax = 100,
+    VictoryMorale = 4,
+    FormationMorale = 1.4,
+    LeaderLossMorale = -8,
+    BannerSwayDegrees = 4.5,
+    BannerSwaySpeed = 2.0,
+    DustInterval = 0.75,
+    CapturePulseSeconds = 0.85,
+    OptionalAudioAttributes = {
+        CastleCaptured = "KC_Audio_CastleCaptured",
+        CastleContested = "KC_Audio_CastleContested",
+        BattleImpact = "KC_Audio_BattleImpact",
+        Victory = "KC_Audio_Victory",
+        Defeat = "KC_Audio_Defeat",
+    },
+}
+
 Config.Castles = {
     Capital = {Garrison=140, Defense=1.35, Recovery=1.6, Stabilization=12},
     Major = {Garrison=95, Defense=1.18, Recovery=1.35, Stabilization=9},
