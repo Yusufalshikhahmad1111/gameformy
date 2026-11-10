@@ -24,8 +24,8 @@ function CombatService.GetRolePriority(attackerType, defenderType)
     return 1
 end
 
-function CombatService.GetDetectionRange(army)
-    local base = 48
+function CombatService.GetDetectionRange(army, config)
+    local base = config and config.Combat and config.Combat.DetectionRange or 48
     if army.Type == "Cavalry" then base = 58 end
     if army.Type == "Archers" then base = 52 end
     return base * CombatService.GetFormationModifier(army.Formation, "Range")
@@ -33,7 +33,7 @@ end
 
 function CombatService.ChooseTarget(army, armies, SoldierService)
     local best, bestScore = nil, -math.huge
-    local detectRange = CombatService.GetDetectionRange(army)
+    local detectRange = CombatService.GetDetectionRange(army, nil)
 
     for _, candidate in pairs(armies or {}) do
         if candidate ~= army
@@ -69,9 +69,9 @@ function CombatService.IsRanged(army)
     return army.Type == "Archers"
 end
 
-function CombatService.GetAttackRange(army, definition)
+function CombatService.GetAttackRange(army, definition, config, terrainModifier)
     local range = definition.AttackRange or 10
-    return range * CombatService.GetFormationModifier(army.Formation, "Range")
+    return range * CombatService.GetFormationModifier(army.Formation, "Range") * (terrainModifier or 1)
 end
 
 function CombatService.GetHitChance(attacker, defender, soldier, terrainRangeModifier)
@@ -90,16 +90,17 @@ function CombatService.GetBaseDamage(attacker, defender, soldier, formationMulti
     return math.max(1, power * formationMultiplier * roleMultiplier / (1 + defenseValue / 36))
 end
 
-function CombatService.GetRetreatThreshold(army)
+function CombatService.GetRetreatThreshold(army, config)
     local morale = army.Morale or 0
     local fatigue = army.Fatigue or 0
     local healthRatio = (army.Health or 0) / math.max(1, army.MaxHealth or 1)
 
-    local threshold = 0.22
+    local threshold = config and config.Combat and config.Combat.RetreatHealthRatio or 0.22
     threshold += math.max(0, 55 - morale) / 300
     threshold += math.max(0, fatigue - 70) / 500
 
-    return healthRatio <= threshold or morale <= 20
+    local retreatMorale = config and config.Combat and config.Combat.RetreatMorale or 20
+    return healthRatio <= threshold or morale <= retreatMorale
 end
 
 function CombatService.CanDisengage(army, target)
@@ -108,3 +109,32 @@ function CombatService.CanDisengage(army, target)
 end
 
 return CombatService
+
+function CombatService.GetTerrainModifiers(position, terrainZones)
+    local river = terrainZones and terrainZones.River
+    if river and position
+        and math.abs(position.X - river.Center.X) <= river.HalfX
+        and math.abs(position.Z - river.Center.Z) <= river.HalfZ
+    then
+        return {
+            Range = 0.88,
+            Defense = 1.05,
+            Cavalry = 0.78,
+            Movement = river.Speed or 0.55,
+        }
+    end
+
+    return {
+        Range = 1,
+        Defense = 1,
+        Cavalry = 1,
+        Movement = 1,
+    }
+end
+
+function CombatService.ShouldAutoAcquire(army)
+    return army
+        and army.Order ~= "Retreat"
+        and army.Order ~= "Hold"
+        and (army.CombatState == nil or army.CombatState == "Searching")
+end
