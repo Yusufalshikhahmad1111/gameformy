@@ -186,12 +186,18 @@ function BotCommanderService.RecordFailure(bot, objectiveName, now)
 end
 
 
-function BotCommanderService.ChooseReinforcement(bot, armies, teamSupplies)
-    if (teamSupplies or 0) < 5 then return nil end
+function BotCommanderService.ChooseReinforcement(bot, armies, economyState)
+    local gold = type(economyState) == "table" and (economyState.Gold or 0) or 0
+    local supplies = type(economyState) == "table" and (economyState.Supplies or 0) or tonumber(economyState) or 0
+    if gold < 8 or supplies < 2 then return nil end
 
     local best, bestRatio = nil, 1
     for _, army in pairs(armies or {}) do
-        if army.Owner and army.Owner.UserId == bot.UserId and army.Team == bot.Team and (army.SoldierCount or 0) > 0 then
+        if army.Owner
+            and army.Owner.UserId == bot.UserId
+            and army.Team == bot.Team
+            and (army.SoldierCount or 0) > 0
+        then
             local definitionRatio = army.Type == "Cavalry" and 20 or 24
             local ratio = (army.SoldierCount or 0) / math.max(1, definitionRatio)
             if ratio < bestRatio and (army.Fatigue or 0) < 82 then
