@@ -10,7 +10,7 @@ StateSchemas.Forms = {
     Army = {
         "Id", "Team", "OwnerUserId", "Type", "Position", "TargetPosition",
         "Formation", "Order", "AttackTarget", "Health", "MaxHealth",
-        "Morale", "Fatigue", "Experience",
+        "SoldierCount", "Power", "Defense", "Morale", "Fatigue", "Experience",
     },
     Soldier = {
         "Id", "ArmyId", "Role", "Level", "Health", "MaxHealth",
@@ -59,6 +59,8 @@ function StateSchemas.ValidateArmyCommand(action, payload, config)
         return tonumber(payload.TargetArmyId) ~= nil, "invalid-target-army-id"
     elseif action == "Formation" then
         return StateSchemas.IsFormation(payload.Formation, config), "invalid-formation"
+    elseif action == "RecruitSoldier" then
+        return tonumber(payload.ArmyId) ~= nil, "invalid-army-id"
     elseif action == "Hold" or action == "Ping" then
         return true
     end
