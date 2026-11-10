@@ -192,6 +192,20 @@ refreshStaticText = function()
     if mapTitle then mapTitle.Text = t("map") end
     if commandPanel and commandPanel:FindFirstChild("Header") then commandPanel.Header.Text = t("command") end
     if castleTitle and selectedCastle then castleTitle.Text = string.upper(t("castleAction")) end
+
+    local english = UITheme.Text.en
+    local arabic = UITheme.Text.ar
+    for _, descendant in ipairs(root:GetDescendants()) do
+        if descendant:IsA("TextLabel") and descendant ~= timerLabel and descendant ~= scoreLabel and descendant ~= objectiveLabel and descendant ~= resourcesLabel then
+            local currentText = descendant.Text
+            for key, englishText in pairs(english) do
+                if currentText == englishText or currentText == arabic[key] then
+                    descendant.Text = t(key)
+                    break
+                end
+            end
+        end
+    end
 end
 
 local function toast(message)
@@ -711,13 +725,28 @@ local function renderCastle()
         t("owned"),
         tonumber(castle.Owner) or 0,
         t("state"),
-        tostring(castle.State or "Safe"):upper(),
+        string.upper(localizedState(castle.State or "Safe")),
         t("garrison"),
         tonumber(castle.Garrison) or 0,
         tonumber(castle.MaxGarrison) or 0,
         t("capture"),
         math.floor(capturePercent)
     )
+end
+
+local function localizedArmyType(value)
+    local key = ({Spearmen="spearmen", Archers="archers", Cavalry="cavalry"})[value]
+    return key and t(key) or tostring(value or t("army"))
+end
+
+local function localizedState(value)
+    local key = ({
+        Safe="safe", Assaulted="assaulted", Stabilizing="stabilizing",
+        Searching="searching", Approaching="approaching", Engaging="engaging",
+        Ranged="ranged", Retreating="retreating", Recovering="recovering",
+        Following="following", Move="moving", Hold="holding", Retreat="retreating",
+    })[tostring(value)]
+    return key and t(key) or tostring(value or "")
 end
 
 local function renderArmy()
@@ -734,7 +763,7 @@ local function renderArmy()
 
     leftBody.Text = string.format(
         "%s • %d/%d\n%s %d  •  %s %d\n%s %.0f  •  %s %s\n%s %s\n%s: %s\n%s: %s",
-        tostring(army.Type):upper(),
+        string.upper(localizedArmyType(army.Type)),
         tonumber(army.SoldierCount) or 0,
         math.max(0, math.floor((army.SoldierCount or 0))),
         t("health"),
@@ -746,11 +775,11 @@ local function renderArmy()
         t("power"),
         tonumber(army.Power) or 0,
         t("order"),
-        tostring(army.Order or "Hold"):upper(),
+        string.upper(localizedState(army.Order or "Hold")),
         t("destination"),
         destinationText,
         t("state"),
-        tostring(army.CombatState or "Searching"):upper()
+        string.upper(localizedState(army.CombatState or "Searching"))
     )
     refreshFormationButtons()
 end
