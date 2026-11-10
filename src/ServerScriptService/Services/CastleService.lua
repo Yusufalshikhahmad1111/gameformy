@@ -45,8 +45,15 @@ function CastleService.ApplyAssault(castle, attackerPower, dt)
     if not castle or castle.Garrison <= 0 then return 0 end
     local damage = math.max(0, (attackerPower or 0) * 0.065 * dt)
     castle.Garrison = math.max(0, castle.Garrison - damage)
-    castle.State = castle.Garrison <= 0 and "Assaulted" or "Assaulted"
+    castle.State = "Assaulted"
     return damage
+end
+
+function CastleService.GetGarrisonFireDamage(castle, targetPower)
+    if not castle or castle.Garrison <= 0 then return 0 end
+    local ratio = math.max(0.25, math.min(1, (castle.Garrison or 0) / math.max(1, castle.MaxGarrison or 1)))
+    local tier = CastleService.GetTierConfig(castle.Tier)
+    return math.max(1, (castle.Garrison * 0.012 + tier.Defense * 2.2) * ratio * math.max(0.4, math.min(1.2, (targetPower or 0) / 80)))
 end
 
 function CastleService.AdvanceCapture(castle, team, dt, captureSeconds, decayPerSecond, config)
