@@ -582,6 +582,7 @@ local function makeArmyVisual(army)
 	model:SetAttribute("ArmyId", army.Id)
 	model:SetAttribute("OwnerUserId", army.Owner.UserId)
 	model:SetAttribute("ArmyType", army.Type)
+	model:SetAttribute("Stage16ArtReady", true)
 
 	local color = ownerColor(army.Team)
 	local classInfo = Config.ArmyTypes[army.Type]
