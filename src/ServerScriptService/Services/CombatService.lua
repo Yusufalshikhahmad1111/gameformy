@@ -31,9 +31,9 @@ function CombatService.GetDetectionRange(army, config)
     return base * CombatService.GetFormationModifier(army.Formation, "Range")
 end
 
-function CombatService.ChooseTarget(army, armies, SoldierService)
+function CombatService.ChooseTarget(army, armies, SoldierService, config)
     local best, bestScore = nil, -math.huge
-    local detectRange = CombatService.GetDetectionRange(army, nil)
+    local detectRange = CombatService.GetDetectionRange(army, config)
 
     for _, candidate in pairs(armies or {}) do
         if candidate ~= army
