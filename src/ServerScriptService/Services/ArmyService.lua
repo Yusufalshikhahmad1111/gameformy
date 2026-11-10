@@ -71,6 +71,7 @@ function ArmyService.GetDefaultState(config, payload)
         Defense = 0,
         Soldiers = {},
         SoldierSequence = 0,
+        LeaderSoldierId = nil,
         AttackTarget = nil,
         Model = nil,
     }
@@ -95,15 +96,50 @@ function ArmyService.GetMaxSoldiers(definition)
 end
 
 function ArmyService.RefreshAggregate(army, soldierService)
+    local hadLeader = army.LeaderSoldierId ~= nil
+    local leaderStillAlive = hadLeader and soldierService.IsAlive(army.Soldiers[army.LeaderSoldierId])
+
+    if hadLeader and not leaderStillAlive then
+        soldierService.ApplyMoraleEvent(army.Soldiers, "leader_lost", -8)
+        army.LeaderSoldierId = nil
+    end
+
+    if army.LeaderSoldierId == nil then
+        local candidates = {}
+        for _, soldier in pairs(army.Soldiers or {}) do
+            if soldierService.IsAlive(soldier) then
+                table.insert(candidates, soldier)
+            end
+        end
+        table.sort(candidates, function(a, b)
+            return tostring(a.Id) < tostring(b.Id)
+        end)
+        if candidates[1] then
+            army.LeaderSoldierId = candidates[1].Id
+        end
+    end
+
     local aggregate = soldierService.Aggregate(army.Soldiers)
     army.Health = aggregate.Health
     army.MaxHealth = aggregate.MaxHealth
     army.Morale = aggregate.Morale
     army.Fatigue = aggregate.Fatigue
     army.Experience = aggregate.Experience
+    army.Courage = aggregate.Courage or 0
+    army.Aggression = aggregate.Aggression or 0
+    army.Discipline = aggregate.Discipline or 0
+    army.Loyalty = aggregate.Loyalty or 0
     army.Power = aggregate.Power
     army.Defense = aggregate.Defense
     army.SoldierCount = aggregate.SoldierCount
+    army.Cohesion = math.clamp(
+        0.72
+            + (army.Discipline or 0) / 450
+            + (army.Morale or 0) / 650
+            - (army.Fatigue or 0) / 1500,
+        0.72,
+        1.18
+    )
     return aggregate
 end
 
