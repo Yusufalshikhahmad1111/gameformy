@@ -17,11 +17,17 @@ local DEFAULT = {Version=PROFILE_VERSION, XP=0, Level=1, Coins=0, Wins=0, Losses
 local profiles, dirty, saving = {}, {}, {}
 
 local remotes = ReplicatedStorage:FindFirstChild("Stage5Remotes")
-if remotes then remotes:Destroy() end
-remotes = Instance.new("Folder"); remotes.Name="Stage5Remotes"; remotes.Parent=ReplicatedStorage
-local requestProfile=Instance.new("RemoteFunction"); requestProfile.Name="RequestProfile"; requestProfile.Parent=remotes
-local profileChanged=Instance.new("RemoteEvent"); profileChanged.Name="ProfileChanged"; profileChanged.Parent=remotes
-local profileAction=Instance.new("RemoteEvent"); profileAction.Name="ProfileAction"; profileAction.Parent=remotes
+if not remotes then
+ remotes = Instance.new("Folder")
+ remotes.Name="Stage5Remotes"
+ remotes.Parent=ReplicatedStorage
+end
+local requestProfile=remotes:FindFirstChild("RequestProfile")
+if not requestProfile then requestProfile=Instance.new("RemoteFunction"); requestProfile.Name="RequestProfile"; requestProfile.Parent=remotes end
+local profileChanged=remotes:FindFirstChild("ProfileChanged")
+if not profileChanged then profileChanged=Instance.new("RemoteEvent"); profileChanged.Name="ProfileChanged"; profileChanged.Parent=remotes end
+local profileAction=remotes:FindFirstChild("ProfileAction")
+if not profileAction then profileAction=Instance.new("RemoteEvent"); profileAction.Name="ProfileAction"; profileAction.Parent=remotes end
 
 local function cloneDefault()
  local r={}
@@ -102,10 +108,15 @@ profileAction.OnServerEvent:Connect(function(p,action,payload)
 end)
 
 local seasonRemotes=ReplicatedStorage:FindFirstChild("Stage7SeasonRemotes")
-if seasonRemotes then seasonRemotes:Destroy() end
-seasonRemotes=Instance.new("Folder"); seasonRemotes.Name="Stage7SeasonRemotes"; seasonRemotes.Parent=ReplicatedStorage
-local seasonChanged=Instance.new("RemoteEvent"); seasonChanged.Name="SeasonChanged"; seasonChanged.Parent=seasonRemotes
-local seasonRequest=Instance.new("RemoteFunction"); seasonRequest.Name="RequestSeason"; seasonRequest.Parent=seasonRemotes
+if not seasonRemotes then
+ seasonRemotes=Instance.new("Folder")
+ seasonRemotes.Name="Stage7SeasonRemotes"
+ seasonRemotes.Parent=ReplicatedStorage
+end
+local seasonChanged=seasonRemotes:FindFirstChild("SeasonChanged")
+if not seasonChanged then seasonChanged=Instance.new("RemoteEvent"); seasonChanged.Name="SeasonChanged"; seasonChanged.Parent=seasonRemotes end
+local seasonRequest=seasonRemotes:FindFirstChild("RequestSeason")
+if not seasonRequest then seasonRequest=Instance.new("RemoteFunction"); seasonRequest.Name="RequestSeason"; seasonRequest.Parent=seasonRemotes end
 local function activeSeason()
  local selected=workspace:GetAttribute("KC_SeasonId")
  local candidate=nil
