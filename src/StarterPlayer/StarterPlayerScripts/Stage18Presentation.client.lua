@@ -120,13 +120,14 @@ local function makeRing(position, color)
 	Debris:AddItem(ring, 1.0)
 end
 
-local function spawnDust(position, amount, scale)
+local function spawnDust(position, amount, scale, cooldownKey)
 	local count = math.clamp(amount or 3, 2, 5)
 	local now = os.clock()
-	if now - (lastDustAt[position] or 0) < ((Config.Stage18 and Config.Stage18.DustInterval) or 0.75) then
+	local key = cooldownKey or tostring(position)
+	if now - (lastDustAt[key] or 0) < ((Config.Stage18 and Config.Stage18.DustInterval) or 0.75) then
 		return
 	end
-	lastDustAt[position] = now
+	lastDustAt[key] = now
 
 	for index = 1, count do
 		local dust = Instance.new("Part")
@@ -410,7 +411,9 @@ end)
 Workspace.DescendantRemoving:Connect(function(instance)
 	trackedCastles[instance] = nil
 	trackedArmies[instance] = nil
-	lastDustAt[instance] = nil
+	if trackedArmies[instance] then
+		lastDustAt[instance] = nil
+	end
 end)
 
 if feedbackRemote then
@@ -493,7 +496,7 @@ RunService.RenderStepped:Connect(function()
 
 			local position = state.Pole.Position
 			if (position - state.LastPosition).Magnitude > 0.8 then
-				spawnDust(position + Vector3.new(0, 0.15, 0), 2, 0.8)
+				spawnDust(position + Vector3.new(0, 0.15, 0), 2, 0.8, model)
 				state.LastPosition = position
 			end
 		end
