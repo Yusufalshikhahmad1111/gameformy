@@ -595,6 +595,51 @@ local function playerRoot(player)
 	return character and character:FindFirstChild("HumanoidRootPart")
 end
 
+local function addSoldierToArmy(player, army, armyType, allowNew)
+	if not army or not ArmyService.IsAlive(army) then
+		return false, "ARMY_NOT_ACTIVE"
+	end
+	local info = Config.ArmyTypes[armyType or army.Type]
+	if not info then return false, "UNKNOWN_ARMY" end
+	if army.Type ~= (armyType or army.Type) then
+		return false, "ROLE_MISMATCH"
+	end
+
+	local maxSoldiers = ArmyService.GetMaxSoldiers(info)
+	if (army.SoldierCount or 0) >= maxSoldiers then
+		return false, "ARMY_FULL"
+	end
+
+	local cost = ArmyService.GetRecruitCost(info, 1)
+	local team = findTeamForPlayer(player)
+	if teamSupplies[team] < cost then
+		return false, "NEED_" .. tostring(cost) .. "_SUPPLIES"
+	end
+
+	teamSupplies[team] -= cost
+	local soldierId = ArmyService.NextSoldierId(army)
+	local soldier = SoldierService.Create(Config, {
+		Id = soldierId,
+		ArmyId = army.Id,
+		Role = army.Type,
+		PersonalitySeed = (army.Id * 1009) + army.SoldierSequence * 7919 + player.UserId,
+	})
+	army.Soldiers[soldier.Id] = soldier
+	ArmyService.RefreshAggregate(army, SoldierService)
+	makeArmyVisual(army)
+	playerSelectedArmy[player] = army.Id
+
+	feedbackRemote:FireClient(player, "SOLDIER_RECRUITED", {
+		ArmyId = army.Id,
+		ArmyType = army.Type,
+		SoldierId = soldier.Id,
+		SoldierCount = army.SoldierCount,
+		Cost = cost,
+		Supplies = teamSupplies[team],
+	})
+	return true, soldier
+end
+
 local function createArmy(player, armyType)
 	if workspace:GetAttribute("MatchActive") ~= true or matchEnded then
 		return nil, "MATCH_NOT_ACTIVE"
@@ -604,13 +649,19 @@ local function createArmy(player, armyType)
 	if not info then
 		return nil, "UNKNOWN_ARMY"
 	end
-	if teamSupplies[team] < info.Cost then
-		return nil, "NEED_" .. tostring(info.Cost) .. "_SUPPLIES"
+
+	local initialCount = math.min(
+		ArmyService.GetInitialSoldierCount(info),
+		ArmyService.GetMaxSoldiers(info)
+	)
+	local unitCost = ArmyService.GetRecruitCost(info, 1)
+	local affordable = math.floor((teamSupplies[team] or 0) / math.max(1, unitCost))
+	local soldierCount = math.min(initialCount, affordable)
+	if soldierCount <= 0 then
+		return nil, "NEED_" .. tostring(unitCost) .. "_SUPPLIES"
 	end
 
-	teamSupplies[team] -= info.Cost
 	nextArmyId += 1
-
 	local rootPart = playerRoot(player)
 	local spawnBase = rootPart and rootPart.Position or selectedMap.Spawns[team] or Vector3.new(0, ARMY_Y, 0)
 	local slot = ((nextArmyId - 1) % 5) + 1
@@ -624,31 +675,45 @@ local function createArmy(player, armyType)
 	local spawnOffset = spawnOffsets[slot]
 	local spawnPosition = Vector3.new(spawnBase.X + spawnOffset.X, ARMY_Y, spawnBase.Z + spawnOffset.Z)
 
-	local army = {
+	local army = ArmyService.GetDefaultState(Config, {
 		Id = nextArmyId,
 		Owner = player,
 		Team = team,
 		Type = armyType,
-		Formation = "Line",
 		Position = spawnPosition,
 		TargetPosition = spawnPosition,
-		Health = info.Health,
-		MaxHealth = info.Health,
-		AttackTarget = nil,
-		Model = nil,
-	}
+	})
 	armies[army.Id] = army
+
+	local totalCost = 0
+	for _ = 1, soldierCount do
+		local soldierId = ArmyService.NextSoldierId(army)
+		local soldier = SoldierService.Create(Config, {
+			Id = soldierId,
+			ArmyId = army.Id,
+			Role = armyType,
+			PersonalitySeed = (army.Id * 1009) + army.SoldierSequence * 7919 + player.UserId,
+		})
+		army.Soldiers[soldier.Id] = soldier
+		totalCost += unitCost
+	end
+
+	teamSupplies[team] -= totalCost
+	ArmyService.RefreshAggregate(army, SoldierService)
 	makeArmyVisual(army)
 	playerSelectedArmy[player] = army.Id
 
 	feedbackRemote:FireClient(player, "ARMY_CREATED", {
 		ArmyId = army.Id,
 		ArmyType = armyType,
-		Cost = info.Cost,
+		SoldierCount = army.SoldierCount,
+		Cost = totalCost,
+		CostPerSoldier = unitCost,
 		Supplies = teamSupplies[team],
 	})
 	return army
 end
+
 local function armyOwnedBy(player, armyId)
 	local army = armies[armyId]
 	return army and army.Owner == player and army.Model and army.Model.Parent
