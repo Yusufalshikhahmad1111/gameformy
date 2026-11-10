@@ -989,6 +989,28 @@ commandRemote.OnServerEvent:Connect(function(player, action, payload)
 	end
 end)
 
+local function publicArmyState(army)
+	return {
+		Id = army.Id,
+		Team = army.Team,
+		OwnerUserId = army.Owner.UserId,
+		Type = army.Type,
+		Position = army.Position,
+		TargetPosition = army.TargetPosition,
+		Formation = army.Formation,
+		Order = army.Order or "Hold",
+		AttackTarget = army.AttackTarget,
+		Health = army.Health,
+		MaxHealth = army.MaxHealth,
+		SoldierCount = army.SoldierCount or 0,
+		Power = army.Power or 0,
+		Defense = army.Defense or 0,
+		Morale = army.Morale or 0,
+		Fatigue = army.Fatigue or 0,
+		Experience = army.Experience or 0,
+	}
+end
+
 requestState.OnServerInvoke = function(player)
 	local states = {}
 	for name, state in pairs(provinceStates) do
@@ -999,6 +1021,14 @@ requestState.OnServerInvoke = function(player)
 			Income = state.Income,
 		}
 	end
+
+	local publicArmies = {}
+	for id, army in pairs(armies) do
+		if ArmyService.IsAlive(army) then
+			publicArmies[tostring(id)] = publicArmyState(army)
+		end
+	end
+
 	return {
 		Team = findTeamForPlayer(player),
 		TeamCount = activeTeamCount,
@@ -1007,6 +1037,7 @@ requestState.OnServerInvoke = function(player)
 		Supplies = teamSupplies[findTeamForPlayer(player)],
 		Provinces = states,
 		SelectedArmy = playerSelectedArmy[player] or 0,
+		Armies = publicArmies,
 	}
 end
 
@@ -1023,6 +1054,14 @@ local function publishState()
 				CaptureProgress = state.CaptureProgress,
 			}
 		end
+
+		local publicArmies = {}
+		for id, army in pairs(armies) do
+			if ArmyService.IsAlive(army) then
+				publicArmies[tostring(id)] = publicArmyState(army)
+			end
+		end
+
 		stateRemote:FireClient(player, {
 			Team = team,
 			Supplies = teamSupplies[team],
@@ -1033,16 +1072,8 @@ local function publishState()
 			MapNodes = mapNodes,
 			MapEdges = selectedMap.Edges or {},
 			Provinces = capture,
-			MapNodes = mapNodes,
-			MapEdges = selectedMap.Edges or {},
 			SelectedArmy = playerSelectedArmy[player] or 0,
-			Armies = (function()
-				local result = {}
-				for id, army in pairs(armies) do
-					result[tostring(id)] = {Team=army.Team, OwnerUserId=army.Owner.UserId, Position=army.Position, Type=army.Type, Formation=army.Formation, Health=army.Health, MaxHealth=army.MaxHealth}
-				end
-				return result
-			end)()
+			Armies = publicArmies,
 		})
 	end
 end
@@ -1120,21 +1151,43 @@ local broadcastClock = 0
 local captureClock = 0
 local attackClock = 0
 local resultClock = 0
+local soldierClock = 0
 
 RunService.Heartbeat:Connect(function(dt)
 	captureClock += dt
 	attackClock += dt
 	broadcastClock += dt
+	soldierClock += dt
 
 	for _, army in pairs(armies) do
 		local info = Config.ArmyTypes[army.Type]
 		local distance = (army.TargetPosition - army.Position).Magnitude
-		if distance > 0.5 then
-			local step = info.MoveSpeed * terrainMultiplier(army.Position) * dt
-			local nextPos = distance <= step and army.TargetPosition or army.Position:Lerp(army.TargetPosition, step / distance)
+		if distance > 0.5 and ArmyService.IsAlive(army) then
+			local step = ArmyService.GetMovementSpeed(info, terrainMultiplier(army.Position), army.Morale, army.Fatigue) * dt
+			local nextPos = distance <= step and army.TargetPosition or army.Position:Lerp(army.TargetPosition, step / math.max(distance, 0.001))
 			army.Position = Vector3.new(nextPos.X, ARMY_Y, nextPos.Z)
-			syncArmyVisual(army)
 		end
+	end
+
+
+	if soldierClock >= 0.25 then
+		for _, army in pairs(armies) do
+			if ArmyService.IsAlive(army) then
+				local moving = (army.TargetPosition - army.Position).Magnitude > 0.5
+				for _, soldier in pairs(army.Soldiers) do
+					if SoldierService.IsAlive(soldier) then
+						if moving then
+							SoldierService.AddFatigue(soldier, 0.45 * soldierClock)
+						else
+							SoldierService.Recover(soldier, 0.7 * soldierClock)
+						end
+					end
+				end
+				ArmyService.RefreshAggregate(army, SoldierService)
+				syncArmyVisual(army)
+			end
+		end
+		soldierClock = 0
 	end
 
 	if captureClock >= 0.25 then
