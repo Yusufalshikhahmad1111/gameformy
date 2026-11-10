@@ -419,13 +419,31 @@ local function buildCastlePanel()
     castleBody = label(castlePanel, t("selectCastle"), UDim2.fromScale(0.06, 0.23), UDim2.fromScale(0.88, 0.32), Enum.Font.Gotham, color("Muted"))
     castleBody.TextWrapped = true
 
-    button(castlePanel, t("inspect"), UDim2.fromScale(0.06, 0.60), UDim2.fromScale(0.26, 0.23), function()
+    button(castlePanel, t("inspect"), UDim2.fromScale(0.04, 0.60), UDim2.fromScale(0.22, 0.23), function()
         if selectedCastle then
             toast(string.upper(selectedCastle))
         end
     end, color("Surface3"), "◉")
 
-    button(castlePanel, t("route"), UDim2.fromScale(0.37, 0.60), UDim2.fromScale(0.26, 0.23), function()
+    button(castlePanel, t("focus"), UDim2.fromScale(0.28, 0.60), UDim2.fromScale(0.22, 0.23), function()
+        if not selectedCastle then
+            toast(t("selectCastle"))
+            return
+        end
+        local node = state.MapNodes and state.MapNodes[selectedCastle]
+        if node and node.Position and mapViewport then
+            local nx, nz = mapPoint(node.Position)
+            mapZoom = 1.25
+            mapPan = Vector2.new(
+                (0.5 - nx) * mapViewport.AbsoluteSize.X,
+                (0.5 - (1 - nz)) * mapViewport.AbsoluteSize.Y
+            )
+            applyMapTransform()
+            toast(t("focus") .. " • " .. string.upper(selectedCastle))
+        end
+    end, color("Surface3"), "◎")
+
+    button(castlePanel, t("route"), UDim2.fromScale(0.52, 0.60), UDim2.fromScale(0.22, 0.23), function()
         if not selectedCastle then
             toast(t("selectCastle"))
             return
@@ -441,7 +459,7 @@ local function buildCastlePanel()
         end
     end, color("Surface3"), "↗")
 
-    button(castlePanel, t("objectiveAction"), UDim2.fromScale(0.68, 0.60), UDim2.fromScale(0.26, 0.23), function()
+    button(castlePanel, t("objectiveAction"), UDim2.fromScale(0.76, 0.60), UDim2.fromScale(0.20, 0.23), function()
         if selectedCastle then
             toast(t("objectiveAction") .. " • " .. string.upper(selectedCastle))
         end
@@ -721,7 +739,7 @@ local function renderCastle()
     castleBody.Text = string.format(
         "%s • %s\n%s: %d\n%s: %s\n%s: %s\n%s: %d/%d\n%s: %d%%",
         tostring(node and node.Name or selectedCastle),
-        tostring(castle.Tier or t("regional")),
+        localizedTier(castle.Tier),
         t("owned"),
         tonumber(castle.Owner) or 0,
         t("state"),
@@ -732,6 +750,11 @@ local function renderCastle()
         t("capture"),
         math.floor(capturePercent)
     )
+end
+
+local function localizedTier(value)
+    local key = ({Capital="capital", Major="major", Regional="regional"})[tostring(value)]
+    return key and t(key) or tostring(value or t("regional"))
 end
 
 local function localizedArmyType(value)
@@ -1003,13 +1026,13 @@ if mobile then
     leftPanel.Size = UDim2.fromScale(0.58, 0.20)
     recruitFrame.Position = UDim2.fromScale(0.61, 0.105)
     recruitFrame.Size = UDim2.fromScale(0.37, 0.20)
-    castlePanel.Position = UDim2.fromScale(0.02, 0.33)
-    castlePanel.Size = UDim2.fromScale(0.96, 0.21)
-    mapPanel.Position = UDim2.fromScale(0.02, 0.555)
-    mapPanel.Size = UDim2.fromScale(0.96, 0.20)
+    castlePanel.Position = UDim2.fromScale(0.02, 0.395)
+    castlePanel.Size = UDim2.fromScale(0.96, 0.18)
+    mapPanel.Position = UDim2.fromScale(0.02, 0.59)
+    mapPanel.Size = UDim2.fromScale(0.96, 0.16)
     commandPanel.Visible = false
     recruitFrame.Visible = false
-    bottomEconomy = panel(root, UDim2.fromScale(0.02, 0.32), UDim2.fromScale(0.96, 0.07), 0.02)
+    bottomEconomy = panel(root, UDim2.fromScale(0.02, 0.315), UDim2.fromScale(0.96, 0.065), 0.02)
     local economyText = label(bottomEconomy, "", UDim2.fromScale(0.04, 0.08), UDim2.fromScale(0.92, 0.84), Enum.Font.GothamBold, color("Brass"), Enum.TextXAlignment.Center)
     bottomEconomy.Name = "MobileEconomy"
     mobileDock = nil
