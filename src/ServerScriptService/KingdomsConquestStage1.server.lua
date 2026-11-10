@@ -910,7 +910,7 @@ local function updateProvinceVisual(name)
 end
 
 for name in pairs(provinceStates) do
-	updateStaticProvinceVisual(name)
+	updateProvinceVisual(name)
 end
 
 local function gatePresence(provinceName)
