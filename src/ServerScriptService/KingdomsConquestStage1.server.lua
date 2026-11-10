@@ -89,6 +89,7 @@ local botByTeam = {}
 local terrainZones = {}
 local matchStartedAt = 0
 local matchEnded = false
+workspace:SetAttribute("KC_RematchReady", false)
 local provinceCaptureEvent = ReplicatedStorage:FindFirstChild("KingdomsProvinceCaptured")
 if not provinceCaptureEvent then
 	provinceCaptureEvent = Instance.new("BindableEvent")
@@ -1343,6 +1344,13 @@ local function resolveArmyAttack(army, target, dt)
 
 	local killed = SoldierService.ApplyDamage(defender, damage)
 	attackerSoldier.Experience += killed and 2 or 0.5
+	if killed then
+		SoldierService.ApplyMoraleEvent(
+			army.Soldiers,
+			"victory",
+			(Config.Stage18 and Config.Stage18.VictoryMorale) or 4
+		)
+	end
 	SoldierService.AddFatigue(attackerSoldier, CombatService.IsRanged(army) and 0.55 or 0.85)
 
 	if killed then
@@ -1379,6 +1387,33 @@ end
 local function attackTick(dt)
 	for _, army in pairs(armies) do
 		if ArmyService.IsAlive(army) then
+			ArmyService.RefreshAggregate(army, SoldierService)
+
+			local supportCount = 0
+			local enemyCount = 0
+			for _, nearby in pairs(armies) do
+				if nearby ~= army and ArmyService.IsAlive(nearby) then
+					local nearbyDistance = (nearby.Position - army.Position).Magnitude
+					if nearbyDistance <= 30 then
+						if nearby.Team == army.Team then
+							supportCount += 1
+						else
+							enemyCount += 1
+						end
+					end
+				end
+			end
+			local supplied = (teamSupplies[army.Team] or 0) >= math.max(6, (army.SoldierCount or 1) * 0.8)
+			SoldierService.TickMorale(
+				army.Soldiers,
+				{
+					SupportCount = supportCount,
+					EnemyCount = enemyCount,
+					Supplied = supplied,
+					InCombat = enemyCount > 0 or army.CombatState == "Engaging" or army.CombatState == "Ranged",
+				},
+				dt
+			)
 			ArmyService.RefreshAggregate(army, SoldierService)
 
 			if CombatService.GetRetreatThreshold(army, Config) and army.Order ~= "Retreat" then
@@ -1420,6 +1455,23 @@ commandRemote.OnServerEvent:Connect(function(player, action, payload)
 		return
 	end
 	if not RateLimiter.Allow("KCCommand", player.UserId, 1, 24) then return end
+	if action == "Rematch" then
+		if workspace:GetAttribute("KC_RematchReady") ~= true then
+			feedbackRemote:FireClient(player, "COMMAND_REJECTED", {Reason = "REMATCH_UNAVAILABLE"})
+			return
+		end
+		if workspace:GetAttribute("MatchActive") == true then
+			return
+		end
+		workspace:SetAttribute("KC_RematchReady", false)
+		feedbackRemote:FireClient(player, "REMATCH_ACCEPTED", {})
+		task.delay(0.35, function()
+			if player.Parent and workspace:GetAttribute("MatchActive") ~= true then
+				workspace:SetAttribute("MatchActive", true)
+			end
+		end)
+		return
+	end
 	if action == "Ping" then
 		if not RateLimiter.Allow("KCPing", player.UserId, 1, 2) then return end
 		local now = os.clock()
@@ -1491,6 +1543,12 @@ commandRemote.OnServerEvent:Connect(function(player, action, payload)
 	elseif action == "Formation" then
 		if RateLimiter.Allow("KCFormation", player.UserId, 1, 6) and Config.Formations[payload.Formation] then
 			army.Formation = payload.Formation
+			SoldierService.ApplyMoraleEvent(
+				army.Soldiers,
+				"formation_success",
+				(Config.Stage18 and Config.Stage18.FormationMorale) or 1.4
+			)
+			ArmyService.RefreshAggregate(army, SoldierService)
 			syncArmyVisual(army)
 		end
 	elseif action == "Attack" then
@@ -1665,15 +1723,65 @@ end
 local function finishMatch(winner, reason)
 	if matchEnded then return end
 	matchEnded = true
-	workspace:SetAttribute("MatchActive", false)
+
 	local duration = matchStartedAt > 0 and math.floor(os.clock() - matchStartedAt) or 0
 	local ownership = {}
+	local ownedCounts = {}
+	local teamArmyCounts = {}
+	local teamSoldierCounts = {}
+
+	for teamId = 1, activeTeamCount do
+		ownedCounts[teamId] = 0
+		teamArmyCounts[teamId] = 0
+		teamSoldierCounts[teamId] = 0
+	end
+
 	for name, state in pairs(provinceStates) do
 		ownership[name] = state.Owner
+		if ownedCounts[state.Owner] ~= nil then
+			ownedCounts[state.Owner] += 1
+		end
 	end
+
+	for _, army in pairs(armies) do
+		if ArmyService.IsAlive(army) and teamArmyCounts[army.Team] then
+			teamArmyCounts[army.Team] += 1
+			teamSoldierCounts[army.Team] += army.SoldierCount or 0
+		end
+	end
+
+	local teamSummaries = {}
+	for teamId = 1, activeTeamCount do
+		local reward = ownedCounts[teamId] * 15 + teamSoldierCounts[teamId] * 2
+		if winner == teamId then
+			reward += 100
+		end
+		teamSummaries[tostring(teamId)] = {
+			Territories = ownedCounts[teamId],
+			SurvivingArmies = teamArmyCounts[teamId],
+			SurvivingSoldiers = teamSoldierCounts[teamId],
+			FieldReward = reward,
+			Gold = teamGold[teamId] or 0,
+			Supplies = teamSupplies[teamId] or 0,
+		}
+	end
+
 	matchResultEvent:Fire(winner, reason, duration, ownership)
+	workspace:SetAttribute("KC_RematchReady", true)
+	workspace:SetAttribute("MatchActive", false)
+
 	for _, p in ipairs(Players:GetPlayers()) do
-		stateRemote:FireClient(p, {MatchOver=true, Team=findTeamForPlayer(p), Winner=winner, Reason=reason, Duration=duration, MapId=selectedMap.Name})
+		local team = findTeamForPlayer(p)
+		stateRemote:FireClient(p, {
+			MatchOver = true,
+			Team = team,
+			Winner = winner,
+			Reason = reason,
+			Duration = duration,
+			MapId = selectedMap.Name,
+			Ownership = ownership,
+			Summary = teamSummaries[tostring(team)],
+		})
 	end
 end
 
@@ -1836,6 +1944,7 @@ end)
 
 workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
 	if workspace:GetAttribute("MatchActive") == true then
+		workspace:SetAttribute("KC_RematchReady", false)
 		startMatchClock()
 		for _, player in ipairs(Players:GetPlayers()) do
 			assignTeam(player)
