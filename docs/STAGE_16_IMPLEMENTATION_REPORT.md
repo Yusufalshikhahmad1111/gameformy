@@ -120,3 +120,22 @@ The exact castle count is derived from the configured city lists.
 **Code / architecture:** ready.  
 **Full bug audit:** completed for the inspected startup/network/world paths.  
 **Roblox Studio visual/runtime validation:** pending.
+
+
+## Final Stage 16 completion pass
+
+The final pass expanded Stage 16 beyond the initial castle-only layer:
+
+- upgraded live army silhouettes with helmets, torso armor, shoulder pieces and role-specific details;
+- added a physical team-colored army pennant so armies are readable directly in the world;
+- marked live army models with `Stage16ArtReady`;
+- added lightweight regional vegetation / rock props around the four launch maps;
+- kept vegetation outside dense city clusters to protect castle readability;
+- fixed initial castle ownership publication so Stage 16 art starts with the correct team color instead of a neutral flash;
+- preserved the river movement penalty already owned by the gameplay layer so terrain remains gameplay-relevant.
+
+## Final readiness decision
+
+**Stage 16 is repository-ready and closed for handoff to Stage 17.**
+
+The only external verification still required is the normal Roblox Studio gate for visual placement, live multiplayer behavior, device rendering and performance. This is a validation step, not an unfinished implementation item.
