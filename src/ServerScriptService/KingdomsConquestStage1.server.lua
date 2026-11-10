@@ -61,7 +61,25 @@ local staticMap = workspace:FindFirstChild("Map_" .. selectedMap.Name)
 
 local teamObjects = {}
 local teamSupplies = {}
-for teamId = 1, activeTeamCount do teamSupplies[teamId] = 60 end
+local teamGold = {}
+local teamEconomyState = {}
+for teamId = 1, activeTeamCount do
+    teamSupplies[teamId] = (Config.Economy and Config.Economy.StartingSupplies) or 40
+    teamGold[teamId] = (Config.Economy and Config.Economy.StartingGold) or 120
+    teamEconomyState[teamId] = {
+        Gold = teamGold[teamId],
+        Supplies = teamSupplies[teamId],
+        GoldIncomePerMinute = 0,
+        SupplyIncomePerMinute = 0,
+        UpkeepGoldPerMinute = 0,
+        NetGoldPerMinute = 0,
+        ConnectedProvinces = 0,
+        OwnedProvinces = 0,
+        StabilizedProvinces = 0,
+        Comeback = false,
+        EconomyStrain = false,
+    }
+end
 local armies = {}
 local playerSelectedArmy = {}
 local nextArmyId = 0
