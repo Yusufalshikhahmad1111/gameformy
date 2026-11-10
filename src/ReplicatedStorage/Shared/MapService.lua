@@ -114,6 +114,7 @@ function MapService.GetMap(mapId, teamCount)
 
     if Config.MapPacks[mapId] then
         cache[cacheKey] = build(Config.MapPacks[mapId])
+        cache[cacheKey].TeamCount = teamCount
         local total = #cache[cacheKey].ProvinceOrder
         -- Give each participating team one visually separated home castle.
         -- Remaining nodes stay neutral until players capture them.
