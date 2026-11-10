@@ -320,7 +320,6 @@
                   ]
                 ],
                 "BackgroundTransparency": 1,
-                "Font": "GothamBlack",
                 "TextScaled": true,
                 "TextColor3": [
                   0.9373,
@@ -356,7 +355,6 @@
                   ]
                 ],
                 "BackgroundTransparency": 1,
-                "Font": "GothamMedium",
                 "TextScaled": true,
                 "TextColor3": [
                   0.7451,
@@ -521,7 +519,6 @@
                   ]
                 ],
                 "BackgroundTransparency": 1,
-                "Font": "GothamBlack",
                 "TextScaled": true,
                 "TextColor3": [
                   0.9373,
@@ -557,7 +554,6 @@
                   ]
                 ],
                 "BackgroundTransparency": 1,
-                "Font": "GothamMedium",
                 "TextScaled": true,
                 "TextColor3": [
                   0.7451,
@@ -666,7 +662,6 @@
                   ]
                 ],
                 "BackgroundTransparency": 1,
-                "Font": "GothamBlack",
                 "TextScaled": true,
                 "TextColor3": [
                   0.9373,
@@ -702,7 +697,6 @@
                   ]
                 ],
                 "BackgroundTransparency": 1,
-                "Font": "GothamMedium",
                 "TextScaled": true,
                 "TextColor3": [
                   0.7451,
@@ -811,7 +805,6 @@
                   ]
                 ],
                 "BackgroundTransparency": 1,
-                "Font": "GothamBlack",
                 "TextScaled": true,
                 "TextColor3": [
                   0.9373,
@@ -847,7 +840,6 @@
                   ]
                 ],
                 "BackgroundTransparency": 1,
-                "Font": "GothamMedium",
                 "TextScaled": true,
                 "TextColor3": [
                   0.7451,
@@ -956,7 +948,6 @@
                   ]
                 ],
                 "BackgroundTransparency": 1,
-                "Font": "GothamBlack",
                 "TextScaled": true,
                 "TextColor3": [
                   0.9373,
@@ -992,7 +983,6 @@
                   ]
                 ],
                 "BackgroundTransparency": 1,
-                "Font": "GothamMedium",
                 "TextScaled": true,
                 "TextColor3": [
                   0.7451,
