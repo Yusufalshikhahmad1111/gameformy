@@ -136,7 +136,7 @@ Repository-level checks completed:
 - no second RemoteEvent hierarchy introduced: PASS
 - Rojo mapping covers all new files: PASS
 
-The repository is 20 commits ahead of the Stage 17 closeout base.
+The repository is ahead of the Stage 17 closeout base with the full Stage 18 change set committed to main.
 
 ## External gate
 
