@@ -838,29 +838,74 @@ local function removeArmy(id)
 	local army = armies[id]
 	if not army then return end
 	if army.Model then army.Model:Destroy() end
+	if army.Owner and playerSelectedArmy[army.Owner] == army.Id then
+		playerSelectedArmy[army.Owner] = nil
+	end
 	armies[id] = nil
+end
+
+local function firstAliveSoldier(army)
+	local chosen = nil
+	for _, soldier in pairs(army.Soldiers or {}) do
+		if SoldierService.IsAlive(soldier) then
+			if not chosen or soldier.Health < chosen.Health then
+				chosen = soldier
+			end
+		end
+	end
+	return chosen
 end
 
 local function attackTick(dt)
 	for _, army in pairs(armies) do
 		if army.AttackTarget then
 			local target = armies[army.AttackTarget]
-			if not target then
+			if not target or not ArmyService.IsAlive(target) then
 				army.AttackTarget = nil
+				army.Order = "Hold"
 			else
 				local distance = (army.Position - target.Position).Magnitude
 				local info = Config.ArmyTypes[army.Type]
 				if distance <= info.AttackRange then
 					army._cooldown = (army._cooldown or 0) - dt
 					if army._cooldown <= 0 then
-						local damage = ArmyService.GetAttackDamage(info, army.Type, target.Type)
-						target.Health -= damage
-						vfxRemote:FireAllClients("Hit", target.Position, army.Type, target.Health <= 0)
-						army._cooldown = info.AttackCooldown
-						if target.Health <= 0 then removeArmy(target.Id) end
+						ArmyService.RefreshAggregate(army, SoldierService)
+						ArmyService.RefreshAggregate(target, SoldierService)
+						local defender = firstAliveSoldier(target)
+						if not defender then
+							removeArmy(target.Id)
+						else
+							local averagePower = army.SoldierCount > 0 and army.Power / army.SoldierCount or 0
+							local damage = ArmyService.GetAttackDamage(info, army.Type, target.Type, averagePower)
+							local killed = SoldierService.ApplyDamage(defender, damage)
+							for _, soldier in pairs(army.Soldiers) do
+								if SoldierService.IsAlive(soldier) then
+									soldier.Experience += killed and 1.5 or 0.2
+									SoldierService.AddFatigue(soldier, killed and 1.2 or 0.4)
+								end
+							end
+							for _, soldier in pairs(target.Soldiers) do
+								if SoldierService.IsAlive(soldier) and not killed then
+									soldier.Morale = math.max(0, soldier.Morale - 1.5)
+								end
+							end
+							ArmyService.RefreshAggregate(army, SoldierService)
+							ArmyService.RefreshAggregate(target, SoldierService)
+							vfxRemote:FireAllClients("Hit", target.Position, army.Type, killed)
+							army._cooldown = ArmyService.GetAttackCooldown(info, army.Morale, army.Fatigue)
+							if killed then
+								makeArmyVisual(target)
+							else
+								syncArmyVisual(target)
+							end
+							if target.SoldierCount <= 0 then
+								removeArmy(target.Id)
+							end
+						end
 					end
 				else
 					army.TargetPosition = target.Position
+					army.Order = "Attack"
 				end
 			end
 		end
@@ -896,6 +941,20 @@ commandRemote.OnServerEvent:Connect(function(player, action, payload)
 		return
 	end
 
+	if action == "RecruitSoldier" then
+		local id = tonumber(payload.ArmyId)
+		local army = id and armyOwnedBy(player, id)
+		if not army then
+			feedbackRemote:FireClient(player, "ARMY_FAILED", {Reason = "ARMY_NOT_FOUND"})
+			return
+		end
+		local ok, result = addSoldierToArmy(player, army, army.Type)
+		if not ok then
+			feedbackRemote:FireClient(player, "ARMY_FAILED", {Reason = result})
+		end
+		return
+	end
+
 	if action == "SelectArmy" then
 		local id = tonumber(payload.ArmyId)
 		if id and armyOwnedBy(player, id) then playerSelectedArmy[player] = id end
@@ -908,10 +967,13 @@ commandRemote.OnServerEvent:Connect(function(player, action, payload)
 
 	if action == "Move" then
 		local p = payload.Position
-		if typeof(p) == "Vector3" and p.X == p.X and p.Y == p.Y and p.Z == p.Z then moveArmy(army, p) end
+		if typeof(p) == "Vector3" and p.X == p.X and p.Y == p.Y and p.Z == p.Z then
+			if moveArmy(army, p) then army.Order = "Move" end
+		end
 	elseif action == "Hold" then
 		army.TargetPosition = army.Position
 		army.AttackTarget = nil
+		army.Order = "Hold"
 	elseif action == "Formation" then
 		if RateLimiter.Allow("KCFormation", player.UserId, 1, 6) and Config.Formations[payload.Formation] then
 			army.Formation = payload.Formation
@@ -922,6 +984,7 @@ commandRemote.OnServerEvent:Connect(function(player, action, payload)
 		local target = targetId and armies[targetId]
 		if target and target.Team ~= army.Team and target.Model and target.Model.Parent then
 			army.AttackTarget = target.Id
+			army.Order = "Attack"
 		end
 	end
 end)
