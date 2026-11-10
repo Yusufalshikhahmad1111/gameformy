@@ -70,28 +70,32 @@ function EconomyService.GetConnectedProvinces(provinceStates, mapData, team, hom
     return connected
 end
 
-function EconomyService.GetConnectionMultiplier(isConnected, provinceIsCapital)
+function EconomyService.GetConnectionMultiplier(isConnected, provinceIsCapital, config)
     if provinceIsCapital then return 1.0 end
-    return isConnected and DEFAULT_CONNECTED or DEFAULT_DISCONNECTED
+    local economy = config and config.Economy
+    local connected = economy and economy.ConnectedIncomeMultiplier or DEFAULT_CONNECTED
+    local disconnected = economy and economy.DisconnectedIncomeMultiplier or DEFAULT_DISCONNECTED
+    return isConnected and connected or disconnected
 end
 
-function EconomyService.GetStabilizationMultiplier(castle)
+function EconomyService.GetStabilizationMultiplier(castle, config)
     if castle and (castle.StabilizationRemaining or 0) > 0 then
-        return DEFAULT_STABILIZED
+        return (config and config.Economy and config.Economy.StabilizedIncomeMultiplier) or DEFAULT_STABILIZED
     end
     return 1.0
 end
 
-function EconomyService.GetProvinceGoldPerMinute(provinceState, provinceData, connected)
+function EconomyService.GetProvinceGoldPerMinute(provinceState, provinceData, connected, config)
     if not provinceState or provinceState.Owner == 0 then return 0 end
     local base = tonumber(provinceState.Income) or tonumber(provinceData and provinceData.Income) or 0
-    local connection = EconomyService.GetConnectionMultiplier(connected, provinceData and provinceData.Capital == true)
-    local stabilization = EconomyService.GetStabilizationMultiplier(provinceState.Castle)
+    local connection = EconomyService.GetConnectionMultiplier(connected, provinceData and provinceData.Capital == true, config)
+    local stabilization = EconomyService.GetStabilizationMultiplier(provinceState.Castle, config)
     return base * connection * stabilization
 end
 
-function EconomyService.GetProvinceSupplyPerMinute(provinceState, provinceData, connected)
-    return EconomyService.GetProvinceGoldPerMinute(provinceState, provinceData, connected) * 0.28
+function EconomyService.GetProvinceSupplyPerMinute(provinceState, provinceData, connected, config)
+    local ratio = (config and config.Economy and config.Economy.SupplyIncomeRatio) or 0.28
+    return EconomyService.GetProvinceGoldPerMinute(provinceState, provinceData, connected, config) * ratio
 end
 
 function EconomyService.GetArmyUpkeepPerMinute(army, config)
@@ -159,8 +163,8 @@ function EconomyService.ComputeTeamEconomy(provinceStates, mapData, armies, team
             if state.Castle and (state.Castle.StabilizationRemaining or 0) > 0 then
                 stabilizedCount += 1
             end
-            goldIncome += EconomyService.GetProvinceGoldPerMinute(state, data, isConnected)
-            supplyIncome += EconomyService.GetProvinceSupplyPerMinute(state, data, isConnected)
+            goldIncome += EconomyService.GetProvinceGoldPerMinute(state, data, isConnected, config)
+            supplyIncome += EconomyService.GetProvinceSupplyPerMinute(state, data, isConnected, config)
         end
     end
 
