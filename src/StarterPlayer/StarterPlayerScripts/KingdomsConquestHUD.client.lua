@@ -35,6 +35,7 @@ local mobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEn
 local reducedMotion = false
 local briefingClosed = false
 local lastToastId = 0
+local refreshStaticText
 local mapZoom = 1
 local mapPan = Vector2.zero
 local mapScene
@@ -182,9 +183,10 @@ local mapReset
 local mobileDock
 local mobileRecruit
 local mobileFormation
+local mobileFormationButtons = {}
 local bottomEconomy
 
-local function refreshStaticText()
+refreshStaticText = function()
     if leftTitle then leftTitle.Text = t("army") end
     if formationLabel then formationLabel.Text = t("formation") end
     if mapTitle then mapTitle.Text = t("map") end
@@ -225,7 +227,7 @@ local function ensureBriefing()
 end
 
 local function onboardingStep()
-    if briefingClosed or not state or not state.MatchActive then
+    if briefingClosed or not state or Workspace:GetAttribute("MatchActive") ~= true then
         return nil
     end
 
@@ -924,7 +926,7 @@ local function buildMobileDock()
         {id="Column", key="column"},
     }
     for i, entry in ipairs(entriesFormation) do
-        button(
+        local mobileButton = button(
             mobileFormation,
             t(entry.key),
             UDim2.fromScale(0.02 + (i - 1) * 0.245, 0.12),
@@ -937,10 +939,14 @@ local function buildMobileDock()
                 formation = entry.id
                 command:FireServer("Formation", {ArmyId = selectedArmy, Formation = formation})
                 refreshFormationButtons()
+                for id, otherButton in pairs(mobileFormationButtons) do
+                    otherButton.BackgroundColor3 = id == formation and color("Brass") or color("Surface3")
+                end
                 toast(t(entry.key))
             end,
             entry.id == formation and color("Brass") or color("Surface3")
         )
+        mobileFormationButtons[entry.id] = mobileButton
     end
 
     mobileRecruit = button(mobileDock, t("recruit"), UDim2.fromScale(0.63, 0.49), UDim2.fromScale(0.35, 0.43), function()
@@ -973,6 +979,7 @@ if mobile then
     mapPanel.Position = UDim2.fromScale(0.02, 0.555)
     mapPanel.Size = UDim2.fromScale(0.96, 0.20)
     commandPanel.Visible = false
+    recruitFrame.Visible = false
     bottomEconomy = panel(root, UDim2.fromScale(0.02, 0.32), UDim2.fromScale(0.96, 0.07), 0.02)
     local economyText = label(bottomEconomy, "", UDim2.fromScale(0.04, 0.08), UDim2.fromScale(0.92, 0.84), Enum.Font.GothamBold, color("Brass"), Enum.TextXAlignment.Center)
     bottomEconomy.Name = "MobileEconomy"
