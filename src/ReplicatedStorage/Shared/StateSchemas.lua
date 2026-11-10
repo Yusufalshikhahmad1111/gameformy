@@ -1,7 +1,7 @@
 -- Kingdoms Conquest — state contracts shared by server and clients
 local StateSchemas = {}
 
-StateSchemas.Version = 3
+StateSchemas.Version = 4
 
 StateSchemas.Forms = {
     Match = {
@@ -15,7 +15,7 @@ StateSchemas.Forms = {
     Soldier = {
         "Id", "ArmyId", "Role", "Level", "Health", "MaxHealth",
         "Power", "Defense", "Range", "Accuracy", "Speed",
-        "Morale", "Discipline", "Fatigue", "Experience", "PersonalitySeed",
+        "Morale", "Courage", "Aggression", "Discipline", "Loyalty", "Fatigue", "Experience", "PersonalitySeed",
     },
     Province = {
         "Owner", "CaptureTeam", "CaptureProgress", "Income", "Strategic",
@@ -73,6 +73,8 @@ function StateSchemas.ValidateArmyCommand(action, payload, config)
     elseif action == "RecruitSoldier" then
         return tonumber(payload.ArmyId) ~= nil, "invalid-army-id"
     elseif action == "Hold" or action == "Ping" then
+        return true
+    elseif action == "Rematch" then
         return true
     end
 
