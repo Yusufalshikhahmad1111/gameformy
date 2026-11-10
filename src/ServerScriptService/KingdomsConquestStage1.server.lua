@@ -358,6 +358,8 @@ for _, descendant in ipairs(root:GetDescendants()) do
 end
 
 -- Stage 3+ clients must only proceed after the complete runtime world exists.
+refreshEconomySnapshots()
+
 workspace:SetAttribute("KC_RuntimeReady", true)
 
 local function findTeamForPlayer(player)
@@ -1420,6 +1422,22 @@ commandRemote.OnServerEvent:Connect(function(player, action, payload)
 	end
 end)
 
+local function refreshEconomySnapshots()
+    for team = 1, activeTeamCount do
+        local snapshot = EconomyService.ComputeTeamEconomy(
+            provinceStates,
+            selectedMap,
+            armies,
+            team,
+            Config,
+            activeTeamCount
+        )
+        snapshot.Gold = teamGold[team] or 0
+        snapshot.Supplies = teamSupplies[team] or 0
+        teamEconomyState[team] = snapshot
+    end
+end
+
 local function publicEconomyState(team)
     local economy = teamEconomyState[team] or {}
     return {
@@ -1461,6 +1479,7 @@ local function publicArmyState(army)
 end
 
 requestState.OnServerInvoke = function(player)
+	refreshEconomySnapshots()
 	local states = {}
 	for name, state in pairs(provinceStates) do
 		states[name] = {
@@ -1507,6 +1526,7 @@ requestState.OnServerInvoke = function(player)
 end
 
 local function publishState()
+	refreshEconomySnapshots()
 	for _, player in ipairs(Players:GetPlayers()) do
 		local team = findTeamForPlayer(player)
 		local owned = 0
@@ -1772,6 +1792,7 @@ workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
 		for player in pairs(playerSelectedArmy) do
 			playerSelectedArmy[player] = nil
 		end
+		refreshEconomySnapshots()
 	end
 end)
 if workspace:GetAttribute("MatchActive") == true then
