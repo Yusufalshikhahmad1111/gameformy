@@ -168,13 +168,16 @@ function BotCommanderService.ChooseFormation(army, targetType, difficulty)
     return "Line"
 end
 
-function BotCommanderService.ChooseRecruitment(teamSupplies, armyCount, difficulty)
+function BotCommanderService.ChooseRecruitment(economyState, armyCount, difficulty)
     local profile = BotCommanderService.GetProfile(difficulty)
-    if teamSupplies < 15 then return nil end
+    local gold = type(economyState) == "table" and (economyState.Gold or 0) or 0
+    local supplies = type(economyState) == "table" and (economyState.Supplies or 0) or tonumber(economyState) or 0
+
+    if gold < 40 or supplies < 8 then return nil end
     if armyCount == 0 then return "Spearmen" end
-    if teamSupplies >= 32 * profile.EconomyBias then return "Cavalry" end
-    if teamSupplies >= 24 * profile.EconomyBias then return "Archers" end
-    return "Spearmen"
+    if gold >= 96 * profile.EconomyBias and supplies >= 18 then return "Cavalry" end
+    if gold >= 72 * profile.EconomyBias and supplies >= 12 then return "Archers" end
+    return gold >= 40 and supplies >= 8 and "Spearmen" or nil
 end
 
 function BotCommanderService.RecordFailure(bot, objectiveName, now)
