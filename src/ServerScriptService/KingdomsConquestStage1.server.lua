@@ -817,6 +817,10 @@ local function updateStaticProvinceVisual(name)
 	local color = ownerColor(state.Owner)
 	local castle = mapModel:FindFirstChild(name .. "_Castle", true)
 	if castle then
+		castle:SetAttribute("Owner", state.Owner or 0)
+		castle:SetAttribute("CastleState", (state.Castle and state.Castle.State) or "Safe")
+		castle:SetAttribute("Garrison", math.floor((state.Castle and state.Castle.Garrison) or 0))
+		castle:SetAttribute("CaptureTeam", math.floor((state.Castle and state.Castle.AssaultTeam) or 0))
 		local banner = castle:FindFirstChild("Banner", true)
 		if banner and banner:IsA("BasePart") then banner.Color = color end
 		local gates = castle:FindFirstChild("Gates", true)
@@ -982,6 +986,13 @@ local function captureTick(dt)
 				model:SetAttribute("CastleState", castle.State)
 				model:SetAttribute("Garrison", math.floor(castle.Garrison))
 				model:SetAttribute("CaptureTeam", castle.AssaultTeam or 0)
+			end
+			local staticCastle = staticMap and staticMap:FindFirstChild(name .. "_Castle", true)
+			if staticCastle then
+				staticCastle:SetAttribute("Owner", castle.Owner or 0)
+				staticCastle:SetAttribute("CastleState", castle.State or "Safe")
+				staticCastle:SetAttribute("Garrison", math.floor(castle.Garrison or 0))
+				staticCastle:SetAttribute("CaptureTeam", castle.AssaultTeam or 0)
 			end
 		end
 	end
