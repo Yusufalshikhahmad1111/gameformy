@@ -19,28 +19,36 @@ local MATCH_TOPIC_PREFIX = "KC_MATCH_READY_"
 local QUEUE_NAME = "KingdomsConquest_Matchmaking_v1"
 local RECONNECT_MAP_NAME = "KingdomsConquest_Reconnect_v1"
 
-workspace:SetAttribute("Stage4Ready", true)
 if workspace:GetAttribute("MatchActive") == nil then
 	workspace:SetAttribute("MatchActive", false)
 end
 
 local remotes = ReplicatedStorage:FindFirstChild("Stage4Remotes")
-if remotes then remotes:Destroy() end
-remotes = Instance.new("Folder")
-remotes.Name = "Stage4Remotes"
-remotes.Parent = ReplicatedStorage
+if not remotes then
+	remotes = Instance.new("Folder")
+	remotes.Name = "Stage4Remotes"
+	remotes.Parent = ReplicatedStorage
+end
 
-local actionRemote = Instance.new("RemoteEvent")
-actionRemote.Name = "Action"
-actionRemote.Parent = remotes
+local function ensureStage4Remote(name, className)
+	local current = remotes:FindFirstChild(name)
+	if current and current.ClassName ~= className then
+		current:Destroy()
+		current = nil
+	end
+	if not current then
+		current = Instance.new(className)
+		current.Name = name
+		current.Parent = remotes
+	end
+	return current
+end
 
-local stateRemote = Instance.new("RemoteEvent")
-stateRemote.Name = "State"
-stateRemote.Parent = remotes
+local actionRemote = ensureStage4Remote("Action", "RemoteEvent")
+local stateRemote = ensureStage4Remote("State", "RemoteEvent")
+local requestState = ensureStage4Remote("RequestState", "RemoteFunction")
 
-local requestState = Instance.new("RemoteFunction")
-requestState.Name = "RequestState"
-requestState.Parent = remotes
+workspace:SetAttribute("Stage4Ready", true)
 
 local lobbyModel = workspace:FindFirstChild("KingdomsLobbyEntrance")
 local lobbySpawn = lobbyModel and lobbyModel:FindFirstChild("LobbySpawn", true)
