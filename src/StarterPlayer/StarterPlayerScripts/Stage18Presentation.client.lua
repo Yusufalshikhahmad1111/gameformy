@@ -102,7 +102,7 @@ local function makeRing(position, color)
 	ring.Name = "KC_Stage18_TerritoryPulse"
 	ring.Shape = Enum.PartType.Cylinder
 	ring.Size = Vector3.new(0.22, 1.6, 1.6)
-	ring.CFrame = CFrame.new(position + Vector3.new(0, 0.25, 0)) * CFrame.Angles(0, 0, math.rad(90))
+	ring.CFrame = CFrame.new(position + Vector3.new(0, 0.25, 0))
 	ring.Anchored = true
 	ring.CanCollide = false
 	ring.CanTouch = false
