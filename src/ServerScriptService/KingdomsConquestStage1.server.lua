@@ -17,6 +17,7 @@ local CastleService = require(script.Parent.Services.CastleService)
 local EconomyService = require(script.Parent.Services.EconomyService)
 local MatchService = require(script.Parent.Services.MatchService)
 local CaptureService = require(script.Parent.Services.CaptureService)
+local BotCommanderService = require(script.Parent.Services.BotCommanderService)
 
 if workspace:GetAttribute("KC_BootstrapReady") ~= true then
 	workspace:GetAttributeChangedSignal("KC_BootstrapReady"):Wait()
@@ -65,6 +66,8 @@ local armies = {}
 local playerSelectedArmy = {}
 local nextArmyId = 0
 local pingCooldown = {}
+local botCommanders = {}
+local botByTeam = {}
 local terrainZones = {}
 local matchStartedAt = 0
 local matchEnded = false
@@ -605,7 +608,7 @@ local function playerRoot(player)
 	return character and character:FindFirstChild("HumanoidRootPart")
 end
 
-local function addSoldierToArmy(player, army, armyType, allowNew)
+local function addSoldierToArmy(owner, army, armyType)
 	if not army or not ArmyService.IsAlive(army) then
 		return false, "ARMY_NOT_ACTIVE"
 	end
@@ -621,40 +624,42 @@ local function addSoldierToArmy(player, army, armyType, allowNew)
 	end
 
 	local cost = ArmyService.GetRecruitCost(info, 1)
-	local team = findTeamForPlayer(player)
-	if teamSupplies[team] < cost then
+	local team = army.Team
+	if (teamSupplies[team] or 0) < cost then
 		return false, "NEED_" .. tostring(cost) .. "_SUPPLIES"
 	end
 
 	teamSupplies[team] -= cost
 	local soldierId = ArmyService.NextSoldierId(army)
+	local seedOwnerId = owner and owner.UserId or 0
 	local soldier = SoldierService.Create(Config, {
 		Id = soldierId,
 		ArmyId = army.Id,
 		Role = army.Type,
-		PersonalitySeed = (army.Id * 1009) + army.SoldierSequence * 7919 + player.UserId,
+		PersonalitySeed = (army.Id * 1009) + army.SoldierSequence * 7919 + seedOwnerId,
 	})
 	army.Soldiers[soldier.Id] = soldier
 	ArmyService.RefreshAggregate(army, SoldierService)
 	makeArmyVisual(army)
-	playerSelectedArmy[player] = army.Id
 
-	feedbackRemote:FireClient(player, "SOLDIER_RECRUITED", {
-		ArmyId = army.Id,
-		ArmyType = army.Type,
-		SoldierId = soldier.Id,
-		SoldierCount = army.SoldierCount,
-		Cost = cost,
-		Supplies = teamSupplies[team],
-	})
+	if owner and owner:IsA and owner:IsA("Player") then
+		playerSelectedArmy[owner] = army.Id
+		feedbackRemote:FireClient(owner, "SOLDIER_RECRUITED", {
+			ArmyId = army.Id,
+			ArmyType = army.Type,
+			SoldierId = soldier.Id,
+			SoldierCount = army.SoldierCount,
+			Cost = cost,
+			Supplies = teamSupplies[team],
+		})
+	end
 	return true, soldier
 end
 
-local function createArmy(player, armyType)
+local function createArmyForOwner(owner, team, armyType, spawnBase)
 	if workspace:GetAttribute("MatchActive") ~= true or matchEnded then
 		return nil, "MATCH_NOT_ACTIVE"
 	end
-	local team = findTeamForPlayer(player)
 	local info = Config.ArmyTypes[armyType]
 	if not info then
 		return nil, "UNKNOWN_ARMY"
@@ -672,9 +677,8 @@ local function createArmy(player, armyType)
 	end
 
 	nextArmyId += 1
-	local rootPart = playerRoot(player)
-	local spawnBase = rootPart and rootPart.Position or selectedMap.Spawns[team] or Vector3.new(0, ARMY_Y, 0)
-	local slot = ((nextArmyId - 1) % 5) + 1
+	local spawnPosition = spawnBase or selectedMap.Spawns[team] or Vector3.new(0, ARMY_Y, 0)
+	local offsetSeed = (nextArmyId - 1) % 5
 	local spawnOffsets = {
 		Vector3.new(8, 0, 0),
 		Vector3.new(-8, 0, 0),
@@ -682,16 +686,15 @@ local function createArmy(player, armyType)
 		Vector3.new(0, 0, -8),
 		Vector3.new(10, 0, 10),
 	}
-	local spawnOffset = spawnOffsets[slot]
-	local spawnPosition = Vector3.new(spawnBase.X + spawnOffset.X, ARMY_Y, spawnBase.Z + spawnOffset.Z)
+	spawnPosition += spawnOffsets[offsetSeed + 1]
 
 	local army = ArmyService.GetDefaultState(Config, {
 		Id = nextArmyId,
-		Owner = player,
+		Owner = owner,
 		Team = team,
 		Type = armyType,
-		Position = spawnPosition,
-		TargetPosition = spawnPosition,
+		Position = Vector3.new(spawnPosition.X, ARMY_Y, spawnPosition.Z),
+		TargetPosition = Vector3.new(spawnPosition.X, ARMY_Y, spawnPosition.Z),
 		FallbackPosition = selectedMap.Spawns[team] or spawnPosition,
 	})
 	armies[army.Id] = army
@@ -699,11 +702,12 @@ local function createArmy(player, armyType)
 	local totalCost = 0
 	for _ = 1, soldierCount do
 		local soldierId = ArmyService.NextSoldierId(army)
+		local seedOwnerId = owner and owner.UserId or 0
 		local soldier = SoldierService.Create(Config, {
 			Id = soldierId,
 			ArmyId = army.Id,
 			Role = armyType,
-			PersonalitySeed = (army.Id * 1009) + army.SoldierSequence * 7919 + player.UserId,
+			PersonalitySeed = (army.Id * 1009) + army.SoldierSequence * 7919 + seedOwnerId,
 		})
 		army.Soldiers[soldier.Id] = soldier
 		totalCost += unitCost
@@ -712,17 +716,27 @@ local function createArmy(player, armyType)
 	teamSupplies[team] -= totalCost
 	ArmyService.RefreshAggregate(army, SoldierService)
 	makeArmyVisual(army)
-	playerSelectedArmy[player] = army.Id
 
-	feedbackRemote:FireClient(player, "ARMY_CREATED", {
-		ArmyId = army.Id,
-		ArmyType = armyType,
-		SoldierCount = army.SoldierCount,
-		Cost = totalCost,
-		CostPerSoldier = unitCost,
-		Supplies = teamSupplies[team],
-	})
+	if owner and owner:IsA and owner:IsA("Player") then
+		playerSelectedArmy[owner] = army.Id
+		feedbackRemote:FireClient(owner, "ARMY_CREATED", {
+			ArmyId = army.Id,
+			ArmyType = armyType,
+			SoldierCount = army.SoldierCount,
+			Cost = totalCost,
+			CostPerSoldier = unitCost,
+			Supplies = teamSupplies[team],
+		})
+	end
+
 	return army
+end
+
+local function createArmy(player, armyType)
+	local team = findTeamForPlayer(player)
+	local rootPart = playerRoot(player)
+	local spawnBase = rootPart and rootPart.Position or selectedMap.Spawns[team]
+	return createArmyForOwner(player, team, armyType, spawnBase)
 end
 
 local function armyOwnedBy(player, armyId)
@@ -940,6 +954,145 @@ local function removeArmy(id)
 	end
 	armies[id] = nil
 end
+
+
+local function countHumanPlayersOnTeam(teamId)
+	local count = 0
+	for _, player in ipairs(Players:GetPlayers()) do
+		if findTeamForPlayer(player) == teamId then count += 1 end
+	end
+	return count
+end
+
+local function clearBots()
+	for teamId, bot in pairs(botByTeam) do
+		for id, army in pairs(armies) do
+			if army.Owner == bot then
+				removeArmy(id)
+			end
+		end
+		botByTeam[teamId] = nil
+	end
+	for id in pairs(botCommanders) do
+		botCommanders[id] = nil
+	end
+end
+
+local function ensureBotCommanders()
+	clearBots()
+	for teamId = 1, activeTeamCount do
+		if countHumanPlayersOnTeam(teamId) == 0 then
+			local difficulty = teamId == 1 and "Veteran" or (teamId % 3 == 0 and "Warlord" or "Recruit")
+			local spawn = selectedMap.Spawns[teamId] or Vector3.new(0, ARMY_Y, 0)
+			local bot = BotCommanderService.Create(teamId, teamId, difficulty, spawn)
+			botCommanders[teamId] = bot
+			botByTeam[teamId] = bot
+		end
+	end
+
+	for teamId, bot in pairs(botByTeam) do
+		bot.State = "Recruiting"
+		local armyType = BotCommanderService.ChooseRecruitment(teamSupplies[teamId] or 0, 0, bot.Difficulty)
+		if armyType then
+			local army = createArmyForOwner(bot, teamId, armyType, bot.SpawnPosition)
+			if army then
+				bot.ArmyIds[army.Id] = true
+				bot.State = "Idle"
+			end
+		end
+	end
+
+	workspace:SetAttribute("KC_BotsReady", true)
+end
+
+local function removeDeadBotArmyRefs()
+	for _, bot in pairs(botByTeam) do
+		for armyId in pairs(bot.ArmyIds) do
+			if not armies[armyId] then
+				bot.ArmyIds[armyId] = nil
+			end
+		end
+	end
+end
+
+local function nearestEnemyStrength(bot, position)
+	local strength = 0
+	for _, army in pairs(armies) do
+		if army.Team ~= bot.Team and ArmyService.IsAlive(army) then
+			local distance = (army.Position - position).Magnitude
+			if distance < 80 then
+				strength += BotCommanderService.GetArmyStrength(army) * (1 - distance / 80)
+			end
+		end
+	end
+	return strength
+end
+
+local function botThink(bot, now, dt)
+	if not BotCommanderService.IsHealthy(bot) then return end
+	bot.ThinkAccumulator += dt
+	local profile = BotCommanderService.GetProfile(bot.Difficulty)
+	if bot.ThinkAccumulator < profile.ThinkSeconds then return end
+	bot.ThinkAccumulator = 0
+
+	removeDeadBotArmyRefs()
+
+	local armyCount = 0
+	for armyId in pairs(bot.ArmyIds) do
+		if armies[armyId] and ArmyService.IsAlive(armies[armyId]) then armyCount += 1 end
+	end
+
+	local bestProvince, bestScore = BotCommanderService.FindBestProvince(bot, provinceStates, selectedMap, armies, now)
+	if not bestProvince then
+		bot.State = "Idle"
+		return
+	end
+
+	local targetData = selectedMap.Provinces[bestProvince]
+	local targetState = provinceStates[bestProvince]
+
+	local chosenArmy = BotCommanderService.ChooseArmyForObjective(bot, targetData.Position, armies)
+	local enemyThreat = nearestEnemyStrength(bot, targetData.Position)
+
+	if not chosenArmy then
+		bot.State = "Recruiting"
+		local recruitType = BotCommanderService.ChooseRecruitment(teamSupplies[bot.Team] or 0, armyCount, bot.Difficulty)
+		if recruitType then
+			local army = createArmyForOwner(bot, bot.Team, recruitType, bot.SpawnPosition)
+			if army then
+				bot.ArmyIds[army.Id] = true
+				bot.State = "Marching"
+			end
+		end
+		return
+	end
+
+	if BotCommanderService.ShouldRetreat(chosenArmy, enemyThreat) then
+		chosenArmy.Order = "Retreat"
+		chosenArmy.CombatState = "Retreating"
+		chosenArmy.TargetPosition = chosenArmy.FallbackPosition or bot.SpawnPosition
+		bot.State = "Retreating"
+		bot.LastAction = "Retreat"
+		return
+	end
+
+	if targetState.Owner == bot.Team and enemyThreat > BotCommanderService.GetArmyStrength(chosenArmy) * 1.15 then
+		chosenArmy.Order = "Hold"
+		chosenArmy.TargetPosition = chosenArmy.Position
+		bot.State = "Defending"
+		bot.LastAction = "Defend " .. bestProvince
+		return
+	end
+
+	chosenArmy.Formation = BotCommanderService.ChooseFormation(chosenArmy, "Spearmen", bot.Difficulty)
+	chosenArmy.TargetPosition = targetData.Position
+	chosenArmy.Order = targetState.Owner ~= bot.Team and "Attack" or "Move"
+	chosenArmy.CombatState = "Approaching"
+	bot.ObjectiveId = bestProvince
+	bot.State = targetState.Owner ~= bot.Team and "Attacking" or "Marching"
+	bot.LastAction = (chosenArmy.Order == "Attack" and "Attack " or "Move ") .. bestProvince
+end
+
 
 local function firstAliveSoldier(army)
 	local chosen = nil
