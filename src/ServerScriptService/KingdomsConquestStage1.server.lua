@@ -686,79 +686,103 @@ local function addSoldierToArmy(owner, army, armyType)
 end
 
 local function createArmyForOwner(owner, team, armyType, spawnBase)
-	if workspace:GetAttribute("MatchActive") ~= true or matchEnded then
-		return nil, "MATCH_NOT_ACTIVE"
-	end
-	local info = Config.ArmyTypes[armyType]
-	if not info then
-		return nil, "UNKNOWN_ARMY"
-	end
+    if workspace:GetAttribute("MatchActive") ~= true or matchEnded then
+        return nil, "MATCH_NOT_ACTIVE"
+    end
 
-	local initialCount = math.min(
-		ArmyService.GetInitialSoldierCount(info),
-		ArmyService.GetMaxSoldiers(info)
-	)
-	local unitCost = ArmyService.GetRecruitCost(info, 1)
-	local affordable = math.floor((teamSupplies[team] or 0) / math.max(1, unitCost))
-	local soldierCount = math.min(initialCount, affordable)
-	if soldierCount <= 0 then
-		return nil, "NEED_" .. tostring(unitCost) .. "_SUPPLIES"
-	end
+    local info = Config.ArmyTypes[armyType]
+    if not info then
+        return nil, "UNKNOWN_ARMY"
+    end
 
-	nextArmyId += 1
-	local spawnPosition = spawnBase or selectedMap.Spawns[team] or Vector3.new(0, ARMY_Y, 0)
-	local offsetSeed = (nextArmyId - 1) % 5
-	local spawnOffsets = {
-		Vector3.new(8, 0, 0),
-		Vector3.new(-8, 0, 0),
-		Vector3.new(0, 0, 8),
-		Vector3.new(0, 0, -8),
-		Vector3.new(10, 0, 10),
-	}
-	spawnPosition += spawnOffsets[offsetSeed + 1]
+    local initialCount = math.min(
+        ArmyService.GetInitialSoldierCount(info),
+        ArmyService.GetMaxSoldiers(info)
+    )
+    local oneCost = EconomyService.GetRecruitmentCost(
+        info,
+        1,
+        teamEconomyState[team],
+        info.SupplyCostPerSoldier
+    )
 
-	local army = ArmyService.GetDefaultState(Config, {
-		Id = nextArmyId,
-		Owner = owner,
-		Team = team,
-		Type = armyType,
-		Position = Vector3.new(spawnPosition.X, ARMY_Y, spawnPosition.Z),
-		TargetPosition = Vector3.new(spawnPosition.X, ARMY_Y, spawnPosition.Z),
-		FallbackPosition = selectedMap.Spawns[team] or spawnPosition,
-	})
-	armies[army.Id] = army
+    local affordableGold = math.floor((teamGold[team] or 0) / math.max(0.01, oneCost.Gold))
+    local affordableSupplies = math.floor((teamSupplies[team] or 0) / math.max(1, oneCost.Supplies))
+    local soldierCount = math.min(initialCount, affordableGold, affordableSupplies)
 
-	local totalCost = 0
-	for _ = 1, soldierCount do
-		local soldierId = ArmyService.NextSoldierId(army)
-		local seedOwnerId = owner and owner.UserId or 0
-		local soldier = SoldierService.Create(Config, {
-			Id = soldierId,
-			ArmyId = army.Id,
-			Role = armyType,
-			PersonalitySeed = (army.Id * 1009) + army.SoldierSequence * 7919 + seedOwnerId,
-		})
-		army.Soldiers[soldier.Id] = soldier
-		totalCost += unitCost
-	end
+    if soldierCount <= 0 then
+        return nil, string.format(
+            "NEED_%dG_%dS",
+            math.ceil(oneCost.Gold),
+            math.ceil(oneCost.Supplies)
+        )
+    end
 
-	teamSupplies[team] -= totalCost
-	ArmyService.RefreshAggregate(army, SoldierService)
-	makeArmyVisual(army)
+    nextArmyId += 1
+    local spawnPosition = spawnBase or selectedMap.Spawns[team] or Vector3.new(0, ARMY_Y, 0)
+    local offsetSeed = (nextArmyId - 1) % 5
+    local spawnOffsets = {
+        Vector3.new(8, 0, 0),
+        Vector3.new(-8, 0, 0),
+        Vector3.new(0, 0, 8),
+        Vector3.new(0, 0, -8),
+        Vector3.new(10, 0, 10),
+    }
+    spawnPosition += spawnOffsets[offsetSeed + 1]
 
-	if owner and owner:IsA and owner:IsA("Player") then
-		playerSelectedArmy[owner] = army.Id
-		feedbackRemote:FireClient(owner, "ARMY_CREATED", {
-			ArmyId = army.Id,
-			ArmyType = armyType,
-			SoldierCount = army.SoldierCount,
-			Cost = totalCost,
-			CostPerSoldier = unitCost,
-			Supplies = teamSupplies[team],
-		})
-	end
+    local army = ArmyService.GetDefaultState(Config, {
+        Id = nextArmyId,
+        Owner = owner,
+        Team = team,
+        Type = armyType,
+        Position = Vector3.new(spawnPosition.X, ARMY_Y, spawnPosition.Z),
+        TargetPosition = Vector3.new(spawnPosition.X, ARMY_Y, spawnPosition.Z),
+        FallbackPosition = selectedMap.Spawns[team] or spawnPosition,
+    })
+    armies[army.Id] = army
 
-	return army
+    local totalGold = oneCost.Gold * soldierCount
+    local totalSupplies = oneCost.Supplies * soldierCount
+    teamGold[team] = math.max(0, teamGold[team] - totalGold)
+    teamSupplies[team] = math.max(0, teamSupplies[team] - totalSupplies)
+    teamEconomyState[team].Gold = teamGold[team]
+    teamEconomyState[team].Supplies = teamSupplies[team]
+
+    local seedOwnerId = 0
+    if typeof(owner) == "Instance" and owner:IsA("Player") then
+        seedOwnerId = owner.UserId
+    elseif owner and owner.UserId then
+        seedOwnerId = owner.UserId
+    end
+
+    for _ = 1, soldierCount do
+        local soldierId = ArmyService.NextSoldierId(army)
+        local soldier = SoldierService.Create(Config, {
+            Id = soldierId,
+            ArmyId = army.Id,
+            Role = armyType,
+            PersonalitySeed = (army.Id * 1009) + army.SoldierSequence * 7919 + seedOwnerId,
+        })
+        army.Soldiers[soldier.Id] = soldier
+    end
+
+    ArmyService.RefreshAggregate(army, SoldierService)
+    makeArmyVisual(army)
+
+    if typeof(owner) == "Instance" and owner:IsA("Player") then
+        playerSelectedArmy[owner] = army.Id
+        feedbackRemote:FireClient(owner, "ARMY_CREATED", {
+            ArmyId = army.Id,
+            ArmyType = armyType,
+            SoldierCount = army.SoldierCount,
+            CostGold = totalGold,
+            CostSupplies = totalSupplies,
+            Gold = teamGold[team],
+            Supplies = teamSupplies[team],
+        })
+    end
+
+    return army
 end
 
 local function createArmy(player, armyType)
