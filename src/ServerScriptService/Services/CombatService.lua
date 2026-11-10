@@ -79,15 +79,25 @@ function CombatService.GetHitChance(attacker, defender, soldier, terrainRangeMod
     local morale = 0.70 + (attacker.Morale or 0) / 333
     local fatigue = 1 - (attacker.Fatigue or 0) / 250
     local formation = CombatService.GetFormationModifier(attacker.Formation, "Cohesion")
+    local discipline = 0.94 + clamp(attacker.Discipline or 50, 0, 100) / 1666
+    local cohesion = attacker.Cohesion or 1
     local rangePenalty = terrainRangeModifier or 1
-    return clamp(base * morale * fatigue * formation * rangePenalty, 0.18, 0.98)
+    return clamp(base * morale * fatigue * formation * discipline * cohesion * rangePenalty, 0.18, 0.98)
 end
 
 function CombatService.GetBaseDamage(attacker, defender, soldier, formationMultiplier, defense)
     local power = (soldier and soldier.Power) or (attacker.Power or 0)
     local roleMultiplier = CombatService.GetRolePriority(attacker.Type, defender.Type)
     local defenseValue = math.max(1, defense or 1)
-    return math.max(1, power * formationMultiplier * roleMultiplier / (1 + defenseValue / 36))
+    local aggression = clamp(attacker.Aggression or 50, 0, 100)
+    local personalityMultiplier = 0.985 + aggression / 5000
+
+    if attacker._FirstContactUsed ~= true then
+        attacker._FirstContactUsed = true
+        personalityMultiplier *= 1 + ((aggression - 50) / 100) * 0.06
+    end
+
+    return math.max(1, power * formationMultiplier * roleMultiplier * personalityMultiplier / (1 + defenseValue / 36))
 end
 
 function CombatService.GetRetreatThreshold(army, config)
@@ -98,6 +108,8 @@ function CombatService.GetRetreatThreshold(army, config)
     local threshold = config and config.Combat and config.Combat.RetreatHealthRatio or 0.22
     threshold += math.max(0, 55 - morale) / 300
     threshold += math.max(0, fatigue - 70) / 500
+    threshold += (50 - clamp(army.Courage or 50, 0, 100)) / 2500
+    threshold -= math.max(0, clamp(army.Loyalty or 50, 0, 100) - 50) / 5000
 
     local retreatMorale = config and config.Combat and config.Combat.RetreatMorale or 20
     return healthRatio <= threshold or morale <= retreatMorale
@@ -105,10 +117,10 @@ end
 
 function CombatService.CanDisengage(army, target)
     if not target then return true end
-    return (army.Morale or 0) >= 28 and (army.Fatigue or 0) < 90
+    local courage = clamp(army.Courage or 50, 0, 100)
+    return (army.Morale or 0) >= (28 - (courage - 50) / 8)
+        and (army.Fatigue or 0) < (92 + courage / 40)
 end
-
-return CombatService
 
 function CombatService.GetTerrainModifiers(position, terrainZones)
     local river = terrainZones and terrainZones.River
@@ -138,3 +150,5 @@ function CombatService.ShouldAutoAcquire(army)
         and army.Order ~= "Hold"
         and (army.CombatState == nil or army.CombatState == "Searching")
 end
+
+return CombatService
