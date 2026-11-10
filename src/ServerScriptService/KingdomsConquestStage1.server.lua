@@ -1042,7 +1042,7 @@ local function reconcileBotCommanders()
 			botCommanders[teamId] = bot
 			botByTeam[teamId] = bot
 			bot.State = "Recruiting"
-			local armyType = BotCommanderService.ChooseRecruitment(teamSupplies[teamId] or 0, 0, bot.Difficulty)
+			local armyType = BotCommanderService.ChooseRecruitment(teamEconomyState[teamId], 0, bot.Difficulty)
 			if armyType then
 				local army = createArmyForOwner(bot, teamId, armyType, bot.SpawnPosition)
 				if army then
@@ -1118,7 +1118,7 @@ local function botThink(bot, now, dt)
 
 	-- Reinforce a damaged, rested army before creating another army.
 	if chosenArmy and armyCount > 0 then
-		local reinforcement = BotCommanderService.ChooseReinforcement(bot, armies, teamSupplies[bot.Team] or 0)
+		local reinforcement = BotCommanderService.ChooseReinforcement(bot, armies, teamEconomyState[bot.Team])
 		if reinforcement then
 			local ok = addSoldierToArmy(bot, reinforcement, reinforcement.Type)
 			if ok then
@@ -1135,7 +1135,7 @@ local function botThink(bot, now, dt)
 			return
 		end
 		bot.State = "Recruiting"
-		local recruitType = BotCommanderService.ChooseRecruitment(teamSupplies[bot.Team] or 0, armyCount, bot.Difficulty)
+		local recruitType = BotCommanderService.ChooseRecruitment(teamEconomyState[bot.Team], armyCount, bot.Difficulty)
 		if recruitType then
 			local army = createArmyForOwner(bot, bot.Team, recruitType, bot.SpawnPosition)
 			if army then
@@ -1420,6 +1420,23 @@ commandRemote.OnServerEvent:Connect(function(player, action, payload)
 	end
 end)
 
+local function publicEconomyState(team)
+    local economy = teamEconomyState[team] or {}
+    return {
+        Gold = teamGold[team] or 0,
+        Supplies = teamSupplies[team] or 0,
+        GoldIncomePerMinute = economy.GoldIncomePerMinute or 0,
+        SupplyIncomePerMinute = economy.SupplyIncomePerMinute or 0,
+        UpkeepGoldPerMinute = economy.UpkeepGoldPerMinute or 0,
+        NetGoldPerMinute = economy.NetGoldPerMinute or 0,
+        ConnectedProvinces = economy.ConnectedProvinces or 0,
+        OwnedProvinces = economy.OwnedProvinces or 0,
+        StabilizedProvinces = economy.StabilizedProvinces or 0,
+        Comeback = economy.Comeback == true,
+        EconomyStrain = economy.EconomyStrain == true,
+    }
+end
+
 local function publicArmyState(army)
 	return {
 		Id = army.Id,
@@ -1467,6 +1484,8 @@ requestState.OnServerInvoke = function(player)
 		MapId = selectedMap.Name,
 		TotalProvinces = #selectedMap.ProvinceOrder,
 		Supplies = teamSupplies[findTeamForPlayer(player)],
+		Gold = teamGold[findTeamForPlayer(player)],
+		Economy = publicEconomyState(findTeamForPlayer(player)),
 		Provinces = states,
 		SelectedArmy = playerSelectedArmy[player] or 0,
 		Armies = publicArmies,
@@ -1511,6 +1530,8 @@ local function publishState()
 		stateRemote:FireClient(player, {
 			Team = team,
 			Supplies = teamSupplies[team],
+			Gold = teamGold[team],
+			Economy = publicEconomyState(team),
 			Owned = owned,
 			TeamCount = activeTeamCount,
 			MapId = selectedMap.Name,
