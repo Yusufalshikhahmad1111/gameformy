@@ -49,6 +49,12 @@ That means Stage 18 should not be called fully runtime-verified until Roblox Stu
 - multiplayer;
 - performance.
 
+Full repository audit completed after Stage 18.
+
+Legacy tactical-map, legacy combat-VFX and legacy season-overlay clients now yield to the Stage 17/18 systems when the new runtime is healthy.
+
+Full audit document: `docs/FULL_REPOSITORY_BUG_AUDIT_2026-11-10.md`
+
 The correct handoff is therefore:
 
 READY FOR STUDIO VALIDATION → then Stage 19.
