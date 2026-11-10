@@ -285,18 +285,6 @@
           "Name": "LobbyTitle",
           "ClassName": "BillboardGui",
           "Properties": {
-            "Size": {
-              "UDim2": [
-                [
-                  0,
-                  230
-                ],
-                [
-                  0,
-                  58
-                ]
-              ]
-            },
             "StudsOffset": [
               0,
               4,
@@ -311,18 +299,6 @@
               "Name": "Title",
               "ClassName": "TextLabel",
               "Properties": {
-                "Size": {
-                  "UDim2": [
-                    [
-                      1,
-                      0
-                    ],
-                    [
-                      0,
-                      0.62
-                    ]
-                  ]
-                },
                 "BackgroundTransparency": 1,
                 "TextScaled": true,
                 "TextColor3": [
@@ -339,30 +315,6 @@
               "Name": "Sub",
               "ClassName": "TextLabel",
               "Properties": {
-                "Position": {
-                  "UDim2": [
-                    [
-                      0,
-                      0
-                    ],
-                    [
-                      0,
-                      0.62
-                    ]
-                  ]
-                },
-                "Size": {
-                  "UDim2": [
-                    [
-                      1,
-                      0
-                    ],
-                    [
-                      0,
-                      0.28
-                    ]
-                  ]
-                },
                 "BackgroundTransparency": 1,
                 "TextScaled": true,
                 "TextColor3": [
@@ -494,18 +446,6 @@
           "Name": "PortalHeader",
           "ClassName": "BillboardGui",
           "Properties": {
-            "Size": {
-              "UDim2": [
-                [
-                  0,
-                  170
-                ],
-                [
-                  0,
-                  48
-                ]
-              ]
-            },
             "StudsOffset": [
               0,
               3,
@@ -520,18 +460,6 @@
               "Name": "Title",
               "ClassName": "TextLabel",
               "Properties": {
-                "Size": {
-                  "UDim2": [
-                    [
-                      1,
-                      0
-                    ],
-                    [
-                      0.62,
-                      0
-                    ]
-                  ]
-                },
                 "BackgroundTransparency": 1,
                 "TextScaled": true,
                 "TextColor3": [
@@ -548,30 +476,6 @@
               "Name": "Sub",
               "ClassName": "TextLabel",
               "Properties": {
-                "Position": {
-                  "UDim2": [
-                    [
-                      0,
-                      0
-                    ],
-                    [
-                      0.62,
-                      0
-                    ]
-                  ]
-                },
-                "Size": {
-                  "UDim2": [
-                    [
-                      1,
-                      0
-                    ],
-                    [
-                      0.3,
-                      0
-                    ]
-                  ]
-                },
                 "BackgroundTransparency": 1,
                 "TextScaled": true,
                 "TextColor3": [
@@ -647,18 +551,6 @@
           "Name": "PortalHeader",
           "ClassName": "BillboardGui",
           "Properties": {
-            "Size": {
-              "UDim2": [
-                [
-                  0,
-                  170
-                ],
-                [
-                  0,
-                  48
-                ]
-              ]
-            },
             "StudsOffset": [
               0,
               3,
@@ -673,18 +565,6 @@
               "Name": "Title",
               "ClassName": "TextLabel",
               "Properties": {
-                "Size": {
-                  "UDim2": [
-                    [
-                      1,
-                      0
-                    ],
-                    [
-                      0.62,
-                      0
-                    ]
-                  ]
-                },
                 "BackgroundTransparency": 1,
                 "TextScaled": true,
                 "TextColor3": [
@@ -701,30 +581,6 @@
               "Name": "Sub",
               "ClassName": "TextLabel",
               "Properties": {
-                "Position": {
-                  "UDim2": [
-                    [
-                      0,
-                      0
-                    ],
-                    [
-                      0.62,
-                      0
-                    ]
-                  ]
-                },
-                "Size": {
-                  "UDim2": [
-                    [
-                      1,
-                      0
-                    ],
-                    [
-                      0.3,
-                      0
-                    ]
-                  ]
-                },
                 "BackgroundTransparency": 1,
                 "TextScaled": true,
                 "TextColor3": [
@@ -800,18 +656,6 @@
           "Name": "PortalHeader",
           "ClassName": "BillboardGui",
           "Properties": {
-            "Size": {
-              "UDim2": [
-                [
-                  0,
-                  170
-                ],
-                [
-                  0,
-                  48
-                ]
-              ]
-            },
             "StudsOffset": [
               0,
               3,
@@ -826,18 +670,6 @@
               "Name": "Title",
               "ClassName": "TextLabel",
               "Properties": {
-                "Size": {
-                  "UDim2": [
-                    [
-                      1,
-                      0
-                    ],
-                    [
-                      0.62,
-                      0
-                    ]
-                  ]
-                },
                 "BackgroundTransparency": 1,
                 "TextScaled": true,
                 "TextColor3": [
@@ -854,30 +686,6 @@
               "Name": "Sub",
               "ClassName": "TextLabel",
               "Properties": {
-                "Position": {
-                  "UDim2": [
-                    [
-                      0,
-                      0
-                    ],
-                    [
-                      0.62,
-                      0
-                    ]
-                  ]
-                },
-                "Size": {
-                  "UDim2": [
-                    [
-                      1,
-                      0
-                    ],
-                    [
-                      0.3,
-                      0
-                    ]
-                  ]
-                },
                 "BackgroundTransparency": 1,
                 "TextScaled": true,
                 "TextColor3": [
@@ -953,18 +761,6 @@
           "Name": "PortalHeader",
           "ClassName": "BillboardGui",
           "Properties": {
-            "Size": {
-              "UDim2": [
-                [
-                  0,
-                  170
-                ],
-                [
-                  0,
-                  48
-                ]
-              ]
-            },
             "StudsOffset": [
               0,
               3,
@@ -979,18 +775,6 @@
               "Name": "Title",
               "ClassName": "TextLabel",
               "Properties": {
-                "Size": {
-                  "UDim2": [
-                    [
-                      1,
-                      0
-                    ],
-                    [
-                      0.62,
-                      0
-                    ]
-                  ]
-                },
                 "BackgroundTransparency": 1,
                 "TextScaled": true,
                 "TextColor3": [
@@ -1007,30 +791,6 @@
               "Name": "Sub",
               "ClassName": "TextLabel",
               "Properties": {
-                "Position": {
-                  "UDim2": [
-                    [
-                      0,
-                      0
-                    ],
-                    [
-                      0.62,
-                      0
-                    ]
-                  ]
-                },
-                "Size": {
-                  "UDim2": [
-                    [
-                      1,
-                      0
-                    ],
-                    [
-                      0.3,
-                      0
-                    ]
-                  ]
-                },
                 "BackgroundTransparency": 1,
                 "TextScaled": true,
                 "TextColor3": [
