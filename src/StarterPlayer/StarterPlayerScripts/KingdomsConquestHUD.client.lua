@@ -192,6 +192,13 @@ refreshStaticText = function()
     if mapTitle then mapTitle.Text = t("map") end
     if commandPanel and commandPanel:FindFirstChild("Header") then commandPanel.Header.Text = t("command") end
     if castleTitle and selectedCastle then castleTitle.Text = string.upper(t("castleAction")) end
+    local alignment = lang == "ar" and Enum.TextXAlignment.Right or Enum.TextXAlignment.Left
+    if leftTitle then leftTitle.TextXAlignment = alignment end
+    if leftBody then leftBody.TextXAlignment = alignment end
+    if castleBody then castleBody.TextXAlignment = alignment end
+    scoreLabel.TextXAlignment = alignment
+    resourcesLabel.TextXAlignment = lang == "ar" and Enum.TextXAlignment.Left or Enum.TextXAlignment.Right
+    mapTitle.TextXAlignment = alignment
 
     local english = UITheme.Text.en
     local arabic = UITheme.Text.ar
