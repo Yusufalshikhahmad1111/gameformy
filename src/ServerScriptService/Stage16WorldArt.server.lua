@@ -336,6 +336,79 @@ local function buildCityBlock(castleArt, center, art, tier, index, radiusOverrid
 	window.CastShadow = false
 end
 
+local function buildVegetation(landscape, mapId, origin, art, cityPositions)
+	local theme = art.Theme or "DEFAULT"
+	local count = theme == "DESERT_SANDSTONE" and 6 or 10
+	local trunkColor = art.Trunk or Color3.fromRGB(80, 61, 42)
+	local crownColor = art.Tree or Color3.fromRGB(61, 91, 52)
+	local rockColor = art.DarkStone or Color3.fromRGB(91, 88, 82)
+
+	local candidates = {
+		Vector3.new(-285, 0, -265), Vector3.new(-170, 0, -300),
+		Vector3.new(40, 0, -285), Vector3.new(205, 0, -240),
+		Vector3.new(300, 0, -120), Vector3.new(290, 0, 90),
+		Vector3.new(220, 0, 275), Vector3.new(45, 0, 300),
+		Vector3.new(-160, 0, 280), Vector3.new(-300, 0, 180),
+		Vector3.new(-300, 0, 30), Vector3.new(295, 0, 30),
+	}
+	local added = 0
+	for index, localOffset in ipairs(candidates) do
+		if added >= count then
+			break
+		end
+
+		local position = origin + localOffset
+		local nearCity = false
+		for _, cityPosition in ipairs(cityPositions) do
+			if (position - cityPosition).Magnitude < 45 then
+				nearCity = true
+				break
+			end
+		end
+		if not nearCity then
+			if theme == "DESERT_SANDSTONE" and index % 2 == 0 then
+				local rock = makePart(
+					landscape,
+					"DesertRock_" .. index,
+					Vector3.new(5.0, 2.4, 4.2),
+					position + Vector3.new(0, 1.2, 0),
+					rockColor,
+					Enum.Material.Slate,
+					0
+				)
+				rock.Shape = Enum.PartType.Ball
+				rock.CastShadow = true
+			else
+				local trunk = makePart(
+					landscape,
+					"TreeTrunk_" .. index,
+					Vector3.new(1.0, 4.5, 1.0),
+					position + Vector3.new(0, 2.25, 0),
+					trunkColor,
+					Enum.Material.Wood,
+					0
+				)
+				trunk.CastShadow = true
+				local crown = makePart(
+					landscape,
+					"TreeCrown_" .. index,
+					Vector3.new(5.4, 5.4, 5.4),
+					position + Vector3.new(0, 5.1, 0),
+					crownColor,
+					Enum.Material.Grass,
+					0
+				)
+				crown.Shape = Enum.PartType.Ball
+				crown.CastShadow = true
+			end
+			added += 1
+		end
+	end
+
+	landscape:SetAttribute("VegetationCount", added)
+	landscape:SetAttribute("VegetationTheme", theme)
+end
+
 local function buildLandscapeAccents(mapModel, mapId, art)
 	local folder = clearStage16(mapModel)
 	folder.Name = "Stage16Art"
@@ -356,6 +429,15 @@ local function buildLandscapeAccents(mapModel, mapId, art)
 	landscape.Name = "TerrainPresentation"
 	landscape.Parent = folder
 	landscape:SetAttribute("Theme", theme)
+
+	local cityPositions = {}
+	for _, city in ipairs(mapPack and mapPack.Cities or {}) do
+		local cityData = MapService.GetCity(mapId, city.Id)
+		if cityData and cityData.Position then
+			table.insert(cityPositions, cityData.Position)
+		end
+	end
+	buildVegetation(landscape, mapId, origin, art, cityPositions)
 
 	local points = {
 		Vector3.new(origin.X - 230, 4, origin.Z - 205),
