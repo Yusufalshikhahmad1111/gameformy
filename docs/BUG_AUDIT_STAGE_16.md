@@ -63,3 +63,23 @@ Those systems stay in their existing Stage 1 / service layers.
 ## Remaining gate
 
 The only unresolved verification is the Roblox Studio runtime gate. The repository tools available in this execution do not provide a Studio session, so visual placement, runtime logs, mobile rendering and live capture transitions cannot honestly be marked passed yet.
+
+
+## Final expansion pass
+
+After the first audit, the following were also completed:
+
+- army silhouette upgrade with role-aware armor/helmets;
+- physical army pennants;
+- lightweight regional vegetation/rock props;
+- dense-city housing suppression;
+- initial ownership publication before Stage 16 art initialization;
+- live army `Stage16ArtReady` marker.
+
+No new gameplay-authority layer was introduced.
+
+## Final decision
+
+**Repository audit: PASS — Stage 16 ready for Stage 17 handoff.**
+
+Roblox Studio remains the external runtime/visual gate only.
