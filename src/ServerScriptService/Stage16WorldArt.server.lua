@@ -282,8 +282,8 @@ local function buildOwnerMarkers(castleArt, center, footprint)
 	return folder
 end
 
-local function buildCityBlock(castleArt, center, art, tier, index)
-	local radius = tier == "Capital" and 34 or tier == "Major" and 31 or 28
+local function buildCityBlock(castleArt, center, art, tier, index, radiusOverride)
+	local radius = radiusOverride or (tier == "Capital" and 34 or tier == "Major" and 31 or 28)
 	local angle = math.rad((index - 1) * 120 + (tier == "Capital" and 30 or 0))
 	local position = center + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
 	local scale = tier == "Capital" and 1.0 or tier == "Major" and 0.9 or 0.78
@@ -515,8 +515,9 @@ local function buildCastle(mapModel, mapId, city, art)
 	elseif nearestCityDistance < 70 then
 		houseCount = math.min(houseCount, 1)
 	end
+	local houseRadius = nearestCityDistance < 70 and nearestCityDistance * 0.34 or nil
 	for index = 1, houseCount do
-		buildCityBlock(castleArt, center, art, tier, index)
+		buildCityBlock(castleArt, center, art, tier, index, houseRadius)
 	end
 
 	-- State/ownership visuals are intentionally small and sit inside the castle
