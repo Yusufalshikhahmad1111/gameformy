@@ -48,7 +48,9 @@ function CombatService.ChooseTarget(army, armies, SoldierService, config)
                 local healthRatio = (candidate.Health or 0) / math.max(1, candidate.MaxHealth or 1)
                 local woundedPriority = 1 + (1 - healthRatio) * 0.4
                 local distanceScore = 1 - clamp(distance / detectRange, 0, 1)
-                local score = targetPriority * 2 + woundedPriority + distanceScore
+                local aggression = clamp(army.Aggression or 50, 0, 100)
+                local aggressionBias = ((aggression - 50) / 100) * (1 - distanceScore) * 0.55
+                local score = targetPriority * 2 + woundedPriority + distanceScore + aggressionBias
 
                 if army.Order == "Attack" and army.AttackTarget == candidate.Id then
                     score += 4
