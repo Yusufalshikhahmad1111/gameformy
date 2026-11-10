@@ -2,6 +2,17 @@
 local Players=game:GetService("Players")
 local ReplicatedStorage=game:GetService("ReplicatedStorage")
 local player=Players.LocalPlayer
+
+-- Stage 17 owns the tactical-map surface. The legacy Stage 9/8 minimap
+-- remains as a fallback only if the new command center fails to initialize.
+local stage17Deadline = os.clock() + 15
+while workspace:GetAttribute("KC_Stage17Ready") ~= true and os.clock() < stage17Deadline do
+	task.wait(0.1)
+end
+if workspace:GetAttribute("KC_Stage17Ready") == true then
+	return
+end
+
 if workspace:GetAttribute("KC_RuntimeReady") ~= true then
 	workspace:GetAttributeChangedSignal("KC_RuntimeReady"):Wait()
 end
