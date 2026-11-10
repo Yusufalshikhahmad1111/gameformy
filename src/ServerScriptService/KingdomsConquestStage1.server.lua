@@ -1616,22 +1616,8 @@ Players.PlayerAdded:Connect(function(player)
 	end
 end)
 
-task.spawn(function()
-	while true do
-		for team = 1, activeTeamCount do
-			local income = 0
-			for _, state in pairs(provinceStates) do
-				if state.Owner == team then
-					income += state.Income
-				end
-			end
-			teamSupplies[team] += math.floor(income / 6)
-		end
-		task.wait(Config.Game.EconomyTickSeconds)
-	end
-end)
-
 local broadcastClock = 0
+local economyClock = 0
 local captureClock = 0
 local attackClock = 0
 local resultClock = 0
@@ -1642,6 +1628,7 @@ RunService.Heartbeat:Connect(function(dt)
 	captureClock += dt
 	attackClock += dt
 	broadcastClock += dt
+	economyClock += dt
 	soldierClock += dt
 	botClock += dt
 
@@ -1687,6 +1674,22 @@ RunService.Heartbeat:Connect(function(dt)
 	if broadcastClock >= math.max(0.25, Config.Game.StateBroadcastSeconds) then
 		publishState()
 		broadcastClock = 0
+	end
+
+	if economyClock >= math.max(0.5, (Config.Economy and Config.Economy.EconomyTickSeconds) or 2)
+		and workspace:GetAttribute("MatchActive") == true then
+		EconomyService.Tick(
+			teamGold,
+			teamSupplies,
+			teamEconomyState,
+			provinceStates,
+			selectedMap,
+			armies,
+			activeTeamCount,
+			Config,
+			economyClock
+		)
+		economyClock = 0
 	end
 
 	if botClock >= 0.2 and workspace:GetAttribute("MatchActive") == true then
@@ -1740,7 +1743,21 @@ workspace:GetAttributeChangedSignal("MatchActive"):Connect(function()
 			armies[id] = nil
 		end
 		for team = 1, activeTeamCount do
-			teamSupplies[team] = 60
+			teamSupplies[team] = (Config.Economy and Config.Economy.StartingSupplies) or 40
+			teamGold[team] = (Config.Economy and Config.Economy.StartingGold) or 120
+			teamEconomyState[team] = {
+				Gold = teamGold[team],
+				Supplies = teamSupplies[team],
+				GoldIncomePerMinute = 0,
+				SupplyIncomePerMinute = 0,
+				UpkeepGoldPerMinute = 0,
+				NetGoldPerMinute = 0,
+				ConnectedProvinces = 0,
+				OwnedProvinces = 0,
+				StabilizedProvinces = 0,
+				Comeback = false,
+				EconomyStrain = false,
+			}
 		end
 		nextArmyId = 0
 		for name, state in pairs(provinceStates) do
