@@ -982,7 +982,8 @@ local function reconcileBotCommanders()
 		if hasHuman then
 			removeBot(teamId)
 		elseif not botByTeam[teamId] then
-			local difficulty = teamId == 1 and "Veteran" or (teamId % 3 == 0 and "Warlord" or "Recruit")
+			local configuredDifficulty = Config.Bots and Config.Bots.DifficultyByTeam and Config.Bots.DifficultyByTeam[teamId]
+			local difficulty = configuredDifficulty or (teamId == 1 and "Veteran" or (teamId % 3 == 0 and "Warlord" or "Recruit"))
 			local spawn = selectedMap.Spawns[teamId] or Vector3.new(0, ARMY_Y, 0)
 			local bot = BotCommanderService.Create(teamId, teamId, difficulty, spawn)
 			botCommanders[teamId] = bot
@@ -1076,7 +1077,7 @@ local function botThink(bot, now, dt)
 	end
 
 	if not chosenArmy then
-		if armyCount >= 3 then
+		if armyCount >= ((Config.Bots and Config.Bots.MaxArmiesPerCommander) or 3) then
 			bot.State = "Recovering"
 			return
 		end
