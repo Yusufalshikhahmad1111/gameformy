@@ -27,6 +27,9 @@ StateSchemas.Forms = {
         "Province", "Tier", "Owner", "State", "Garrison", "MaxGarrison",
         "CaptureTeam", "CaptureProgress", "StabilizationRemaining",
     },
+    Bot = {
+        "Team", "Name", "Difficulty", "State", "LastAction", "ObjectiveId",
+    },
 }
 
 local function finite(value)
