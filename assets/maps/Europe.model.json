@@ -16078,18 +16078,6 @@
           "Name": "RegionHeader",
           "ClassName": "BillboardGui",
           "Properties": {
-            "Size": {
-              "UDim2": [
-                [
-                  0,
-                  190
-                ],
-                [
-                  0,
-                  54
-                ]
-              ]
-            },
             "StudsOffset": [
               0,
               6,
@@ -16104,18 +16092,6 @@
               "Name": "Title",
               "ClassName": "TextLabel",
               "Properties": {
-                "Size": {
-                  "UDim2": [
-                    [
-                      1,
-                      0
-                    ],
-                    [
-                      0.6,
-                      0
-                    ]
-                  ]
-                },
                 "BackgroundTransparency": 1,
                 "Font": "GothamBlack",
                 "TextScaled": true,
@@ -16132,30 +16108,6 @@
               "Name": "Subtitle",
               "ClassName": "TextLabel",
               "Properties": {
-                "Position": {
-                  "UDim2": [
-                    [
-                      0,
-                      0
-                    ],
-                    [
-                      0.6,
-                      0
-                    ]
-                  ]
-                },
-                "Size": {
-                  "UDim2": [
-                    [
-                      1,
-                      0
-                    ],
-                    [
-                      0.32,
-                      0
-                    ]
-                  ]
-                },
                 "BackgroundTransparency": 1,
                 "Font": "GothamMedium",
                 "TextScaled": true,
