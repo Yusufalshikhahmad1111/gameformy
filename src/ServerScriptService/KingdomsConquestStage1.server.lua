@@ -1100,6 +1100,8 @@ local function botThink(bot, now, dt)
 		chosenArmy.TargetPosition = chosenArmy.FallbackPosition or bot.SpawnPosition
 		bot.State = "Retreating"
 		bot.LastAction = "Retreat Army #" .. tostring(chosenArmy.Id)
+		BotCommanderService.RecordFailure(bot, bestProvince, now)
+		bot.ActiveObjectiveArmyId = chosenArmy.Id
 		return
 	end
 
@@ -1129,6 +1131,8 @@ local function botThink(bot, now, dt)
 	chosenArmy.Order = targetState.Owner ~= bot.Team and "Attack" or "Move"
 	chosenArmy.CombatState = "Approaching"
 	bot.ObjectiveId = bestProvince
+	bot.ActiveObjectiveArmyId = chosenArmy.Id
+	bot.ActiveObjectiveStartedAt = now
 	bot.State = targetState.Owner ~= bot.Team and "Attacking" or "Marching"
 	bot.LastAction = (chosenArmy.Order == "Attack" and "Attack " or "Move ") .. bestProvince
 end
