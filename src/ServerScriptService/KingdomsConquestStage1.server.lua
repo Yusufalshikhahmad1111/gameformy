@@ -840,6 +840,33 @@ local function captureTick(dt)
 				if castle.Garrison > 0 then
 					CastleService.ApplyAssault(castle, attackerPower / math.max(1, 1 + defenderPower * 0.02), dt)
 					castle.State = "Assaulted"
+					local bestTarget = nil
+					for _, army in pairs(armies) do
+						if ArmyService.IsAlive(army) and army.Team == activeTeam then
+							if not bestTarget or army.SoldierCount < bestTarget.SoldierCount then
+								bestTarget = army
+							end
+						end
+					end
+					if bestTarget then
+						local targetSoldier = nil
+						for _, soldier in pairs(bestTarget.Soldiers or {}) do
+							if SoldierService.IsAlive(soldier) and (not targetSoldier or soldier.Health < targetSoldier.Health) then
+								targetSoldier = soldier
+							end
+						end
+						if targetSoldier then
+							local damage = CastleService.GetGarrisonFireDamage(castle, bestTarget.Power)
+							local killed = SoldierService.ApplyDamage(targetSoldier, damage)
+							ArmyService.RefreshAggregate(bestTarget, SoldierService)
+							vfxRemote:FireAllClients("CastleHit", bestTarget.Position, castle.Garrison <= 0, killed)
+							if killed then
+								makeArmyVisual(bestTarget)
+							else
+								syncArmyVisual(bestTarget)
+							end
+						end
+					end
 					for _, army in pairs(armies) do
 						if ArmyService.IsAlive(army) and army.Team == activeTeam then
 							for _, soldier in pairs(army.Soldiers) do
@@ -869,6 +896,7 @@ local function captureTick(dt)
 						state.CaptureProgress = 0
 						updateProvinceVisual(name)
 						provinceCaptureEvent:Fire(name, activeTeam, oldOwner)
+						vfxRemote:FireAllClients("CastleCaptured", model and model:GetPivot().Position or Vector3.zero, activeTeam, true)
 					end
 				end
 			elseif teamCount == 1 and activeTeam == castle.Owner then
