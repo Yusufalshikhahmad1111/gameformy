@@ -51,6 +51,8 @@ function BotCommanderService.Create(id, team, difficulty, spawnPosition)
         ArmyIds = {},
         ObjectiveId = nil,
         ObjectiveFailureCount = 0,
+        ActiveObjectiveArmyId = nil,
+        ActiveObjectiveStartedAt = 0,
     }
 end
 
@@ -82,7 +84,6 @@ function BotCommanderService.ScoreProvince(bot, provinceName, provinceState, pro
         score += 16
     elseif provinceState.Owner ~= bot.Team then
         score += 24 * profile.AttackBias
-        if provinceState.Owner == bot.Team then score -= 30 end
     else
         score -= 20
     end
