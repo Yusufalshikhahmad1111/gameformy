@@ -361,7 +361,7 @@ local function trackCastle(model)
 end
 
 local function trackArmy(model)
-	if not model:IsA("Model") or isGameplayProxy(model) == false then return end
+	if not model:IsA("Model") or not isGameplayProxy(model) then return end
 	if model:GetAttribute("Stage16ArtReady") ~= true then return end
 	local armyId = model:GetAttribute("ArmyId")
 	if armyId == nil or trackedArmies[model] then return end
@@ -393,28 +393,6 @@ local function discover()
 			trackCastle(instance)
 			trackArmy(instance)
 		end
-	end
-end
-
-local function battlePresentation(kind, position, teamOrTarget, defeated)
-	if kind == "Arrow" then
-		playOptionalAudio("BowRelease", 0.12, 0.14)
-		if defeated then
-			playOptionalAudio("BattleImpact", 0.18, 0.18)
-		end
-	elseif kind == "Melee" then
-		playOptionalAudio("MeleeImpact", 0.12, 0.14)
-		if defeated then
-			playOptionalAudio("ArmyDestroyed", 0.22, 0.4)
-		end
-	elseif kind == "CastleHit" then
-		playOptionalAudio("BattleImpact", 0.16, 0.18)
-		makeBurst(position, defeated and 4.5 or 2.6, Color3.fromRGB(225, 188, 103))
-	elseif kind == "CastleCaptured" then
-		captureBannerColor(
-			Workspace:FindFirstChild("Stage18VirtualCastle", true) or {GetAttribute=function() return nil end, GetPivot=function() return CFrame.new(position) end},
-			tonumber(teamOrTarget) or 0
-		)
 	end
 end
 
@@ -460,7 +438,8 @@ vfxRemote.OnClientEvent:Connect(function(kind, position, teamOrType, defeated)
 	elseif kind == "Arrow" then
 		playOptionalAudio("BowRelease", 0.10, 0.12)
 		if defeated then
-			makeBurst(position, 3.2, Color3.fromRGB(220, 187, 119))
+			local impactPosition = typeof(teamOrType) == "Vector3" and teamOrType or position
+			makeBurst(impactPosition, 3.2, Color3.fromRGB(220, 187, 119))
 			playOptionalAudio("BattleImpact", 0.16, 0.18)
 		end
 	elseif kind == "Melee" then
