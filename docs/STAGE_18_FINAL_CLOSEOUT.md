@@ -33,10 +33,7 @@ Marching dust is rate-limited per army so its visual loop does not scale with co
 Stage 17 closeout base:
 ef2dc81a9118d53efc06927f1387f348d43f150c
 
-Current Stage 18 audit head:
-3d1e4b610ce7477181e7db50e97827401924d4f5
-
-The repository is 20 commits ahead of the Stage 17 closeout base and has no known branch divergence from that base.
+The Stage 18 change set is committed to main with no known branch divergence from the Stage 17 closeout base.
 
 ## Studio gate
 
